@@ -12,5 +12,3 @@ Provide information on what this Pull Request (PR) does and any context necessar
 ## Issue
 
 What issue(s) does this PR close? Use the `closes #<issueNum>` here.
-
-@phylum-dev/integrations
