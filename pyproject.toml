@@ -1,0 +1,51 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "phylum-ci"
+version = "0.0.1"
+description = "Utilities for Phylum integrations"
+license = "MIT"
+authors = ["Phylum, Inc. <engineering@phylum.io>"]
+homepage = "https://phylum.io/"
+repository = "https://github.com/phylum-dev/phylum-ci"
+documentation = "https://docs.phylum.io/"
+readme = "README.md"
+keywords = ["dependency", "security", "CI", "integration"]
+# Classifiers can be found here: https://pypi.org/classifiers/
+classifiers = [
+    # TODO: update this value as the project/package matures
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Environment :: Console",
+    "Topic :: Security",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+packages = [
+    { include = "phylum_ci", from = "src" },
+    { include = "tests", format = "sdist" },
+]
+# TODO: add include and/or exclude items here as needed
+# include = ["CHANGELOG.md"]
+# exclude = ["README.md"]
+
+[tool.poetry.urls]
+"Issue Tracker" = "https://github.com/phylum-dev/phylum-ci/issues"
+
+[tool.poetry.scripts]
+phylum-ci = "phylum_ci.cli:main"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.1"
