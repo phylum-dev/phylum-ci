@@ -8,6 +8,7 @@ Provide information on what this Pull Request (PR) does and any context necessar
 - [ ] Have you ensured that you have met the expected acceptance criteria?
 - [ ] Have you created sufficient tests?
 - [ ] Have you updated all affected documentation?
+- [ ] Have you updated the CHANGELOG?
 
 ## Issue
 
