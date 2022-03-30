@@ -1,0 +1,38 @@
+# This is a workflow for ensuring tests pass all supported environments.
+---
+name: Test
+
+on:
+  # Allow running this workflow manually from the Actions tab
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  pytest:
+    name: Test with pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@master
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Install pytest plugin
+        run: poetry run pip install pytest-github-actions-annotate-failures
+
+      - name: Run pytest
+        run: poetry run python -m pytest -p no:sugar -q tests/
