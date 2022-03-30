@@ -15,7 +15,7 @@ readme = "README.md"
 keywords = ["dependency", "security", "CI", "integration"]
 # Classifiers can be found here: https://pypi.org/classifiers/
 classifiers = [
-    # TODO: update this value as the project/package matures
+    # TODO: Update this value as the project/package matures
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -34,7 +34,7 @@ packages = [
     { include = "phylum_ci", from = "src" },
     { include = "tests", format = "sdist" },
 ]
-# TODO: add include and/or exclude items here as needed
+# TODO: Add include and/or exclude items here as needed
 # include = ["CHANGELOG.md"]
 # exclude = ["README.md"]
 
@@ -46,6 +46,18 @@ phylum-ci = "phylum_ci.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"
+# NOTE: This dependency is not required for the package and also does not make sense to be installed as an extra for
+#       the package. However, it is not currently possible to specify extras in dev-dependencies; they have to be in
+#       the dependencies section to be recognized. This is a known issue:
+#       https://github.com/python-poetry/poetry/issues/759
+# TODO: Move this extra to dev-dependencies when Poetry 1.2 is available, with the groups feature:
+#       https://github.com/python-poetry/poetry/issues/1644
+pytest-github-actions-annotate-failures = {version = "^0.1.6", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"
+
+[tool.poetry.extras]
+CI = [
+    "pytest-github-actions-annotate-failures",
+]
