@@ -13,14 +13,23 @@ on:
 
 jobs:
   pytest:
-    name: Test with pytest
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
     defaults:
       run:
         shell: bash
     steps:
       - name: Checkout the repo
         uses: actions/checkout@master
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install poetry
         run: pipx install poetry
@@ -31,5 +40,5 @@ jobs:
       - name: Install dependencies
         run: poetry install --extras CI
 
-      - name: Run pytest
-        run: poetry run pytest
+      - name: Run tox via poetry
+        run: poetry run tox
