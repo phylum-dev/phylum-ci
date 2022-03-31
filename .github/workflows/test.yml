@@ -37,8 +37,11 @@ jobs:
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
 
+      - name: Set poetry environment
+        run: poetry env use python${{ matrix.python-version }}
+
       - name: Install dependencies
         run: poetry install --verbose
 
       - name: Run tox via poetry
-        run: poetry run tox
+        run: poetry run tox -vv
