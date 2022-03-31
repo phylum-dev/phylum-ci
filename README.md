@@ -7,6 +7,16 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/develop?label=Test&logo=GitHub)](https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml)
 
+[![PyPI](https://img.shields.io/pypi/v/phylum-ci)](https://pypi.org/project/phylum-ci/)
+![PyPI - Status](https://img.shields.io/pypi/status/phylum-ci)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/phylum-ci)](https://pypi.org/project/phylum-ci/)
+[![GitHub](https://img.shields.io/github/license/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/issues)
+![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
+<!-- TODO: enable build status shield(s) when there are workflows to reference
+[![Build Status](https://github.com/phylum-dev/phylum-ci/actions/workflows/dev.yml/badge.svg)](https://github.com/phylum-dev/phylum-ci/actions/workflows/dev.yml)
+-->
+
 Python package for handling CI and other integrations
 
 ## Local Development
