@@ -24,7 +24,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@master
+        uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
@@ -36,9 +36,6 @@ jobs:
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
-
-      - name: Install dependencies
-        run: poetry install --extras CI
 
       - name: Run tox via poetry
         run: poetry run tox

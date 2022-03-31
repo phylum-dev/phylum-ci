@@ -47,22 +47,14 @@ phylum-ci = "phylum_ci.cli:main"
 [tool.poetry.dependencies]
 python = "^3.7"
 
-# NOTE: The dependencies in this next group are not required for the package and also does not make sense to be
-#       installed as an extra for the package. However, it is not currently possible to specify extras in
-#       dev-dependencies; they have to be in the dependencies section to be recognized. This is a known issue:
-#       https://github.com/python-poetry/poetry/issues/759
-# TODO: Move these to dev-dependencies when Poetry 1.2 is available, with the groups feature:
-#       https://github.com/python-poetry/poetry/issues/1644
-pytest-github-actions-annotate-failures = {version = "^0.1.6", optional = true}
-tox-gh-actions = {version = "^2.9.1", optional = true}
-
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"
 tox = "^3.24.5"
 
-[tool.poetry.extras]
-# These dependencies are only needed/used in the Continuous Integration (CI) environment
-CI = [
-    "pytest-github-actions-annotate-failures",
-    "tox-gh-actions",
-]
+# NOTE: The dependencies in this next group are not required for local development. However, it is not currently
+#       possible to specify extras in dev-dependencies; they have to be in the dependencies section to be recognized:
+#       https://github.com/python-poetry/poetry/issues/759
+# TODO: Move these to an optional group when Poetry 1.2 is available, using the groups feature:
+#       https://github.com/python-poetry/poetry/issues/1644
+tox-gh-actions = "^2.9.1"
+pytest-github-actions-annotate-failures = "^0.1.6"
