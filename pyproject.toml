@@ -15,7 +15,7 @@ readme = "README.md"
 keywords = ["dependency", "security", "CI", "integration"]
 # Classifiers can be found here: https://pypi.org/classifiers/
 classifiers = [
-    # TODO: update this value as the project/package matures
+    # TODO: Update this value as the project/package matures
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -34,7 +34,7 @@ packages = [
     { include = "phylum_ci", from = "src" },
     { include = "tests", format = "sdist" },
 ]
-# TODO: add include and/or exclude items here as needed
+# TODO: Add include and/or exclude items here as needed
 # include = ["CHANGELOG.md"]
 # exclude = ["README.md"]
 
@@ -49,3 +49,12 @@ python = "^3.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"
+tox = "^3.24.5"
+
+# NOTE: The dependencies in this next group are not required for local development. However, it is not currently
+#       possible to specify extras in dev-dependencies; they have to be in the dependencies section to be recognized:
+#       https://github.com/python-poetry/poetry/issues/759
+# TODO: Move these to an optional group when Poetry 1.2 is available, using the groups feature:
+#       https://github.com/python-poetry/poetry/issues/1644
+tox-gh-actions = "^2.9.1"
+pytest-github-actions-annotate-failures = "^0.1.6"
