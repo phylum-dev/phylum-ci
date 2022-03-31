@@ -38,6 +38,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry env use python${{ matrix.python-version }}
+          poetry install --verbose
 
       - name: Run tox via poetry
         run: poetry run tox
