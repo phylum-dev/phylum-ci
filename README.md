@@ -33,7 +33,7 @@ Here's how to set up `phylum-ci` for local development.
     pyenv install 3.10.x
     pyenv rehash
     # Ensure all environments are available globally (helps tox to find them)
-    pyenv global 3.10.3 3.9.11 3.8.13 3.7.13
+    pyenv global 3.10.x 3.9.x 3.8.x 3.7.x
     ```
 
 3. Ensure [poetry](https://python-poetry.org/docs/) is installed
