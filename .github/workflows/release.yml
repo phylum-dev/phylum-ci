@@ -1,0 +1,62 @@
+# This is a workflow for releasing packages in GitHub and publishing to PyPI
+---
+name: Release
+
+on:
+  # Allow running this workflow manually from the Actions tab
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      # TODO: Ensure the filter is only for release style tags
+      #       https://github.com/phylum-dev/phylum-ci/issues/13
+      - '*'
+
+jobs:
+  release_and_publish:
+    name: Build, Release, and Publish for Production
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
+        python-version: [ 3.10 ]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      # TODO: Use a "CI" group to ensure only the dependencies needed for running in the CI environment are installed.
+      #       This should be possible when Poetry 1.2 is available, using the groups feature:
+      #       https://github.com/python-poetry/poetry/issues/1644
+      #       https://github.com/phylum-dev/phylum-ci/issues/15
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry env use python${{ matrix.python-version }}
+          poetry install --verbose --no-root
+
+      - name: Run tox via poetry
+        run: poetry run tox
+
+      - name: Get version (from tag or other source)
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+
+      - name: Build wheel and source distribution
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+
+      - name: Create GitHub release
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+
+      - name: Publish to PyPI
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
