@@ -1,24 +1,27 @@
-# This is a workflow for ensuring tests pass all supported environments.
+# This is a workflow for previewing packages. It can be used for Staging deployments
+# or otherwise testing before a release to the "production" systems.
 ---
-name: Test
+name: Preview
 
 on:
   # Allow running this workflow manually from the Actions tab
   workflow_dispatch:
-  pull_request:
   push:
     branches:
-      - main
       - develop
+    tags:
+      # TODO: Ensure the filter is only for pre-release style tags
+      #       https://github.com/phylum-dev/phylum-ci/issues/13
+      - '*'
 
 jobs:
-  test-matrix:
-    name: Test on Python ${{ matrix.python-version }}
+  publish_staging:
+    name: Build and Publish for Staging
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
+        python-version: [ 3.10 ]
     defaults:
       run:
         shell: bash
@@ -26,7 +29,7 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
@@ -47,22 +50,8 @@ jobs:
       - name: Run tox via poetry
         run: poetry run tox
 
-  # This job reports the results of the test-matrix job above and is used to enforce status checks in the repo settings
-  # without needing to update those settings everytime the test matrix is updated.
-  test-rollup:
-    name: Test rollup
-    if: always()
-    needs: test-matrix
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check for test matrix failure
-        if: needs.test-matrix.result != 'success'
-        shell: bash
-        run: |
-          echo "One or more jobs in the test matrix was not successful"
-          exit 1
+      - name: Build wheel and source distribution
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
 
-      - name: Confirm test matrix success
-        if: needs.test-matrix.result == 'success'
-        shell: bash
-        run: echo "All jobs in the test matrix were successful"
+      - name: Publish to TestPyPI
+        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
