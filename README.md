@@ -24,13 +24,15 @@ Here's how to set up `phylum-ci` for local development.
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
 
     ```sh
-    # `pyenv install --list` to get available versions and usually install the latest patch version
-    pyenv install 3.7.13
-    pyenv install 3.8.13
-    pyenv install 3.9.11
-    pyenv install 3.10.3
+    # Use `pyenv install --list` to get available versions and usually install the latest patch version.
+    # NOTE: These versions are examples; the latest patch version available from pyenv should be used in place of `.x`.
+    #       example: `pyenv install --list |grep 3.9.` to show latest patch version for the cpython 3.9 minor release.
+    pyenv install 3.7.x
+    pyenv install 3.8.x
+    pyenv install 3.9.x
+    pyenv install 3.10.x
     pyenv rehash
-    # ensure all environments are available globally (helps tox to find them)
+    # Ensure all environments are available globally (helps tox to find them)
     pyenv global 3.10.3 3.9.11 3.8.13 3.7.13
     ```
 
