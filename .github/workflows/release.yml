@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: [ 3.10 ]
+        python-version: [ "3.10" ]
     defaults:
       run:
         shell: bash
