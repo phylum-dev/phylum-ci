@@ -55,6 +55,14 @@ jobs:
     needs: test-matrix
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm test matrix success
+      - name: Check for test matrix failure
         if: needs.test-matrix.result != 'success'
-        run: exit 1
+        shell: bash
+        run: |
+          echo "One or more jobs in the test matrix was not successful"
+          exit 1
+
+      - name: Confirm test matrix success
+        if: needs.test-matrix.result == 'success'
+        shell: bash
+        run: echo "All jobs in the test matrix were successful"
