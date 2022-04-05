@@ -54,7 +54,11 @@ jobs:
           poetry install --verbose --no-root
 
       - name: Make developmental release version
-        run: poetry version $(poetry version --short).dev$GITHUB_RUN_NUMBER
+        # poetry version rules do not provide for developmental releases as specified in PEP440.
+        # It can be pieced together with these commands, but it should be noted that the release version may differ.
+        run: |
+          poetry version patch
+          poetry version $(poetry version --short).dev$GITHUB_RUN_NUMBER
 
       - name: Run tox via poetry
         run: poetry run tox
