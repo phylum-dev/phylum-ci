@@ -13,8 +13,10 @@ with open(PYPROJECT_TOML_PATH, "rb") as f:
 
 
 def test_project_version():
-    """Ensure the package version string matches the reported project version."""
-    assert __version__ == PYPROJECT.get("tool", {}).get("poetry", {}).get("version")
+    """Ensure the source version matches the PEP-440 post-normalization format given to the package."""
+    package_version = __version__
+    source_version = PYPROJECT.get("tool", {}).get("poetry", {}).get("version")
+    assert package_version == source_version, "Source version should match PEP-440 post-normalization format"
 
 
 def test_python_version():
