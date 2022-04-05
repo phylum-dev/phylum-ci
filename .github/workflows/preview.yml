@@ -6,17 +6,22 @@ name: Preview
 on:
   # Allow running this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      TestPyPI:
+        description: 'True to publish to TestPyPI'
+        type: boolean
+        required: true
+        default: false
+
   push:
     branches:
       - develop
-    tags:
-      # TODO: Ensure the filter is only for pre-release style tags
-      #       https://github.com/phylum-dev/phylum-ci/issues/13
-      - '*'
 
 jobs:
   publish_staging:
     name: Build and Publish for Staging
+    environment:
+      name: Staging
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,14 +49,27 @@ jobs:
       - name: Configure poetry
         run: |
           poetry config virtualenvs.in-project true
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
+
+      - name: Make developmental release version
+        run: poetry version $(poetry version --short).dev$GITHUB_RUN_NUMBER
 
       - name: Run tox via poetry
         run: poetry run tox
 
       - name: Build wheel and source distribution
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+        run: poetry build -vvv
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ./dist/
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Publish to TestPyPI
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+        if:  github.event.inputs.TestPyPI == 'true'
+        run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
