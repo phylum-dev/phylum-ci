@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       TestPyPI:
-        description: 'True to publish to TestPyPI'
+        description: 'Publish to TestPyPI'
         type: boolean
         required: true
         default: false
@@ -68,7 +68,7 @@ jobs:
           name: dist
           path: ./dist/
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
 
       - name: Publish to TestPyPI
         if:  github.event.inputs.TestPyPI == 'true'
