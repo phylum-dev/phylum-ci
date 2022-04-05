@@ -1,5 +1,6 @@
 """Top-level package for phylum-ci."""
-# TODO: Use the standard library form (importlib.metadata) only after Python 3.7 support is dropped
+# TODO: Use only the standard library form (importlib.metadata) only after Python 3.7 support is dropped
+#       https://github.com/phylum-dev/phylum-ci/issues/18
 try:
     import importlib.metadata as importlib_metadata
 except ModuleNotFoundError:
