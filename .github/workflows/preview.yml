@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       TestPyPI:
-        description: 'Publish to TestPyPI'
+        description: "Publish to TestPyPI"
         type: boolean
         required: true
         default: false
@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: [ "3.10" ]
+        python-version: ["3.10"]
     defaults:
       run:
         shell: bash
@@ -75,5 +75,5 @@ jobs:
           retention-days: 7
 
       - name: Publish to TestPyPI
-        if:  github.event.inputs.TestPyPI == 'true'
+        if: github.event.inputs.TestPyPI == "true"
         run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
