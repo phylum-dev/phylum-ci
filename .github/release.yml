@@ -21,6 +21,7 @@ changelog:
         - bug
     - title: Other Changes
       exclude:
+        # Labels here represent internal work that doesn't matter or affect consumers of the package.
         labels:
           - task
       labels:
