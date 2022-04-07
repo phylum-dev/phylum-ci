@@ -20,9 +20,8 @@ changelog:
         - Semver-Patch
         - bug
     - title: Other Changes
-      # TODO: re-enable the `task` label exclusion after confirming how these notes work/look
-      # exclude:
-      #  labels:
-      #    - task
+      exclude:
+        labels:
+          - task
       labels:
         - "*"
