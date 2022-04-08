@@ -32,7 +32,7 @@ It requires Python 3.7+ to run.
 
 ### Usage
 <!-- TODO: Fill this section in as functionality is added -->
-The `phylum-ci` package exposes it's functionality with a command line interface (CLI). To view the options available
+The `phylum-ci` package exposes its functionality with a command line interface (CLI). To view the options available
 from the CLI, print the help message:
 
 ```sh
@@ -46,7 +46,7 @@ MIT - with complete text available in the [LICENSE](LICENSE) file.
 ## Contributing
 
 This is a new project and suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
-More information is available on the [contributing documentation](./docs/contributing.md) page.
+More information is available on the [contributing documentation](CONTRIBUTING.md) page.
 
 ## Change log
 
