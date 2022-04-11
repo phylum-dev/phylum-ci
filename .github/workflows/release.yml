@@ -1,26 +1,27 @@
-# This is a workflow for releasing packages in GitHub and publishing to PyPI
+# This is a workflow for releasing packages in GitHub and publishing to PyPI.
+# To trigger the action, push a tag of the form v#.#.#
+# The tag can also be for a pre-release, but then the tag name should adhere
+# to the post-normalized PEP440 form: https://peps.python.org/pep-0440/
+# Example tags: v0.0.1, v1.2.3, v0.1.0a1, v0.1.2b4, v1.0.0rc0, v0.1.5rc3
 ---
 name: Release
 
 on:
-  # Allow running this workflow manually from the Actions tab
-  workflow_dispatch:
   push:
-    branches:
-      - main
     tags:
-      # TODO: Ensure the filter is only for release style tags
-      #       https://github.com/phylum-dev/phylum-ci/issues/13
-      - '*'
+      - "v*"
 
 jobs:
   release_and_publish:
     name: Build, Release, and Publish for Production
+    environment:
+      name: Production
+      url: ${{ steps.github_release.outputs.url }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: [ 3.10 ]
+        python-version: ["3.10"]
     defaults:
       run:
         shell: bash
@@ -46,17 +47,36 @@ jobs:
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
 
+      # NOTE: This step will override, for this release only, the version set in the project. That is, the version will
+      #       be updated in the checked out source on the runner and used when building the package and release
+      #       artifacts but it will not be committed back to source control (e.g., in `main` branch). This means version
+      #       bumps in source control are not strictly enforced and syncronized with release versions.
+      # TODO: Consider a more fully automated continuous deployment pipeline. Some tools and workflows that can help are
+      #       using conventional commits, commitizen, commitlint, semantic-pull-requests, and python-semantic-release.
+      - name: Set the release version
+        run: poetry version ${GITHUB_REF#refs/tags/v}
+
+      # NOTE: Run the tests for the current active Python version, as a sanity check. It should uncover the situation
+      #       where the tag version doesn't adhere to the post-normalized PEP440 form: https://peps.python.org/pep-0440/
       - name: Run tox via poetry
         run: poetry run tox
 
-      - name: Get version (from tag or other source)
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
-
       - name: Build wheel and source distribution
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+        run: poetry build -vvv
 
       - name: Create GitHub release
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+        id: github_release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          # This check is already filtered down to only 'refs/tags/' and shouldn't "overmatch" for a different ref type.
+          # Look for the post-normalized PEP440 pre-release suffixes: https://peps.python.org/pep-0440/#pre-releases
+          prerelease: ${{ contains(github.ref, 'a') || contains(github.ref, 'b') || contains(github.ref, 'rc') }}
+          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_unmatched_files: true
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
 
       - name: Publish to PyPI
-        run: echo "TODO in https://github.com/phylum-dev/phylum-ci/issues/13"
+        run: poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}

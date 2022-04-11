@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 * Test workflows for local and CI based testing
+* Preview and Release workflows for Staging and Production environments
 
 ## 0.0.1 - 2022-03-28
 ### Added

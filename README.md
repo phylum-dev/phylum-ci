@@ -9,67 +9,48 @@
 
 Python package for handling CI and other integrations
 
-## Local Development
-Here's how to set up `phylum-ci` for local development.
+## Installation and usage
 
-1. Clone the `phylum-ci` repo locally
+### Installation
 
-    ```sh
-    git clone git@github.com:phylum-dev/phylum-ci.git
-    ```
+The `phylum-ci` package is pip installable for the environment of your choice:
 
-2. Ensure all supported Python versions are installed locally
-   1. The strategy is to support all released minor versions of Python that are not end-of-life yet
-   2. The current list is 3.7, 3.8, 3.9, and 3.10, but the Python Developer's Guide can be referenced for the [status of active Python releases](https://devguide.python.org/#status-of-python-branches)
-   3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
+```sh
+pip install phylum-ci
+```
 
-    ```sh
-    # Use `pyenv install --list` to get available versions and usually install the latest patch version.
-    # NOTE: These versions are examples; the latest patch version available from pyenv should be used in place of `.x`.
-    #       example: `pyenv install --list |grep 3.9.` to show latest patch version for the cpython 3.9 minor release.
-    pyenv install 3.7.x
-    pyenv install 3.8.x
-    pyenv install 3.9.x
-    pyenv install 3.10.x
-    pyenv rehash
-    # Ensure all environments are available globally (helps tox to find them)
-    pyenv global 3.10.x 3.9.x 3.8.x 3.7.x
-    ```
+It can also also be installed in an isolated environment with the excellent [`pipx` tool](https://pypa.github.io/pipx/):
 
-3. Ensure [poetry](https://python-poetry.org/docs/) is installed
-4. Install dependencies with `poetry`, which will automatically create a virtual environment:
+```sh
+# Globally install the app(s) on your system in an isolated virtual environment for the package
+pipx install phylum-ci
+# Use the apps from the package in an ephemeral environment
+pipx run phylum-ci <options>
+```
 
-    ```sh
-    cd phylum-ci
-    poetry install
-    ```
+It requires Python 3.7+ to run.
 
-5. Create a branch for local development:
+### Usage
+<!-- TODO: Fill this section in as functionality is added -->
+The `phylum-ci` package exposes its functionality with a command line interface (CLI). To view the options available
+from the CLI, print the help message:
 
-    ```sh
-    git checkout -b <name-of-your-branch>
-    ```
+```sh
+phylum-ci -h
+```
 
-    Now you can make your changes locally.
+## License
 
-6. If new dependencies are added, ensure the `poetry.lock` file is updated (and committed):
+MIT - with complete text available in the [LICENSE](LICENSE) file.
 
-    ```sh
-    poetry lock
-    ```
+## Contributing
 
-7. When you're done making changes, check that your changes pass the tests:
+This is a new project and suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
+More information is available on the [contributing documentation](CONTRIBUTING.md) page.
 
-    ```sh
-    poetry run tox
-    ```
+## Change log
 
-8. Commit your changes and push your branch to GitHub:
+All notable changes to this project are documented in the [CHANGELOG](CHANGELOG.md).
 
-    ```sh
-    git add .
-    git commit -m "Description of the changes goes here"
-    git push --set-upstream origin <name-of-your-branch>
-    ```
-
-9. Submit a pull request through the GitHub website
+The format of the change log is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

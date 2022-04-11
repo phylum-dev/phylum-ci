@@ -9,6 +9,7 @@ Provide information on what this Pull Request (PR) does and any context necessar
 - [ ] Have you created sufficient tests?
 - [ ] Have you updated all affected documentation?
 - [ ] Have you updated the CHANGELOG?
+- [ ] Have you applied labels to this PR, to usually include at least one `Semver-*` label?
 
 ## Issue
 
