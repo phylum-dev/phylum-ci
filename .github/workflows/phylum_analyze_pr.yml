@@ -1,0 +1,25 @@
+# This is a workflow for analyzing dependency lock files
+# in this repository with Phylum during pull requests.
+---
+name: Phylum_analyze
+
+on:
+  pull_request:
+
+jobs:
+  Analyze_PR_with_Phylum:
+    name: Analyze PR with phylum
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Analyze poetry.lock file
+        uses: phylum-dev/phylum-analyze-pr-action@v1
+        with:
+          vul_threshold: 1.0
+          mal_threshold: 1.0
+          eng_threshold: 1.0
+          lic_threshold: 1.0
+          aut_threshold: 1.0
+          phylum_token: ${{ secrets.PHYLUM_TOKEN }}
