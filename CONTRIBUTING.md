@@ -100,6 +100,8 @@ Here's how to set up `phylum-ci` for local development.
 
     ```sh
     poetry lock
+    # Dependencies will be checked automatically in CI during a PR, but checking locally is possible:
+    phylum analyze poetry.lock
     ```
 
 7. When you're done making changes, check that your changes pass the tests:
