@@ -17,9 +17,9 @@ jobs:
       - name: Analyze poetry.lock file
         uses: phylum-dev/phylum-analyze-pr-action@v1
         with:
-          vul_threshold: 1.0
-          mal_threshold: 1.0
-          eng_threshold: 1.0
-          lic_threshold: 1.0
-          aut_threshold: 1.0
+          vul_threshold: 0.99
+          mal_threshold: 0.99
+          eng_threshold: 0.99
+          lic_threshold: 0.99
+          aut_threshold: 0.99
           phylum_token: ${{ secrets.PHYLUM_TOKEN }}
