@@ -1,3 +1,5 @@
+"""Test the package metadata."""
+
 import pathlib
 import sys
 
