@@ -4,7 +4,7 @@ import pathlib
 import sys
 
 import tomli
-from phylum_ci import __author__, __email__, __version__
+from phylum_ci import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 
 HERE = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
@@ -38,3 +38,15 @@ def test_author_email_metadata():
     poetry_authors = PYPROJECT.get("tool", {}).get("poetry", {}).get("authors", [])
     assert expected_poetry_author in poetry_authors
     assert len(poetry_authors) == 1, "There should only be one author - the company, with it's engineering group email"
+
+
+def test_package_name():
+    """Ensure the package name is traced through from the pyproject.toml definition to the script entrypoint usage."""
+    expected_pkg_name = PYPROJECT.get("tool", {}).get("poetry", {}).get("name", "")
+    assert expected_pkg_name == PKG_NAME
+
+
+def test_package_description():
+    """Ensure the package description is traced through from the pyproject definition to the script entrypoint usage."""
+    expected_pkg_name = PYPROJECT.get("tool", {}).get("poetry", {}).get("description", "")
+    assert expected_pkg_name == PKG_SUMMARY
