@@ -7,7 +7,12 @@ except ModuleNotFoundError:
     import importlib_metadata
 
 
+PKG_METADATA = importlib_metadata.metadata(__name__)
+
 # TODO: Bump this version to at least 0.1.0 once there is more product centered functionality provided by this package
 __version__ = importlib_metadata.version(__name__)
-__author__ = importlib_metadata.metadata(__name__).get("Author")
-__email__ = importlib_metadata.metadata(__name__).get("Author-email")
+__author__ = PKG_METADATA.get("Author")
+__email__ = PKG_METADATA.get("Author-email")
+
+PKG_NAME = PKG_METADATA.get("Name")
+PKG_SUMMARY = PKG_METADATA.get("Summary")
