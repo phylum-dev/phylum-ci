@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "phylum-ci"
-version = "0.0.1"
+version = "0.1.1"
 description = "Utilities for handling Phylum integrations"
 license = "MIT"
 authors = ["Phylum, Inc. <engineering@phylum.io>"]
@@ -16,7 +16,7 @@ keywords = ["dependency", "security", "CI", "integration"]
 # Classifiers can be found here: https://pypi.org/classifiers/
 classifiers = [
     # TODO: Update this value as the project/package matures
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
