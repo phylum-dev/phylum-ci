@@ -1,9 +1,9 @@
-"""Console script for phylum_ci."""
+"""Console script for phylum-install."""
 
 import argparse
 import sys
 
-from phylum_ci import PKG_NAME, PKG_SUMMARY, __version__
+from phylum import PKG_NAME, PKG_SUMMARY, __version__
 
 
 def get_args(args=None):

@@ -2,7 +2,7 @@
 
 import sys
 
-from phylum_ci import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
+from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 
 from .constants import PYPROJECT
 

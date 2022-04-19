@@ -1,7 +1,7 @@
 # phylum-ci
-[![PyPI](https://img.shields.io/pypi/v/phylum-ci)](https://pypi.org/project/phylum-ci/)
-![PyPI - Status](https://img.shields.io/pypi/status/phylum-ci)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/phylum-ci)](https://pypi.org/project/phylum-ci/)
+[![PyPI](https://img.shields.io/pypi/v/phylum)](https://pypi.org/project/phylum/)
+![PyPI - Status](https://img.shields.io/pypi/status/phylum)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/phylum)](https://pypi.org/project/phylum/)
 [![GitHub](https://img.shields.io/github/license/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/issues)
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
@@ -13,30 +13,30 @@ Python package for handling CI and other integrations
 
 ### Installation
 
-The `phylum-ci` package is pip installable for the environment of your choice:
+The `phylum` Python package is pip installable for the environment of your choice:
 
 ```sh
-pip install phylum-ci
+pip install phylum
 ```
 
 It can also also be installed in an isolated environment with the excellent [`pipx` tool](https://pypa.github.io/pipx/):
 
 ```sh
 # Globally install the app(s) on your system in an isolated virtual environment for the package
-pipx install phylum-ci
+pipx install phylum
 # Use the apps from the package in an ephemeral environment
-pipx run phylum-ci <options>
+pipx run --spec phylum phylum-install <options>
 ```
 
 It requires Python 3.7+ to run.
 
 ### Usage
 <!-- TODO: Fill this section in as functionality is added -->
-The `phylum-ci` package exposes its functionality with a command line interface (CLI). To view the options available
-from the CLI, print the help message:
+The `phylum` Python package exposes its functionality with a command line interface (CLI).
+To view the options available from the CLI, print the help message from one of the scripts provided as entry points:
 
 ```sh
-phylum-ci -h
+phylum-install -h
 ```
 
 ## License

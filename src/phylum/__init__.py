@@ -1,4 +1,4 @@
-"""Top-level package for phylum-ci."""
+"""Top-level package for phylum."""
 # TODO: Use only the standard library form (importlib.metadata) only after Python 3.7 support is dropped
 #       https://github.com/phylum-dev/phylum-ci/issues/18
 try:

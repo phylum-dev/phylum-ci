@@ -65,7 +65,7 @@ approach, an option is exposed to optionally publish the built package to the
 environment. For example using `pipx` to run a specific developmental release version:
 
 ```sh
-pipx run --index-url https://test.pypi.org/simple/ --spec "phylum-ci==0.0.2.dev6" phylum-ci -h
+pipx run --index-url https://test.pypi.org/simple/ --spec "phylum==0.0.2.dev6" phylum-install -h
 ```
 
 Currently this workflow uses the `Staging` environment, as configured in

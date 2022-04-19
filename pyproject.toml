@@ -3,7 +3,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "phylum-ci"
+name = "phylum"
 version = "0.1.1"
 description = "Utilities for handling Phylum integrations"
 license = "MIT"
@@ -31,7 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 packages = [
-    { include = "phylum_ci", from = "src" },
+    { include = "phylum", from = "src" },
     { include = "tests", format = "sdist" },
 ]
 # TODO: Add include and/or exclude items here as needed
@@ -42,7 +42,7 @@ packages = [
 "Issue Tracker" = "https://github.com/phylum-dev/phylum-ci/issues"
 
 [tool.poetry.scripts]
-phylum-ci = "phylum_ci.cli:main"
+phylum-install = "phylum.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"
