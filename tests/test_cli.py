@@ -5,6 +5,8 @@ import sys
 
 from phylum_ci import PKG_NAME, __version__
 
+from .constants import PYPROJECT
+
 
 def test_run_as_module():
     """Ensure the CLI can be called as a module.
@@ -16,6 +18,15 @@ def test_run_as_module():
     cmd_line = [sys.executable, "-m", "phylum_ci", "--help"]
     ret = subprocess.run(cmd_line)
     assert ret.returncode == 0, "Running the package as a module failed"
+
+
+def test_run_as_script():
+    """Ensure the CLI can be called by it's script entry point."""
+    scripts = PYPROJECT.get("tool", {}).get("poetry", {}).get("scripts", {})
+    assert scripts, "There should be at least one script entry point"
+    for script in scripts:
+        ret = subprocess.run([script, "-h"])
+        assert ret.returncode == 0, f"{script} entry point failed"
 
 
 def test_version_option():
