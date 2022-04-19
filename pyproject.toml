@@ -42,7 +42,7 @@ packages = [
 "Issue Tracker" = "https://github.com/phylum-dev/phylum-ci/issues"
 
 [tool.poetry.scripts]
-phylum-install = "phylum.cli:main"
+phylum-install = "phylum.install.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"

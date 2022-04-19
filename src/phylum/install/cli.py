@@ -3,7 +3,8 @@
 import argparse
 import sys
 
-from phylum import PKG_NAME, PKG_SUMMARY, __version__
+from phylum import __version__
+from phylum.install import SCRIPT_NAME
 
 
 def get_args(args=None):
@@ -12,12 +13,12 @@ def get_args(args=None):
     Use `args` parameter as dependency injection for testing.
     """
     parser = argparse.ArgumentParser(
-        prog=PKG_NAME,
-        description=PKG_SUMMARY,
+        prog=SCRIPT_NAME,
+        description="Download and install the Phylum CLI tool",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    parser.add_argument("--version", action="version", version=f"{PKG_NAME} {__version__}")
+    parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
 
     return parser.parse_args(args)
 

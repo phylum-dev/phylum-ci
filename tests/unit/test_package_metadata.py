@@ -4,7 +4,7 @@ import sys
 
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 
-from .constants import PYPROJECT
+from ..constants import PYPROJECT
 
 
 def test_project_version():
@@ -34,12 +34,12 @@ def test_author_email_metadata():
 
 
 def test_package_name():
-    """Ensure the package name is traced through from the pyproject.toml definition to the script entrypoint usage."""
+    """Ensure the package name is traced through from the pyproject.toml definition."""
     expected_pkg_name = PYPROJECT.get("tool", {}).get("poetry", {}).get("name", "")
     assert expected_pkg_name == PKG_NAME, "The package name should be defined in pyproject.toml only"
 
 
 def test_package_description():
-    """Ensure the package description is traced through from the pyproject definition to the script entrypoint usage."""
+    """Ensure the package description is traced through from the pyproject definition."""
     expected_pkg_desc = PYPROJECT.get("tool", {}).get("poetry", {}).get("description", "")
     assert expected_pkg_desc == PKG_SUMMARY, "The package description should be defined in pyproject.toml only"
