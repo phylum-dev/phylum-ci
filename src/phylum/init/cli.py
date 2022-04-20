@@ -8,11 +8,11 @@ import tempfile
 import zipfile
 
 import requests
-import yaml
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
 from phylum.init import SCRIPT_NAME
+from ruamel.yaml import YAML
 
 # These are the supported Rust target triples
 # TODO: provide a reference
@@ -87,7 +87,8 @@ def is_token_set(token=None):
     """
     if not SETTINGS_YAML_PATH.exists():
         return False
-    settings_dict = yaml.safe_load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
+    yaml = YAML()
+    settings_dict = yaml.load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
     configured_token = settings_dict.get("auth_info", {}).get("offline_access")
     if configured_token is None:
         return False
@@ -105,7 +106,8 @@ def setup_token(token):
         cmd_line = [PHYLUM_BIN_PATH, "version"]
         subprocess.run(cmd_line, check=True)
 
-    settings_dict = yaml.safe_load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
+    yaml = YAML()
+    settings_dict = yaml.load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
     settings_dict.setdefault("auth_info", {})
     settings_dict["auth_info"]["offline_access"] = token
     with open(SETTINGS_YAML_PATH, "w", encoding="utf-8") as f:
