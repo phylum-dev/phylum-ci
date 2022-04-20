@@ -25,7 +25,7 @@ It can also also be installed in an isolated environment with the excellent [`pi
 # Globally install the app(s) on your system in an isolated virtual environment for the package
 pipx install phylum
 # Use the apps from the package in an ephemeral environment
-pipx run --spec phylum phylum-install <options>
+pipx run --spec phylum phylum-init <options>
 ```
 
 It requires Python 3.7+ to run.
@@ -36,7 +36,7 @@ The `phylum` Python package exposes its functionality with a command line interf
 To view the options available from the CLI, print the help message from one of the scripts provided as entry points:
 
 ```sh
-phylum-install -h
+phylum-init -h
 ```
 
 ## License

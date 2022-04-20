@@ -1,10 +1,9 @@
-""""Test the phylum-install command line interface (CLI)."""
-
+""""Test the phylum-init command line interface (CLI)."""
 import subprocess
 import sys
 
 from phylum import __version__
-from phylum.install import SCRIPT_NAME
+from phylum.init import SCRIPT_NAME
 
 from ..constants import PYPROJECT
 
@@ -16,7 +15,7 @@ def test_run_as_module():
     NOTE: The <module_name> must be specified with an underscore, even if the corresponding
           script entry point is specified with a dash.
     """
-    cmd_line = [sys.executable, "-m", "phylum.install", "--help"]
+    cmd_line = [sys.executable, "-m", "phylum.init", "--help"]
     ret = subprocess.run(cmd_line)
     assert ret.returncode == 0, "Running the package as a module failed"
 
@@ -25,7 +24,7 @@ def test_run_as_script():
     """Ensure the CLI can be called by it's script entry point."""
     scripts = PYPROJECT.get("tool", {}).get("poetry", {}).get("scripts", {})
     assert scripts, "There should be at least one script entry point"
-    assert SCRIPT_NAME in scripts, "The phylum-install script should be a defined entry point"
+    assert SCRIPT_NAME in scripts, f"The {SCRIPT_NAME} script should be a defined entry point"
     ret = subprocess.run([SCRIPT_NAME, "-h"])
     assert ret.returncode == 0, f"{SCRIPT_NAME} entry point failed"
 
