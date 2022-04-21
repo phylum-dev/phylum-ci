@@ -2,6 +2,7 @@
 import argparse
 import os
 import pathlib
+import platform
 import subprocess
 import sys
 import tempfile
@@ -17,7 +18,7 @@ from ruamel.yaml import YAML
 # These are the supported Rust target triples
 # TODO: provide a reference
 # TODO: get rid of this when the install method switches to the universal install script
-TARGET_TRIPLES = (
+SUPPORTED_TARGET_TRIPLES = (
     "aarch64-apple-darwin",
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-musl",
@@ -28,7 +29,7 @@ PHYLUM_BIN_PATH = PHYLUM_PATH / "phylum"
 SETTINGS_YAML_PATH = PHYLUM_PATH / "settings.yaml"
 
 
-def version_check(version: str) -> str:
+def version_check(version):
     """Check a given version for validity and return a normalized form of it."""
     if version == "latest":
         return version
@@ -50,15 +51,43 @@ def version_check(version: str) -> str:
     return version
 
 
-def save_file_from_url(url, file, mode):
-    """Save a file from a given URL to a local file with a given mode"""
+def get_target_triple():
+    """Get the "target triple" from the current system and return it.
+
+    Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
+    should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
+    at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
+    type, and the optional fourth is environment type.
+
+    References:
+      * https://doc.rust-lang.org/nightly/rustc/platform-support.html
+      * https://rust-lang.github.io/rfcs/0131-target-specification.html
+    """
+    # Keys are lowercase machine hardware names as returned from `uname -m`. Values are the mapped rustc architecture.
+    supported_arches = {
+        "arm64": "aarch64XXX",
+        "amd64": "x86_64",
+    }
+    # Keys are lowercase operating system name as returned from `uname -s`.
+    # Values are the mapped rustc platform, which is the vendor-os_type[-environment_type]
+    supported_platforms = {
+        "linux": "unknown-linux-musl",
+        "darwin": "apple-darwin",
+    }
+    arch = supported_arches.get(platform.uname().machine.lower(), "unknown")
+    plat = supported_platforms.get(platform.uname().system.lower(), "unknown")
+    return f"{arch}-{plat}"
+
+
+def save_file_from_url(url, path):
+    """Save a file from a given URL to a local file path, in binary mode."""
     print(f" [*] Getting {url} file ...", end="")
     req = requests.get(url, timeout=2.0)
     req.raise_for_status()
     print("Done")
 
-    print(f" [*] Saving {url} file to {file} ...", end="")
-    with open(file, mode) as f:
+    print(f" [*] Saving {url} file to {path} ...", end="")
+    with open(path, "wb") as f:
         f.write(req.content)
     print("Done")
 
@@ -140,8 +169,8 @@ def get_args(args=None):
     parser.add_argument(
         "-t",
         "--target",
-        choices=TARGET_TRIPLES,
-        default="x86_64-unknown-linux-musl",
+        choices=SUPPORTED_TARGET_TRIPLES,
+        default=get_target_triple(),
         help="the target platform type where the CLI will be installed",
     )
     parser.add_argument(
@@ -167,7 +196,11 @@ def main():
     if not token and not is_token_set():
         raise ValueError(f"Phylum Token not supplied as option or `{TOKEN_ENVVAR_NAME}` environment variable")
 
-    archive_name = f"phylum-{args.target}.zip"
+    target_triple = args.target
+    if target_triple not in SUPPORTED_TARGET_TRIPLES:
+        raise ValueError(f"The identified target triple `{target_triple}` is not currently supported")
+
+    archive_name = f"phylum-{target_triple}.zip"
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(args.version, archive_name)
     minisig_url = f"{archive_url}.minisig"
@@ -177,8 +210,8 @@ def main():
         archive_path = temp_dir_path / archive_name
         minisig_path = temp_dir_path / minisig_name
 
-        save_file_from_url(archive_url, archive_path, "wb")
-        save_file_from_url(minisig_url, minisig_path, "wb")
+        save_file_from_url(archive_url, archive_path)
+        save_file_from_url(minisig_url, minisig_path)
 
         # TODO: Verify the download with minisign
 
