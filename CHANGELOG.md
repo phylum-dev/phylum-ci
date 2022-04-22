@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+* `phylum-init` script entry point and initial functionality
 * Test workflows for local and CI based testing
 * Preview and Release workflows for Staging and Production environments
 * Phylum analyze workflow for PRs
