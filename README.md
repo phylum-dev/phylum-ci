@@ -31,13 +31,31 @@ pipx run --spec phylum phylum-init <options>
 It requires Python 3.7+ to run.
 
 ### Usage
-<!-- TODO: Fill this section in as functionality is added -->
+
 The `phylum` Python package exposes its functionality with a command line interface (CLI).
 To view the options available from the CLI, print the help message from one of the scripts provided as entry points:
 
 ```sh
 phylum-init -h
 ```
+
+The functionality can also be accessed by calling the module:
+
+```sh
+python -m phylum.init -h
+# The top level package is redirected to the phylum.init package:
+python -m phylum -h
+```
+
+#### `phylum-init`
+
+The `phylum-init` script can be used to fetch and install the Phylum CLI.
+It will attempt to install the latest released version of the CLI but can be specified to fetch a specific version.
+It will attempt to automatically determine the correct CLI release, based on the platform where the script is run, but
+a specific release target can be specified.
+It will accept a Phylum token from an environment variable or specified as an option, but will also function in the case
+that no token is provided. This can be because there is already a token set that should continue to be used or because
+no token exists and one will need to be manually created or set, after the CLI is installed.
 
 ## License
 
