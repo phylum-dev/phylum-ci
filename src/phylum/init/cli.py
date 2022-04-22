@@ -13,6 +13,7 @@ from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
 from phylum.init import SCRIPT_NAME
+from phylum.init.sig import verify_minisig
 from ruamel.yaml import YAML
 
 # These are the currently supported Rust target triples
@@ -214,7 +215,7 @@ def main():
         save_file_from_url(archive_url, archive_path)
         save_file_from_url(minisig_url, minisig_path)
 
-        # TODO: Verify the download with minisign
+        verify_minisig(archive_path, minisig_path)
 
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:
