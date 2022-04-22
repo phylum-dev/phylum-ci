@@ -15,18 +15,40 @@ from phylum import __version__
 from phylum.init import SCRIPT_NAME
 from ruamel.yaml import YAML
 
-# These are the supported Rust target triples
-# TODO: provide a reference
-# TODO: get rid of this when the install method switches to the universal install script
+# These are the currently supported Rust target triples
+#
+# Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
+# should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
+# at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
+# type, and the optional fourth is environment type.
+#
+# References:
+#   * https://doc.rust-lang.org/nightly/rustc/platform-support.html
+#   * https://rust-lang.github.io/rfcs/0131-target-specification.html
 SUPPORTED_TARGET_TRIPLES = (
     "aarch64-apple-darwin",
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-musl",
 )
+# Keys are lowercase machine hardware names as returned from `uname -m`.
+# Values are the mapped rustc architecture.
+SUPPORTED_ARCHES = {
+    "arm64": "aarch64",
+    "amd64": "x86_64",
+}
+# Keys are lowercase operating system name as returned from `uname -s`.
+# Values are the mapped rustc platform, which is the vendor-os_type[-environment_type].
+SUPPORTED_PLATFORMS = {
+    "linux": "unknown-linux-musl",
+    "darwin": "apple-darwin",
+}
+
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 PHYLUM_PATH = pathlib.Path.home() / ".phylum"
 PHYLUM_BIN_PATH = PHYLUM_PATH / "phylum"
 SETTINGS_YAML_PATH = PHYLUM_PATH / "settings.yaml"
+
+# TODO: Add logging support, a verbosity option to control it, and swap out print statements for logging
 
 
 def version_check(version):
@@ -52,30 +74,9 @@ def version_check(version):
 
 
 def get_target_triple():
-    """Get the "target triple" from the current system and return it.
-
-    Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
-    should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
-    at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
-    type, and the optional fourth is environment type.
-
-    References:
-      * https://doc.rust-lang.org/nightly/rustc/platform-support.html
-      * https://rust-lang.github.io/rfcs/0131-target-specification.html
-    """
-    # Keys are lowercase machine hardware names as returned from `uname -m`. Values are the mapped rustc architecture.
-    supported_arches = {
-        "arm64": "aarch64XXX",
-        "amd64": "x86_64",
-    }
-    # Keys are lowercase operating system name as returned from `uname -s`.
-    # Values are the mapped rustc platform, which is the vendor-os_type[-environment_type]
-    supported_platforms = {
-        "linux": "unknown-linux-musl",
-        "darwin": "apple-darwin",
-    }
-    arch = supported_arches.get(platform.uname().machine.lower(), "unknown")
-    plat = supported_platforms.get(platform.uname().system.lower(), "unknown")
+    """Get the "target triple" from the current system and return it."""
+    arch = SUPPORTED_ARCHES.get(platform.uname().machine.lower(), "unknown")
+    plat = SUPPORTED_PLATFORMS.get(platform.uname().system.lower(), "unknown")
     return f"{arch}-{plat}"
 
 
@@ -147,7 +148,7 @@ def setup_token(token):
     subprocess.run(cmd_line, check=True)
 
 
-def get_args(args=None):
+def get_args():
     """Get the arguments from the command line and return them.
 
     Use `args` parameter as dependency injection for testing.
@@ -185,7 +186,7 @@ def get_args(args=None):
     # parser.add_argument("-p", "--pre-release", action="store_true", help="specify to include pre-release versions")
     parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
 
-    return parser.parse_args(args)
+    return parser.parse_args()
 
 
 def main():
