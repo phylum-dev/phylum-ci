@@ -132,6 +132,34 @@ def is_token_set(token=None):
     return True
 
 
+def process_token_option(token_option):
+    """Process the token option as parsed from the arguments."""
+    # The option takes precedence over the matching environment variable.
+    token = os.getenv(TOKEN_ENVVAR_NAME)
+    if token_option is not None:
+        token = token_option
+
+    if token:
+        print(f" [+] Phylum token supplied as an option or `{TOKEN_ENVVAR_NAME}` environment variable")
+        if is_token_set():
+            print(" [+] An existing token is already set")
+            if is_token_set(token=token):
+                print(" [+] Supplied token matches existing token")
+            else:
+                print(" [!] Supplied token will be used to overwrite the existing token")
+        else:
+            print(" [+] No existing token exists. Supplied token will be used.")
+    else:
+        print(f" [+] Phylum token NOT supplied as option or `{TOKEN_ENVVAR_NAME}` environment variable")
+        if is_token_set():
+            print(" [+] Existing token found. It will be used without modification.")
+        else:
+            print(" [!] Existing token not found. Use `phylum auth login` or `phylum auth register` command to set it.")
+
+    if token and not is_token_set(token=token):
+        setup_token(token)
+
+
 def setup_token(token):
     """Setup the CLI credentials with a provided token."""
     # The phylum CLI settings.yaml file won't exist upon initial install
@@ -181,7 +209,9 @@ def get_args():
         dest="token",
         help=f"""Phylum user token. Can also specify this option's value by setting the `{TOKEN_ENVVAR_NAME}`
             environment variable. The value specified with this option takes precedence when both are provided.
-            Leave this option unspecified to use an existing token already set in the Phylum config file.""",
+            Leave this option and it's related environment variable unspecified to either (1) use an existing token
+            already set in the Phylum config file or (2) to manually populate the token with a `phylum auth login` or
+            `phylum auth register` command after install.""",
     )
     parser.add_argument(
         "--version",
@@ -195,10 +225,6 @@ def get_args():
 def main():
     """Main entrypoint."""
     args = get_args()
-
-    token = args.token or os.getenv(TOKEN_ENVVAR_NAME)
-    if not token and not is_token_set():
-        raise ValueError(f"Phylum Token not supplied as option or `{TOKEN_ENVVAR_NAME}` environment variable")
 
     target_triple = args.target
     if target_triple not in SUPPORTED_TARGET_TRIPLES:
@@ -231,8 +257,7 @@ def main():
         cmd_line = ["sh", "install.sh"]
         subprocess.run(cmd_line, check=True, cwd=extracted_dir)
 
-    if not is_token_set(token=token):
-        setup_token(token)
+    process_token_option(args.token)
 
     # Check to ensure everything is working
     cmd_line = [PHYLUM_BIN_PATH, "--help"]
