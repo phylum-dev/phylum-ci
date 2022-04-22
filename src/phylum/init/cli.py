@@ -49,7 +49,13 @@ PHYLUM_PATH = pathlib.Path.home() / ".phylum"
 PHYLUM_BIN_PATH = PHYLUM_PATH / "phylum"
 SETTINGS_YAML_PATH = PHYLUM_PATH / "settings.yaml"
 
-# TODO: Add logging support, a verbosity option to control it, and swap out print statements for logging
+# Potential features to add:
+#  * Add logging support, a verbosity option to control it, and swap out print statements for logging
+#  * Check for valid versions by using the GitHub API to compare against actual releases
+#    * If so, also programmatically generate the SUPPORTED_TARGET_TRIPLES
+#  * Use the GitHub API ("https://api.github.com") to more programmatically get the archive URL
+#  * Add a `--list` option, to show which versions are available
+#  * Add an option to account for pre-releases
 
 
 def version_check(version):
@@ -61,11 +67,8 @@ def version_check(version):
     if not version.startswith("v"):
         version = f"v{version}"
 
-    # TODO: Check for valid versions by using the GitHub API to compare against actual releases?
-    #       raise argparse.ArgumentTypeError(f"version {version} does not exist as a release")
-
     try:
-        # Ensure the version is at least v2.0.0, which is when the release layout structure changed
+        # The release layout structure changed starting with v2.0.0 and support here is only for the new layout
         if Version("v2.0.0") > Version(canonicalize_version(version)):
             raise argparse.ArgumentTypeError("version must be at least v2.0.0")
     except InvalidVersion as err:
@@ -100,9 +103,6 @@ def get_archive_url(version, archive_name):
     latest_version_uri = f"{github_base_uri}/latest/download"
     specific_version_uri = f"{github_base_uri}/download"
 
-    # TODO: Use the GitHub API instead?
-    # GITHUB_API = "https://api.github.com"
-
     if version == "latest":
         archive_url = f"{latest_version_uri}/{archive_name}"
     else:
@@ -112,20 +112,23 @@ def get_archive_url(version, archive_name):
 
 
 def is_token_set(token=None):
-    """Check if any token is already set.
+    """Check if any token is already set in the CLI configuration file.
 
     Optionally, check if a specific given `token` is set.
     """
     if not SETTINGS_YAML_PATH.exists():
         return False
+
     yaml = YAML()
     settings_dict = yaml.load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
     configured_token = settings_dict.get("auth_info", {}).get("offline_access")
+
     if configured_token is None:
         return False
     if token is not None:
         if token != configured_token:
             return False
+
     return True
 
 
@@ -150,10 +153,7 @@ def setup_token(token):
 
 
 def get_args():
-    """Get the arguments from the command line and return them.
-
-    Use `args` parameter as dependency injection for testing.
-    """
+    """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Fetch and install the Phylum CLI",
@@ -180,12 +180,14 @@ def get_args():
         "--phylum-token",
         dest="token",
         help=f"""Phylum user token. Can also specify this option's value by setting the `{TOKEN_ENVVAR_NAME}`
-            environment variable. The value specified with this option takes precedence when both are provided.""",
+            environment variable. The value specified with this option takes precedence when both are provided.
+            Leave this option unspecified to use an existing token already set in the Phylum config file.""",
     )
-    # TODO: Add a --list option, to show which versions are available?
-    # TODO: Account for pre-releases?
-    # parser.add_argument("-p", "--pre-release", action="store_true", help="specify to include pre-release versions")
-    parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{SCRIPT_NAME} {__version__}",
+    )
 
     return parser.parse_args()
 
@@ -226,14 +228,13 @@ def main():
                 extracted_dir = temp_dir_path / top_level_zip_entry.filename
             zip_file.extractall(path=temp_dir)
 
-        # Run the install script
         cmd_line = ["sh", "install.sh"]
         subprocess.run(cmd_line, check=True, cwd=extracted_dir)
 
     if not is_token_set(token=token):
         setup_token(token)
 
-    # Do a check to ensure everything is working
+    # Check to ensure everything is working
     cmd_line = [PHYLUM_BIN_PATH, "--help"]
     subprocess.run(cmd_line, check=True)
 

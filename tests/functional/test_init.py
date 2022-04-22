@@ -12,8 +12,7 @@ def test_run_as_module():
     """Ensure the CLI can be called as a module.
 
     This is the `python -m <module_name>` format to "run library module as a script."
-    NOTE: The <module_name> must be specified with an underscore, even if the corresponding
-          script entry point is specified with a dash.
+    NOTE: The <module_name> is specified as the dotted path to the package where the `__main__.py` module exists.
     """
     cmd_line = [sys.executable, "-m", "phylum.init", "--help"]
     ret = subprocess.run(cmd_line)

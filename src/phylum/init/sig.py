@@ -5,11 +5,21 @@ There is no readily accessible Python library at this time. The `py-minisign` re
 on GitHub to attempt this - https://github.com/x13a/py-minisign - but it does not exist as a
 package on PyPI and also does not appear to be actively maintained. There is a `minisign` package
 on PyPI - https://pypi.org/project/minisign/ - but it comes from a different repo and has no
-functionality at the time of this writing. Short of forking the `py-minisign` repo to maintain it
-and publish a package from it on PyPI, the actual format for signatures and public keys is simple
-and so is verifying signatures.
+functionality at the time of this writing.
+
+Short of forking the `py-minisign` repo to maintain it and publish a package from it on PyPI,
+the actual format for signatures and public keys is simple and so is verifying signatures.
 
 Minisign reference: https://jedisct1.github.io/minisign/
+
+Even still, this module is NOT meant to be used as a library or general purpose minisign
+signature verification. It is purpose written to specifically verify minisign signatures that
+were created by Phylum. As such, it makes a number of assumptions:
+
+* The Minisign Public Key for Phylum, Inc. will not change between releases
+* The files to be verified were created by Phylum, Inc.
+* The `.minisig` signature includes a trusted comment and will therefore contain a known number of lines
+* The source of the `.minisig` signature is a trusted location, controlled by Phylum, Inc. for it's CLI releases
 """
 import base64
 
