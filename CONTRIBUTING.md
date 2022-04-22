@@ -152,3 +152,12 @@ poetry run tox -e py310 test/test_package_metadata.py::test_python_version
 # passing additional options to pytest requires using the double dash escape
 poetry run tox -e py310 -- --help
 ```
+
+To run a script entry point with the local checkout of the code (in develop mode), use `poetry`:
+
+```sh
+# If not done previously, ensure the project is installed by poetry (only required once)
+poetry install
+# Use the `poetry run` command to ensure the installed project is used
+poetry run phylum-init -h
+```
