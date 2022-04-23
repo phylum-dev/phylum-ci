@@ -232,19 +232,20 @@ def get_args():
     )
 
     parser.add_argument(
-        "-v",
-        "--phylum-version",
+        "-r",
+        "--phylum-release",
         dest="version",
         default="latest",
         type=version_check,
-        help="the version of the Phylum CLI to install",
+        help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
+            with or without the leading `v`.""",
     )
     parser.add_argument(
         "-t",
         "--target",
         choices=SUPPORTED_TARGET_TRIPLES,
         default=get_target_triple(),
-        help="the target platform type where the CLI will be installed",
+        help="The target platform type where the CLI will be installed.",
     )
     parser.add_argument(
         "-k",
@@ -292,10 +293,7 @@ def main():
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:
                 raise zipfile.BadZipFile(f"There was a bad file in the zip archive {archive_name}")
-            extracted_dir = temp_dir_path
-            top_level_zip_entry = zip_file.infolist()[0]
-            if top_level_zip_entry.is_dir():
-                extracted_dir = temp_dir_path / top_level_zip_entry.filename
+            extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 
         cmd_line = ["sh", "install.sh"]
