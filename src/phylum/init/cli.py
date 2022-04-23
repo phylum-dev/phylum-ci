@@ -45,9 +45,6 @@ SUPPORTED_PLATFORMS = {
 }
 
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
-PHYLUM_PATH = pathlib.Path.home() / ".phylum"
-PHYLUM_BIN_PATH = PHYLUM_PATH / "phylum"
-SETTINGS_YAML_PATH = PHYLUM_PATH / "settings.yaml"
 
 # Potential features to add:
 #  * Add logging support, a verbosity option to control it, and swap out print statements for logging
@@ -58,10 +55,59 @@ SETTINGS_YAML_PATH = PHYLUM_PATH / "settings.yaml"
 #  * Add an option to account for pre-releases
 
 
+def get_phylum_settings_path(version):
+    """Get the Phylum settings path based on a provided version."""
+    home_dir = pathlib.Path.home()
+    version = version_check(version)
+
+    config_home_path = os.getenv("XDG_CONFIG_HOME")
+    if not config_home_path:
+        config_home_path = home_dir / ".config"
+    phylum_config_path = pathlib.Path(config_home_path) / "phylum" / "settings.yaml"
+
+    # The Phylum config path changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec
+    # Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    if Version(canonicalize_version(version)) <= Version("v2.2.0"):
+        phylum_config_path = home_dir / ".phylum" / "settings.yaml"
+
+    return phylum_config_path
+
+
+def get_phylum_bin_path(version):
+    """Get the path to the Phylum binary based on a provided version."""
+    home_dir = pathlib.Path.home()
+    version = version_check(version)
+
+    # The Phylum binary path changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec
+    # Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    phylum_bin_path = home_dir / ".local" / "bin" / "phylum"
+
+    if Version(canonicalize_version(version)) <= Version("v2.2.0"):
+        phylum_bin_path = home_dir / ".phylum" / "phylum"
+
+    return phylum_bin_path
+
+
+def get_latest_version():
+    """Get the "latest" version programmatically and return it."""
+    # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
+    github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
+
+    req = requests.get(github_api_url, timeout=5.0)
+    req.raise_for_status()
+    req_json = req.json()
+
+    # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
+    # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
+    latest_version = req_json.get("tag_name")
+
+    return latest_version
+
+
 def version_check(version):
     """Check a given version for validity and return a normalized form of it."""
     if version == "latest":
-        return version
+        version = get_latest_version()
 
     version = version.lower()
     if not version.startswith("v"):
@@ -87,7 +133,7 @@ def get_target_triple():
 def save_file_from_url(url, path):
     """Save a file from a given URL to a local file path, in binary mode."""
     print(f" [*] Getting {url} file ...", end="")
-    req = requests.get(url, timeout=2.0)
+    req = requests.get(url, timeout=5.0)
     req.raise_for_status()
     print("Done")
 
@@ -111,16 +157,16 @@ def get_archive_url(version, archive_name):
     return archive_url
 
 
-def is_token_set(token=None):
-    """Check if any token is already set in the CLI configuration file.
+def is_token_set(phylum_settings_path, token=None):
+    """Check if any token is already set in the given CLI configuration file.
 
     Optionally, check if a specific given `token` is set.
     """
-    if not SETTINGS_YAML_PATH.exists():
+    if not phylum_settings_path.exists():
         return False
 
     yaml = YAML()
-    settings_dict = yaml.load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
+    settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     configured_token = settings_dict.get("auth_info", {}).get("offline_access")
 
     if configured_token is None:
@@ -132,18 +178,20 @@ def is_token_set(token=None):
     return True
 
 
-def process_token_option(token_option):
+def process_token_option(args):
     """Process the token option as parsed from the arguments."""
+    phylum_settings_path = get_phylum_settings_path(args.version)
+
     # The option takes precedence over the matching environment variable.
     token = os.getenv(TOKEN_ENVVAR_NAME)
-    if token_option is not None:
-        token = token_option
+    if args.token is not None:
+        token = args.token
 
     if token:
         print(f" [+] Phylum token supplied as an option or `{TOKEN_ENVVAR_NAME}` environment variable")
-        if is_token_set():
+        if is_token_set(phylum_settings_path):
             print(" [+] An existing token is already set")
-            if is_token_set(token=token):
+            if is_token_set(phylum_settings_path, token=token):
                 print(" [+] Supplied token matches existing token")
             else:
                 print(" [!] Supplied token will be used to overwrite the existing token")
@@ -151,32 +199,35 @@ def process_token_option(token_option):
             print(" [+] No existing token exists. Supplied token will be used.")
     else:
         print(f" [+] Phylum token NOT supplied as option or `{TOKEN_ENVVAR_NAME}` environment variable")
-        if is_token_set():
+        if is_token_set(phylum_settings_path):
             print(" [+] Existing token found. It will be used without modification.")
         else:
             print(" [!] Existing token not found. Use `phylum auth login` or `phylum auth register` command to set it.")
 
-    if token and not is_token_set(token=token):
-        setup_token(token)
+    if token and not is_token_set(phylum_settings_path, token=token):
+        setup_token(token, args)
 
 
-def setup_token(token):
-    """Setup the CLI credentials with a provided token."""
+def setup_token(token, args):
+    """Setup the CLI credentials with a provided token and path to phylum binary."""
+    phylum_bin_path = get_phylum_bin_path(args.version)
+    phylum_settings_path = get_phylum_settings_path(args.version)
+
     # The phylum CLI settings.yaml file won't exist upon initial install
     # but running a command will trigger the CLI to generate it
-    if not SETTINGS_YAML_PATH.exists():
-        cmd_line = [PHYLUM_BIN_PATH, "version"]
+    if not phylum_settings_path.exists():
+        cmd_line = [phylum_bin_path, "version"]
         subprocess.run(cmd_line, check=True)
 
     yaml = YAML()
-    settings_dict = yaml.load(SETTINGS_YAML_PATH.read_text(encoding="utf-8"))
+    settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     settings_dict.setdefault("auth_info", {})
     settings_dict["auth_info"]["offline_access"] = token
-    with open(SETTINGS_YAML_PATH, "w", encoding="utf-8") as f:
+    with open(phylum_settings_path, "w", encoding="utf-8") as f:
         yaml.dump(settings_dict, f)
 
     # Check that the token was setup correctly by using it to display the current auth status
-    cmd_line = [PHYLUM_BIN_PATH, "auth", "status"]
+    cmd_line = [phylum_bin_path, "auth", "status"]
     subprocess.run(cmd_line, check=True)
 
 
@@ -234,6 +285,7 @@ def main():
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(args.version, archive_name)
     minisig_url = f"{archive_url}.minisig"
+    phylum_bin_path = get_phylum_bin_path(args.version)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
@@ -257,10 +309,10 @@ def main():
         cmd_line = ["sh", "install.sh"]
         subprocess.run(cmd_line, check=True, cwd=extracted_dir)
 
-    process_token_option(args.token)
+    process_token_option(args)
 
     # Check to ensure everything is working
-    cmd_line = [PHYLUM_BIN_PATH, "--help"]
+    cmd_line = [phylum_bin_path, "--help"]
     subprocess.run(cmd_line, check=True)
 
     return 0
