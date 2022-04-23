@@ -46,14 +46,6 @@ SUPPORTED_PLATFORMS = {
 
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 
-# Potential features to add:
-#  * Add logging support, a verbosity option to control it, and swap out print statements for logging
-#  * Check for valid versions by using the GitHub API to compare against actual releases
-#    * If so, also programmatically generate the SUPPORTED_TARGET_TRIPLES
-#  * Use the GitHub API ("https://api.github.com") to more programmatically get the archive URL
-#  * Add a `--list` option, to show which versions are available
-#  * Add an option to account for pre-releases
-
 
 def get_phylum_settings_path(version):
     """Get the Phylum settings path based on a provided version."""
