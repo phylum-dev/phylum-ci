@@ -43,8 +43,6 @@ The functionality can also be accessed by calling the module:
 
 ```sh
 python -m phylum.init -h
-# The top level package is redirected to the phylum.init package:
-python -m phylum -h
 ```
 
 #### `phylum-init`

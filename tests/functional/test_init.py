@@ -32,8 +32,8 @@ def test_version_option():
     """Ensure the correct program name and version is displayed when using the `--version` option."""
     # The argparse module adds a newline to the output
     expected_output = f"{SCRIPT_NAME} {__version__}\n"
-    cmd_line = [sys.executable, "-m", "phylum", "--version"]
-    ret = subprocess.run(cmd_line, check=True, capture_output=True, encoding="utf-8")
-    assert ret.stdout == expected_output, "Output did not match expected input"
+    cmd_line = [sys.executable, "-m", "phylum.init", "--version"]
+    ret = subprocess.run(cmd_line, capture_output=True, encoding="utf-8")
     assert not ret.stderr, "Nothing should be written to stderr"
     assert ret.returncode == 0, "A non-successful return code was provided"
+    assert ret.stdout == expected_output, "Output did not match expected input"
