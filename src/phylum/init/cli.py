@@ -47,6 +47,15 @@ SUPPORTED_PLATFORMS = {
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 
 
+def use_legacy_paths(version):
+    """Predicate to specify whether legacy paths should be used for a given version.
+
+    The Phylum config and binary paths changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec.
+    Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    """
+    return Version(canonicalize_version(version)) <= Version("v2.2.0")
+
+
 def get_phylum_settings_path(version):
     """Get the Phylum settings path based on a provided version."""
     home_dir = pathlib.Path.home()
@@ -55,11 +64,9 @@ def get_phylum_settings_path(version):
     config_home_path = os.getenv("XDG_CONFIG_HOME")
     if not config_home_path:
         config_home_path = home_dir / ".config"
-    phylum_config_path = pathlib.Path(config_home_path) / "phylum" / "settings.yaml"
 
-    # The Phylum config path changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec
-    # Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    if Version(canonicalize_version(version)) <= Version("v2.2.0"):
+    phylum_config_path = pathlib.Path(config_home_path) / "phylum" / "settings.yaml"
+    if use_legacy_paths(version):
         phylum_config_path = home_dir / ".phylum" / "settings.yaml"
 
     return phylum_config_path
@@ -70,11 +77,8 @@ def get_phylum_bin_path(version):
     home_dir = pathlib.Path.home()
     version = version_check(version)
 
-    # The Phylum binary path changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec
-    # Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     phylum_bin_path = home_dir / ".local" / "bin" / "phylum"
-
-    if Version(canonicalize_version(version)) <= Version("v2.2.0"):
+    if use_legacy_paths(version):
         phylum_bin_path = home_dir / ".phylum" / "phylum"
 
     return phylum_bin_path
@@ -136,15 +140,13 @@ def save_file_from_url(url, path):
 
 
 def get_archive_url(version, archive_name):
-    """Craft an archive download URL from a given version and archive name."""
-    github_base_uri = "https://github.com/phylum-dev/cli/releases"
-    latest_version_uri = f"{github_base_uri}/latest/download"
-    specific_version_uri = f"{github_base_uri}/download"
+    """Craft an archive download URL from a given version and archive name.
 
-    if version == "latest":
-        archive_url = f"{latest_version_uri}/{archive_name}"
-    else:
-        archive_url = f"{specific_version_uri}/{version}/{archive_name}"
+    Despite the name, the `version` is really what the GitHub API for releases calls the `tag_name`.
+    Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
+    """
+    github_base_uri = "https://github.com/phylum-dev/cli/releases"
+    archive_url = f"{github_base_uri}/download/{version}/{archive_name}"
 
     return archive_url
 
@@ -154,11 +156,13 @@ def is_token_set(phylum_settings_path, token=None):
 
     Optionally, check if a specific given `token` is set.
     """
-    if not phylum_settings_path.exists():
+    try:
+        settings_data = phylum_settings_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
         return False
 
     yaml = YAML()
-    settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings_dict = yaml.load(settings_data)
     configured_token = settings_dict.get("auth_info", {}).get("offline_access")
 
     if configured_token is None:
