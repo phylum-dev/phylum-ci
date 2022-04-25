@@ -3,9 +3,9 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "phylum-ci"
-version = "0.0.1"
-description = "Utilities for Phylum integrations"
+name = "phylum"
+version = "0.1.1"
+description = "Utilities for handling Phylum integrations"
 license = "MIT"
 authors = ["Phylum, Inc. <engineering@phylum.io>"]
 homepage = "https://phylum.io/"
@@ -16,7 +16,7 @@ keywords = ["dependency", "security", "CI", "integration"]
 # Classifiers can be found here: https://pypi.org/classifiers/
 classifiers = [
     # TODO: Update this value as the project/package matures
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
@@ -31,7 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 packages = [
-    { include = "phylum_ci", from = "src" },
+    { include = "phylum", from = "src" },
     { include = "tests", format = "sdist" },
 ]
 # TODO: Add include and/or exclude items here as needed
@@ -40,15 +40,20 @@ packages = [
 
 [tool.poetry.urls]
 "Issue Tracker" = "https://github.com/phylum-dev/phylum-ci/issues"
+"CI" = "https://github.com/phylum-dev/phylum-ci/actions"
 
 [tool.poetry.scripts]
-phylum-ci = "phylum_ci.cli:main"
+phylum-init = "phylum.init.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"
 # TODO: Remove this dependency when Python 3.7 support is removed
 #       https://github.com/phylum-dev/phylum-ci/issues/18
 importlib-metadata = {version = "^4.11.3", python = "<3.8"}
+requests = "^2.27.1"
+cryptography = "^36.0.2"
+packaging = "^21.3"
+"ruamel.yaml" = "^0.17.21"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"

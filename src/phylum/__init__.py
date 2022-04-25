@@ -1,4 +1,4 @@
-"""Top-level package for phylum-ci."""
+"""Top-level package for phylum."""
 # TODO: Use only the standard library form (importlib.metadata) only after Python 3.7 support is dropped
 #       https://github.com/phylum-dev/phylum-ci/issues/18
 try:
@@ -7,7 +7,11 @@ except ModuleNotFoundError:
     import importlib_metadata
 
 
-# TODO: Bump this version to at least 0.1.0 once there is more product centered functionality provided by this package
+PKG_METADATA = importlib_metadata.metadata(__name__)
+
 __version__ = importlib_metadata.version(__name__)
-__author__ = importlib_metadata.metadata(__name__).get("Author")
-__email__ = importlib_metadata.metadata(__name__).get("Author-email")
+__author__ = PKG_METADATA.get("Author")
+__email__ = PKG_METADATA.get("Author-email")
+
+PKG_NAME = PKG_METADATA.get("Name")
+PKG_SUMMARY = PKG_METADATA.get("Summary")

@@ -36,7 +36,7 @@ Look through the GitHub issues for features to work on, which will be labeled wi
 ### Write Documentation
 
 The `phylum-ci` project could always use more documentation, whether as part of the
-official phylum-ci docs, in docstrings, or even on the web in blog posts, articles, and such.
+official phylum docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 ### Submit Feedback
 
@@ -144,11 +144,20 @@ interact with `pytest` by passing additional positional arguments:
 
 ```sh
 # run a specific test module across all test environments
-poetry run tox tests/test_phylum_ci.py
+poetry run tox tests/test_package_metadata.py
 # run a specific test module across a specific test environment
-poetry run tox -e py39 test/test_phylum_ci.py
+poetry run tox -e py39 test/test_package_metadata.py
 # run a specific test function within a test module, in a specific test environment
-poetry run tox -e py310 test/test_phylum_ci.py::test_python_version
+poetry run tox -e py310 test/test_package_metadata.py::test_python_version
 # passing additional options to pytest requires using the double dash escape
 poetry run tox -e py310 -- --help
+```
+
+To run a script entry point with the local checkout of the code (in develop mode), use `poetry`:
+
+```sh
+# If not done previously, ensure the project is installed by poetry (only required once)
+poetry install
+# Use the `poetry run` command to ensure the installed project is used
+poetry run phylum-init -h
 ```
