@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "phylum"
-version = "0.2.0"
+version = "0.1.1"
 description = "Utilities for handling Phylum integrations"
 license = "MIT"
 authors = ["Phylum, Inc. <engineering@phylum.io>"]
