@@ -33,6 +33,9 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
+        with:
+          # `python-semantic-release` needs full history to properly determine the next release version
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v3
