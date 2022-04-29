@@ -1,4 +1,4 @@
-# This is a workflow for previewing packages. It can be used for Staging deployments
+# This is a workflow for previewing packages. It can be used for Preview deployments
 # or otherwise testing before a release to the "production" systems.
 ---
 name: Preview
@@ -15,13 +15,13 @@ on:
 
   push:
     branches:
-      - develop
+      - main
 
 jobs:
-  publish_staging:
-    name: Build and Publish for Staging
+  publish_preview:
+    name: Build and Publish for Preview
     environment:
-      name: Staging
+      name: Preview
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,9 +55,9 @@ jobs:
 
       - name: Make developmental release version
         # poetry version rules do not provide for developmental releases as specified in PEP440.
-        # It can be pieced together with these commands, but it should be noted that the release version may differ.
+        # It can be pieced together with these commands.
         run: |
-          poetry version patch
+          poetry version $(poetry run semantic-release print-version --next)
           poetry version $(poetry version --short).dev$GITHUB_RUN_NUMBER
 
       - name: Run tox via poetry
