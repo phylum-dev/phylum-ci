@@ -1,5 +1,6 @@
-# This is a workflow for previewing packages. It can be used for Preview deployments
-# or otherwise testing before a release to the "production" systems.
+# This is a workflow for previewing packages. It can be used for testing before a release to the "production" systems.
+# It will automatically create developmental release builds and make them available for all pushes to `main`. There is
+# also an ability to manually trigger this workflow, with an additional option to publish the package to TestPyPI.
 ---
 name: Preview
 
@@ -20,8 +21,6 @@ on:
 jobs:
   publish_preview:
     name: Build and Publish for Preview
-    environment:
-      name: Preview
     runs-on: ubuntu-latest
     strategy:
       matrix:
