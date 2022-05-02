@@ -36,14 +36,14 @@ jobs:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
 
+      - name: Install poetry
+        run: pipx install poetry
+
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-
-      - name: Install poetry
-        run: pipx install poetry
 
       # TODO: Use a "CI" group to ensure only the dependencies needed for running in the CI environment are installed.
       #       This should be possible when Poetry 1.2 is available, using the groups feature:
