@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!--next-version-placeholder-->
 
-## Unreleased
+## 0.1.1 - 2022-04-25
 ### Added
 * `phylum-init` script entry point and initial functionality
 * Test workflows for local and CI based testing

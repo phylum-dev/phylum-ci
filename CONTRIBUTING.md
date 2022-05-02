@@ -144,11 +144,11 @@ interact with `pytest` by passing additional positional arguments:
 
 ```sh
 # run a specific test module across all test environments
-poetry run tox tests/test_package_metadata.py
+poetry run tox tests/unit/test_package_metadata.py
 # run a specific test module across a specific test environment
-poetry run tox -e py39 test/test_package_metadata.py
+poetry run tox -e py39 tests/unit/test_package_metadata.py
 # run a specific test function within a test module, in a specific test environment
-poetry run tox -e py310 test/test_package_metadata.py::test_python_version
+poetry run tox -e py310 tests/unit/test_package_metadata.py::test_python_version
 # passing additional options to pytest requires using the double dash escape
 poetry run tox -e py310 -- --help
 ```
