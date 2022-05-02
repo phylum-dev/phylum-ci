@@ -2,16 +2,17 @@
 
 import sys
 
+from packaging.version import Version
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 
 from ..constants import PYPROJECT
 
 
 def test_project_version():
-    """Ensure the source version matches the PEP-440 post-normalization format given to the package."""
-    package_version = __version__
-    source_version = PYPROJECT.get("tool", {}).get("poetry", {}).get("version")
-    assert package_version == source_version, "Source version should match PEP-440 post-normalization format"
+    """Ensure the source version can be normalized to the PEP-440 post-normalization format given to the package."""
+    package_version = Version(__version__)
+    source_version = Version(PYPROJECT.get("tool", {}).get("poetry", {}).get("version"))
+    assert package_version == source_version, "Source version unable to normalize to PEP-440 post-normalization format"
 
 
 def test_python_version():
