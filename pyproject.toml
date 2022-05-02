@@ -79,16 +79,16 @@ line-length = 120
 [tool.semantic_release]
 branch = "main"
 version_toml = "pyproject.toml:tool.poetry.version"
-# Not sure about these settings:
-# prerelease_tag = "rc"
-# patch_without_tag = true
-# commit_author = "github-actions <github-actions@github.com>"
-# changelog_sections
-# changelog_components
-
+prerelease_tag = "rc"
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
 upload_to_repository = false
 upload_to_release = true
 remove_dist = false
 build_command = "poetry build -vvv"
+# Not sure about these settings:
+# patch_without_tag = true
+# pre_commit_command
+# commit_author = "github-actions <github-actions@github.com>"
+# changelog_sections
+# changelog_components
