@@ -30,6 +30,7 @@ on:
 jobs:
   release:
     name: Build, Verify, Release, and Publish
+    if: github.ref_name == 'main'
     environment:
       name: Production
       url: ${{ steps.psr_release.outputs.url }}
