@@ -77,18 +77,18 @@ python-semantic-release = "^7.28.1"
 line-length = 120
 
 [tool.semantic_release]
+# Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
 branch = "main"
 version_toml = "pyproject.toml:tool.poetry.version"
 prerelease_tag = "rc"
+# This will create a new patch release even if there is no commits since the last release that would trigger a release
+patch_without_tag = false
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
-upload_to_repository = false
+upload_to_repository = true
 upload_to_release = true
 remove_dist = false
-build_command = "poetry build -vvv"
-# Not sure about these settings:
-# patch_without_tag = true
-# pre_commit_command
-# commit_author = "github-actions <github-actions@github.com>"
-# changelog_sections
-# changelog_components
+# Setting build_command to false here b/c `poetry build -vvv` will be used prior to a PSR publish command
+build_command = false
+commit_subject = "chore: bump to v{version}"
+commit_author = "github-actions <github-actions@github.com>"
