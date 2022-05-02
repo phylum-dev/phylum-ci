@@ -38,11 +38,19 @@ Look through the GitHub issues for features to work on, which will be labeled wi
 The `phylum-ci` project could always use more documentation, whether as part of the
 official phylum docs, in docstrings, or even on the web in blog posts, articles, and such.
 
+### Increase Test Coverage
+
+There can always be more and better tests to improve the overall test coverage. Contributions to unit or functional
+tests will help make the project more robust, less prone to regressions, and easier for everyone to contribute as
+it will be more likely that changes are made in a way that don't break other parts of the project. Even if there is
+already 100% test coverage, there may still be room for contributions. For instance, it may be the case that certain
+functionality or use cases are not covered in the existing set of tests.
+
 ### Submit Feedback
 
 The best way to send feedback is to file an issue at <https://github.com/phylum-dev/phylum-ci/issues>.
 
-If you are proposing a feature, please use the feature request template which should remind you to include:
+If you are proposing a feature, please use the feature request template which should remind you to:
 
 * Explain in detail how it would work
 * Keep the scope as narrow as possible, to make it easier to implement
@@ -64,7 +72,8 @@ Here's how to set up `phylum-ci` for local development.
    1. The strategy is to support all released minor versions of Python that are not end-of-life yet
    2. The current list
       1. at the time of this writing is 3.7, 3.8, 3.9, and 3.10
-      2. can be inferred with the Python Developer's Guide, which maintains the [status of active Python releases](https://devguide.python.org/#status-of-python-branches)
+      2. can be inferred with the Python Developer's Guide, which maintains the
+         [status of active Python releases](https://devguide.python.org/#status-of-python-branches)
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
 
     ```sh
@@ -124,18 +133,21 @@ Here's how to set up `phylum-ci` for local development.
 
 Before you submit a pull request, check that it meets these guidelines:
 
-* Does this PR have an associated issue?
+* Does this PR have an associated issue (i.e., `closes #<issueNum>` in the PR description)?
 * Have you ensured that you have met the expected acceptance criteria?
 * Have you created sufficient tests?
 * Have you updated all affected documentation?
-* Have you updated the CHANGELOG?
-* Have you applied labels to this PR, to usually include at least one `Semver-*` label?
-  * These are used to better automate the GitHub release notes
-  * Use the `ignore-for-release` label to keep the PR out of the release notes
 
 The pull request should work for Python 3.6, 3.7, 3.8 and 3.9.
 Check <https://github.com/phylum-dev/phylum-ci/actions> and make sure that the tests
 pass for all supported Python versions.
+
+The [Semantic Pull Requests](https://github.com/apps/semantic-pull-requests) GitHub app is in use for this repository
+as a means to ensure each PR that gets merged back to the `main` branch adheres to the
+[conventional commit](https://www.conventionalcommits.org) strategy. This means that either the PR title (when
+squash merging) or any included commit (when rebase merging) must adhere to the conventional commit format. This is
+important because the conventional commits made to the default branch are used to automatically bump release versions,
+populate the changelog, and create releases.
 
 ## Tips
 
