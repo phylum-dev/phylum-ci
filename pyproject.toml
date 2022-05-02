@@ -34,9 +34,6 @@ packages = [
     { include = "phylum", from = "src" },
     { include = "tests", format = "sdist" },
 ]
-# TODO: Add include and/or exclude items here as needed
-# include = ["CHANGELOG.md"]
-# exclude = ["README.md"]
 
 [tool.poetry.urls]
 "Issue Tracker" = "https://github.com/phylum-dev/phylum-ci/issues"
@@ -69,7 +66,6 @@ tox = "^3.24.5"
 # ---START---
 tox-gh-actions = "^2.9.1"
 pytest-github-actions-annotate-failures = "^0.1.6"
-# TODO: remove this as a dev dependency since it's only used in CI?
 python-semantic-release = "^7.28.1"
 # ---END---
 
@@ -81,7 +77,8 @@ line-length = 120
 branch = "main"
 version_toml = "pyproject.toml:tool.poetry.version"
 prerelease_tag = "rc"
-# This will create a new patch release even if there is no commits since the last release that would trigger a release
+# If set to true, this will create a new patch release even if there are no commits
+# since the last release that would trigger a release.
 patch_without_tag = false
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
