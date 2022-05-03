@@ -48,6 +48,8 @@ jobs:
         with:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
+          # `python-semantic-release` needs this personal access token in order to push to a protected branch
+          token: ${{ secrets.GH_RELEASE_PAT }}
 
       - name: Install poetry
         run: pipx install poetry
@@ -77,7 +79,7 @@ jobs:
 
       - name: Set to next version for build
         run: |
-          if [ ${{ github.event.inputs.prerelease }} = "true" ]; then
+          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
             poetry version $(poetry run semantic-release print-version --next --prerelease)
           else
             poetry version $(poetry run semantic-release print-version --next)
@@ -117,16 +119,15 @@ jobs:
       - name: Use Python Semantic Release to publish release
         id: psr_release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: verbose
+          GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          if [ ${{ github.event.inputs.prerelease }} = "true" ]; then
-            poetry run semantic-release publish --prerelease
+          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+            poetry run semantic-release publish -v DEBUG --prerelease
           else
-            poetry run semantic-release publish
+            poetry run semantic-release publish -v DEBUG
           fi
           echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_release_version }}/"
