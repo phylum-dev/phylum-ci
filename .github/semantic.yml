@@ -1,8 +1,0 @@
-# This is the configuration file for the Semantic Pull Requests GitHub App.
-# Reference: https://github.com/zeke/semantic-pull-requests
----
-enabled: true
-titleAndCommits: true
-anyCommit: true
-allowMergeCommits: true
-allowRevertCommits: true
