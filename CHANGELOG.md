@@ -10,6 +10,9 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.2.0-rc.0 (2022-05-03)
+
+
 ## 0.1.1 - 2022-04-25
 ### Added
 * `phylum-init` script entry point and initial functionality
