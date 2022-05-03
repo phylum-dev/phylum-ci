@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - main
-      - develop
 
 jobs:
   test-matrix:
@@ -26,21 +25,24 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3
 
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install poetry
-        run: pipx install poetry
+          cache: 'poetry'
 
       # TODO: Use a "CI" group to ensure only the dependencies needed for running in the CI environment are installed.
       #       This should be possible when Poetry 1.2 is available, using the groups feature:
       #       https://github.com/python-poetry/poetry/issues/1644
       #       https://github.com/phylum-dev/phylum-ci/issues/15
-      - name: Configure poetry
+      - name: Install the project with poetry
         run: |
-          poetry config virtualenvs.in-project true
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
 

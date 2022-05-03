@@ -1,5 +1,6 @@
-# This is a workflow for previewing packages. It can be used for Staging deployments
-# or otherwise testing before a release to the "production" systems.
+# This is a workflow for previewing packages. It can be used for testing before a release to the "production" systems.
+# It will automatically create developmental release builds and make them available for all pushes to `main`. There is
+# also an ability to manually trigger this workflow, with an additional option to publish the package to TestPyPI.
 ---
 name: Preview
 
@@ -15,13 +16,11 @@ on:
 
   push:
     branches:
-      - develop
+      - main
 
 jobs:
-  publish_staging:
-    name: Build and Publish for Staging
-    environment:
-      name: Staging
+  publish_preview:
+    name: Build and Publish for Preview
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,31 +32,38 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
+        with:
+          # `python-semantic-release` needs full history to properly determine the next release version
+          fetch-depth: 0
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
 
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install poetry
-        run: pipx install poetry
+          cache: 'poetry'
 
       # TODO: Use a "CI" group to ensure only the dependencies needed for running in the CI environment are installed.
       #       This should be possible when Poetry 1.2 is available, using the groups feature:
       #       https://github.com/python-poetry/poetry/issues/1644
       #       https://github.com/phylum-dev/phylum-ci/issues/15
-      - name: Configure poetry
+      - name: Install the project with poetry
         run: |
-          poetry config virtualenvs.in-project true
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
 
       - name: Make developmental release version
         # poetry version rules do not provide for developmental releases as specified in PEP440.
-        # It can be pieced together with these commands, but it should be noted that the release version may differ.
+        # It can be pieced together with these commands.
         run: |
-          poetry version patch
+          poetry version $(poetry run semantic-release print-version --next)
           poetry version $(poetry version --short).dev$GITHUB_RUN_NUMBER
 
       - name: Run tox via poetry
@@ -75,5 +81,5 @@ jobs:
           retention-days: 7
 
       - name: Publish to TestPyPI
-        if: github.event.inputs.TestPyPI == "true"
+        if: github.event.inputs.TestPyPI == 'true'
         run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
