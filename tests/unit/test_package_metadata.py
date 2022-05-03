@@ -12,7 +12,7 @@ def test_project_version():
     """Ensure the source version can be normalized as specified in PEP-440."""
     package_version = Version(__version__)
     source_version = Version(PYPROJECT.get("tool", {}).get("poetry", {}).get("version"))
-    assert package_version == source_version, "Source version unable to normalize to PEP-440 post-normalization format"
+    assert package_version == source_version
 
 
 def test_python_version():
