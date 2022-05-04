@@ -88,4 +88,4 @@ remove_dist = false
 # Setting build_command to false here b/c `poetry build -vvv` will be used prior to a PSR publish command
 build_command = false
 commit_subject = "chore: bump to v{version}"
-commit_author = "github-actions <github-actions@github.com>"
+commit_author = "phylum-bot <69485888+phylum-bot@users.noreply.github.com>"
