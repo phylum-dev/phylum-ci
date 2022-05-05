@@ -21,6 +21,9 @@ def get_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+    # TODO: Add arguments for each of the inputs from the `phylum-analyze-pr-action`.
+    #       Allow them to be specified as environment variables as well.
+    # TODO: Allow for a specific lockfile name/path to be provided as input (instead of trying to determine it)
     parser.add_argument(
         "--version",
         action="version",
@@ -37,11 +40,32 @@ def main():
     if args is None:
         return 1
 
+    # TODO: Determine which CI environment, if any, we are in
+
+    # TODO: Check for existing `.phylum_project` file
+
+    # TODO: Generate PHYLUM_LABEL
+
+    # TODO: Determine the "PR type" (lockfile type or "NA") and report it.
+    #       This is also where the diff of the lockfile is taken into account.
+
     # TODO: Check for the existence of the CLI and install it if needed
+
     # TODO: get the Phylum CLI version
     version = get_phylum_cli_version()
     cli_path = get_phylum_bin_path(version)
     print(f"Phylum CLI path: {str(cli_path)}")
+
+    # TODO: Analyze project lockfile with phylum CLI
+
+    # TODO: Replicate test matrix?
+
+    # TODO: Compare added dependencies in PR to analysis results
+
+    # TODO: Update the PR/MR with an appropriate comment.
+    #       This can be done conditionally based on the CI env, if any, we are in.
+    #       Not being in a CI env could be the case when run locally...and may be the basis for a good pre-commit hook.
+    #       Look into the `python-gitlab` package
 
     return 0
 
