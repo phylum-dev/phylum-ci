@@ -76,9 +76,9 @@ def main(args=None):
 
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(args)
-    print(ci_env.ci_platform_name)
 
-    # TODO: Check for existing `.phylum_project` file
+    # Check for existing `.phylum_project` file
+    ci_env.ensure_phylum_project_present()
 
     # TODO: Generate PHYLUM_LABEL
 
@@ -86,8 +86,7 @@ def main(args=None):
     #       This is also where the diff of the lockfile is taken into account.
 
     # Check for the existence of the CLI and install it if needed
-    cli_path = ci_env.init_cli()
-    print(f"cli_path: {cli_path}")
+    ci_env.init_cli()
 
     # TODO: Analyze project lockfile with phylum CLI
 
