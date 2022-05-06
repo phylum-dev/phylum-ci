@@ -12,39 +12,10 @@ import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
+from phylum.constants import SUPPORTED_ARCHES, SUPPORTED_PLATFORMS, SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_minisig
 from ruamel.yaml import YAML
-
-# These are the currently supported Rust target triples
-#
-# Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
-# should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
-# at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
-# type, and the optional fourth is environment type.
-#
-# References:
-#   * https://doc.rust-lang.org/nightly/rustc/platform-support.html
-#   * https://rust-lang.github.io/rfcs/0131-target-specification.html
-SUPPORTED_TARGET_TRIPLES = (
-    "aarch64-apple-darwin",
-    "x86_64-apple-darwin",
-    "x86_64-unknown-linux-musl",
-)
-# Keys are lowercase machine hardware names as returned from `uname -m`.
-# Values are the mapped rustc architecture.
-SUPPORTED_ARCHES = {
-    "arm64": "aarch64",
-    "amd64": "x86_64",
-}
-# Keys are lowercase operating system name as returned from `uname -s`.
-# Values are the mapped rustc platform, which is the vendor-os_type[-environment_type].
-SUPPORTED_PLATFORMS = {
-    "linux": "unknown-linux-musl",
-    "darwin": "apple-darwin",
-}
-
-TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 
 
 def use_legacy_paths(version):
@@ -72,8 +43,8 @@ def get_phylum_settings_path(version):
     return phylum_config_path
 
 
-def get_phylum_bin_path(version):
-    """Get the path to the Phylum binary based on a provided version."""
+def get_expected_phylum_bin_path(version):
+    """Get the expected path to the Phylum CLI binary based on a provided version."""
     home_dir = pathlib.Path.home()
     version = version_check(version)
 
@@ -206,7 +177,7 @@ def process_token_option(args):
 
 def setup_token(token, args):
     """Setup the CLI credentials with a provided token and path to phylum binary."""
-    phylum_bin_path = get_phylum_bin_path(args.version)
+    phylum_bin_path = get_expected_phylum_bin_path(args.version)
     phylum_settings_path = get_phylum_settings_path(args.version)
 
     # The phylum CLI settings.yaml file won't exist upon initial install
@@ -227,7 +198,7 @@ def setup_token(token, args):
     subprocess.run(cmd_line, check=True)
 
 
-def get_args():
+def get_args(args=None):
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
@@ -267,12 +238,12 @@ def get_args():
         version=f"{SCRIPT_NAME} {__version__}",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(args=args)
 
 
-def main():
+def main(args=None):
     """Main entrypoint."""
-    args = get_args()
+    args = get_args(args=args)
 
     target_triple = args.target
     if target_triple not in SUPPORTED_TARGET_TRIPLES:
@@ -282,7 +253,7 @@ def main():
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(args.version, archive_name)
     minisig_url = f"{archive_url}.minisig"
-    phylum_bin_path = get_phylum_bin_path(args.version)
+    phylum_bin_path = get_expected_phylum_bin_path(args.version)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
