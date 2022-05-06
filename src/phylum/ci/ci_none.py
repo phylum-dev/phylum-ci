@@ -6,7 +6,7 @@ This is also the fallback implementation to use when no known CI platform is det
 """
 import argparse
 
-from phylum.ci.base import CIBase
+from phylum.ci.ci_base import CIBase
 
 
 class CINone(CIBase):

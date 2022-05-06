@@ -1,7 +1,7 @@
 """Define an implementation for the GitLab CI platform."""
 import argparse
 
-from phylum.ci.base import CIBase
+from phylum.ci.ci_base import CIBase
 
 
 # NOTE: This is just a stub for now

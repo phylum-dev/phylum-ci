@@ -5,8 +5,9 @@ import sys
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
-from phylum.ci.base import CIBase
-from phylum.ci.gitlab import CIGitLab
+from phylum.ci.ci_base import CIBase
+from phylum.ci.ci_gitlab import CIGitLab
+from phylum.ci.ci_none import CINone
 from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import version_check
 
@@ -25,7 +26,7 @@ def detect_ci_platform(args: argparse.Namespace) -> CIBase:
         ci_env = ci_envs[0]
     else:
         print(" [+] No CI environment detected")
-        ci_env = CIBase(args)
+        ci_env = CINone(args)
 
     return ci_env
 
