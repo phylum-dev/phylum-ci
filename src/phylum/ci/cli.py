@@ -1,9 +1,6 @@
 """Console script for phylum-ci."""
 import argparse
 import os
-import pathlib
-import shutil
-import subprocess
 import sys
 
 from phylum import __version__
@@ -11,62 +8,7 @@ from phylum.ci import SCRIPT_NAME
 from phylum.ci.base import CIBase
 from phylum.ci.gitlab import CIGitLab
 from phylum.constants import TOKEN_ENVVAR_NAME
-from phylum.init.cli import get_expected_phylum_bin_path
-from phylum.init.cli import main as phylum_init
 from phylum.init.cli import version_check
-
-
-def get_phylum_cli_version(cli_path):
-    """Get the version of the installed and active Phylum CLI and return it."""
-    cmd_line = [cli_path, "--version"]
-    version = subprocess.run(cmd_line, check=True, capture_output=True, text=True).stdout.strip().lower()
-
-    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-    prefix = "phylum "
-    prefix_len = len(prefix)
-    if version.startswith(prefix):
-        version = version[prefix_len:]
-
-    return version
-
-
-def get_phylum_bin_path(version=None):
-    """Get the current path and corresponding version to the Phylum CLI binary and return them.
-
-    Provide a CLI version as a fallback method for looking on an explicit path,
-    based on the expected path for that version.
-    """
-    # Look for `phylum` on the PATH first
-    cli_path = shutil.which("phylum")
-
-    if cli_path is None and version is not None:
-        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
-        # context. Look in the specific location expected by the provided version.
-        expected_cli_path = get_expected_phylum_bin_path(version)
-        cli_path = shutil.which("phylum", path=expected_cli_path)
-
-    if cli_path is None:
-        return (None, None)
-
-    cli_path = pathlib.Path(cli_path)
-    cli_version = get_phylum_cli_version(cli_path)
-    return cli_path, cli_version
-
-
-def _init_cli(args):
-    """Check for an existing Phylum CLI install, install it if needed, and return the path to its binary."""
-    cli_path, cli_version = get_phylum_bin_path(version=args.version)
-    if cli_path is None:
-        print(f" [+] Existing Phylum CLI instance not found. Installing version `{args.version}` ...")
-        install_args = ["--phylum-release", args.version, "--phylum-token", args.token]
-        phylum_init(install_args)
-    else:
-        print(f" [+] Existing Phylum CLI instance found: {cli_version} at {cli_path}")
-
-    cli_path, cli_version = get_phylum_bin_path(version=args.version)
-    print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
-
-    return cli_path
 
 
 def detect_ci_platform(args: argparse.Namespace) -> CIBase:
@@ -79,7 +21,7 @@ def detect_ci_platform(args: argparse.Namespace) -> CIBase:
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
         raise RuntimeError(f" Multiple CI environments detected: {ci_platform_names}")
-    elif len(ci_envs) == 1:
+    if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
         print(" [+] No CI environment detected")
@@ -143,7 +85,7 @@ def main(args=None):
     #       This is also where the diff of the lockfile is taken into account.
 
     # Check for the existence of the CLI and install it if needed
-    cli_path = _init_cli(args)
+    cli_path = ci_env.init_cli()
     print(f"cli_path: {cli_path}")
 
     # TODO: Analyze project lockfile with phylum CLI
