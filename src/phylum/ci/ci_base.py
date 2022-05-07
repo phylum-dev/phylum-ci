@@ -61,6 +61,15 @@ class CIBase(ABC):
     def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
 
+        # The lockfile specified as a script argument will be used, if provided.
+        # Otherwise, an attempt will be made to automatically detect the lockfile.
+        self._lockfile = None
+        lockfile: Path = args.lockfile
+        if lockfile is None or not lockfile.exists():
+            lockfile = self._detect_lockfile()
+        if lockfile and self._is_lockfile_changed(lockfile):
+            self._lockfile = lockfile.resolve()
+
     def init_cli(self):
         """Check for an existing Phylum CLI install, install it if needed, and return the path to its binary."""
         cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
@@ -89,17 +98,8 @@ class CIBase(ABC):
 
     @property
     def lockfile(self):
-        """Get the package lockfile.
-
-        The lockfile specified as a script argument will be used, if provided. Otherwise, an attempt will be made to
-        automatically detect the lockfile.
-        """
-        lockfile: Path = self.args.lockfile
-        if lockfile is None or not lockfile.exists():
-            lockfile = self._detect_lockfile()
-        if lockfile and self._is_lockfile_changed(lockfile):
-            return lockfile.resolve()
-        return None
+        """Get the package lockfile."""
+        return self._lockfile
 
     @property
     @abstractmethod

@@ -42,7 +42,6 @@ def get_args(args=None):
 
     # TODO: Add arguments for each of the inputs from the `phylum-analyze-pr-action`.
     #       Allow them to be specified as environment variables as well.
-    # TODO: Allow for a specific lockfile name/path to be provided as input (instead of trying to determine it)
     parser.add_argument(
         "-r",
         "--phylum-release",
@@ -92,14 +91,13 @@ def main(args=None):
     # Check for existing `.phylum_project` file
     ci_env.ensure_phylum_project_present()
 
-    # TODO: Determine the "PR type" (lockfile type or "NA") and report it.
-    #       This is also where the diff of the lockfile is taken into account.
+    # Determine lockfile type and report it.
     if not ci_env.lockfile:
         print(" [+] No lockfile detected or lockfile has no changes. Nothing to do.")
         return 0
     print(f" [+] lockfile in use: {ci_env.lockfile}")
 
-    # TODO: Generate PHYLUM_LABEL
+    # Generate PHYLUM_LABEL
     print(f" [+] phylum_label: {ci_env.phylum_label}")
 
     # Check for the existence of the CLI and install it if needed
