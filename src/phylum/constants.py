@@ -33,3 +33,24 @@ SUPPORTED_PLATFORMS = {
 # the `offline_access` parameter in the `settings.yaml` file.
 # TODO: Change this to `PHYLUM_API_KEY` or otherwise account for both tokens?
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
+
+# These are the currently supported lockfiles.
+# Keys are the standard lockfile filename.
+# Values are the name of the tool that generates the lockfile.
+SUPPORTED_LOCKFILES = {
+    # Javascript/Typescript
+    "package-lock.json": "npm",
+    "yarn.lock": "yarn",
+    # Ruby
+    "Gemfile.lock": "gem",
+    # Python
+    "requirements.txt": "pip",
+    "Pipfile.lock": "pipenv",
+    "Pipfile": "pipenv",
+    "poetry.lock": "poetry",
+    # C#
+    "*.csproj": "nuget",
+    # Java
+    "pom.xml": "mvn",
+    "gradle.lockfile": "gradle",
+}

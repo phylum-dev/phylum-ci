@@ -1,6 +1,7 @@
 """Console script for phylum-ci."""
 import argparse
 import os
+import pathlib
 import sys
 
 from phylum import __version__
@@ -62,6 +63,15 @@ def get_args(args=None):
             `phylum auth register` command after install.""",
     )
     parser.add_argument(
+        "-l",
+        "--lockfile",
+        type=pathlib.Path,
+        help="""Path to the package lockfile to analyze. If not specified, an attempt will be made to automatically
+            detect the lockfile. Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that they
+            can be named differently and may or may not contain strict dependencies. In these cases, it is best to
+            specify an explicit lockfile path.""",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",
@@ -74,16 +84,23 @@ def main(args=None):
     """Main entrypoint."""
     args = get_args(args=args)
 
+    # TODO: Perform a pre-requisites check (e.g., for `git`, located at the root of the repo, and ???)
+
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(args)
 
     # Check for existing `.phylum_project` file
     ci_env.ensure_phylum_project_present()
 
-    # TODO: Generate PHYLUM_LABEL
-
     # TODO: Determine the "PR type" (lockfile type or "NA") and report it.
     #       This is also where the diff of the lockfile is taken into account.
+    if not ci_env.lockfile:
+        print(" [+] No lockfile detected or lockfile has no changes. Nothing to do.")
+        return 0
+    print(f" [+] lockfile in use: {ci_env.lockfile}")
+
+    # TODO: Generate PHYLUM_LABEL
+    print(f" [+] phylum_label: {ci_env.phylum_label}")
 
     # Check for the existence of the CLI and install it if needed
     ci_env.init_cli()

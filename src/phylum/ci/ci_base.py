@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 from phylum.init.cli import get_expected_phylum_bin_path
 from phylum.init.cli import main as phylum_init
@@ -85,3 +86,36 @@ class CIBase(ABC):
             print(" [+] Existing `.phylum_project` file was found at the current working directory")
         else:
             raise RuntimeError(" [!] The `.phylum_project` file was not found at the current working directory.")
+
+    @property
+    def lockfile(self):
+        """Get the package lockfile.
+
+        The lockfile specified as a script argument will be used, if provided. Otherwise, an attempt will be made to
+        automatically detect the lockfile.
+        """
+        lockfile: Path = self.args.lockfile
+        if lockfile is None or not lockfile.exists():
+            lockfile = self._detect_lockfile()
+        if lockfile and self._is_lockfile_changed(lockfile):
+            return lockfile.resolve()
+        return None
+
+    @property
+    @abstractmethod
+    def phylum_label(self):
+        """Get a custom label for use when submitting jobs with `phylum analyze`.
+
+        Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
+        """
+
+    @abstractmethod
+    def _detect_lockfile(self) -> Optional[Path]:
+        """Detect the lockfile in use and return it.
+
+        Use the `lockfile` property instead of this method directly.
+        """
+
+    @abstractmethod
+    def _is_lockfile_changed(self, lockfile: Path) -> bool:
+        """Predicate for detecting if the given lockfile has changed."""
