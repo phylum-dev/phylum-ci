@@ -5,6 +5,7 @@ This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
 import argparse
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -37,8 +38,26 @@ class CINone(CIBase):
         super().__init__(args)
         self.ci_platform_name = "No CI"
 
+    def check_prerequisites(self) -> None:
+        """Ensure the necessary pre-requisites are met and bail when they aren't.
+
+        These are the current pre-requisites for when no CI environments/platforms is detected:
+          * Have `git` installed and available for use on the PATH
+          * Run the script from the root of a git repository
+        """
+        with super().check_prerequisites():
+            if shutil.which("git"):
+                print(" [+] `git` binary found on the PATH")
+            else:
+                raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+            git_dir = Path.cwd() / ".git"
+            if git_dir.is_dir():
+                print(" [+] Existing `.git` directory was found at the current working directory")
+            else:
+                raise SystemExit(" [!] This script expects to be run from the top level of a `git` repository")
+
     @property
-    def phylum_label(self):
+    def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         cmd_line = ["git", "branch", "--show-current"]
         current_branch = subprocess.run(cmd_line, check=True, text=True, capture_output=True).stdout.strip()
@@ -73,7 +92,7 @@ class CINone(CIBase):
         if not lockfiles:
             return None
         if len(lockfiles) > 1:
-            raise RuntimeError("Only one lockfile is supported at this time")
+            raise SystemExit("Only one lockfile is supported at this time. Consider specifying it with `--lockfile`.")
         lockfile = lockfiles[0]
         return lockfile
 

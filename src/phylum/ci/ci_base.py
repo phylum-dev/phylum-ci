@@ -8,6 +8,7 @@ import argparse
 import shutil
 import subprocess
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -70,6 +71,26 @@ class CIBase(ABC):
         if lockfile and self._is_lockfile_changed(lockfile):
             self._lockfile = lockfile.resolve()
 
+    @contextmanager
+    @abstractmethod
+    def check_prerequisites(self) -> None:
+        """Ensure the necessary pre-requisites are met and bail when they aren't.
+
+        The current pre-requisites for *all* CI environments/platforms are:
+          * A `.phylum_project` file exists at the working directory
+        """
+        print(" [+] Confirming pre-requisites ...")
+
+        phylum_project_file = Path.cwd() / ".phylum_project"
+        if phylum_project_file.exists():
+            print(" [+] Existing `.phylum_project` file was found at the current working directory")
+        else:
+            # TODO: Consider using CI specific error reporting
+            raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
+
+        yield
+        print(" [+] All pre-requisites met")
+
     def init_cli(self):
         """Check for an existing Phylum CLI install, install it if needed, and return the path to its binary."""
         cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
@@ -86,16 +107,6 @@ class CIBase(ABC):
         # TODO: Set a class property with the `cli_path` value?
         return cli_path
 
-    # TODO: Consider using CI specific error reporting before moving this method out of the class
-    def ensure_phylum_project_present(self):
-        """Ensure a `.phylum_project` file exists at the working directory and bail if it does not."""
-        cwd = Path.cwd()
-        phylum_project_file = cwd / ".phylum_project"
-        if phylum_project_file.exists():
-            print(" [+] Existing `.phylum_project` file was found at the current working directory")
-        else:
-            raise RuntimeError(" [!] The `.phylum_project` file was not found at the current working directory.")
-
     @property
     def lockfile(self):
         """Get the package lockfile."""
@@ -103,7 +114,7 @@ class CIBase(ABC):
 
     @property
     @abstractmethod
-    def phylum_label(self):
+    def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`.
 
         Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.

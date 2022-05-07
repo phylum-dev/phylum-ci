@@ -16,12 +16,18 @@ class CIGitLab(CIBase):
         self.ci_platform_name = "GitLab CI"
 
     @property
-    def phylum_label(self):
+    def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         return "TO DO"
 
+    def check_prerequisites(self) -> None:
+        """Ensure the necessary pre-requisites are met and bail when they aren't."""
+        with super().check_prerequisites():
+            print("TO DO")
+
     def _detect_lockfile(self) -> Optional[Path]:
         """Detect the lockfile in use by the repository and return it."""
+        # TODO: fill this in
         return None
 
     def _is_lockfile_changed(self, lockfile: Path) -> bool:

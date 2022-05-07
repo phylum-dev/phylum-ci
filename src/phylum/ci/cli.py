@@ -22,7 +22,7 @@ def detect_ci_platform(args: argparse.Namespace) -> CIBase:
 
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
-        raise RuntimeError(f" Multiple CI environments detected: {ci_platform_names}")
+        raise SystemExit(f" Multiple CI environments detected: {ci_platform_names}")
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
@@ -83,19 +83,18 @@ def main(args=None):
     """Main entrypoint."""
     args = get_args(args=args)
 
-    # TODO: Perform a pre-requisites check (e.g., for `git`, located at the root of the repo, and ???)
-
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(args)
 
-    # Check for existing `.phylum_project` file
-    ci_env.ensure_phylum_project_present()
+    # Ensure all pre-requisites are met
+    ci_env.check_prerequisites()
 
     # Determine lockfile type and report it.
-    if not ci_env.lockfile:
+    if ci_env.lockfile:
+        print(f" [+] lockfile in use: {ci_env.lockfile}")
+    else:
         print(" [+] No lockfile detected or lockfile has no changes. Nothing to do.")
         return 0
-    print(f" [+] lockfile in use: {ci_env.lockfile}")
 
     # Generate PHYLUM_LABEL
     print(f" [+] phylum_label: {ci_env.phylum_label}")
@@ -112,7 +111,7 @@ def main(args=None):
     # TODO: Update the PR/MR with an appropriate comment.
     #       This can be done conditionally based on the CI env, if any, we are in.
     #       Not being in a CI env could be the case when run locally...and may be the basis for a good pre-commit hook.
-    #       Look into the `python-gitlab` package
+    #       Look into the `python-gitlab` package.
 
     return 0
 
