@@ -4,13 +4,13 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
-import argparse
 import shutil
 import subprocess
 from abc import ABC, abstractmethod
+from argparse import Namespace
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Generator, Optional
 
 from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_expected_phylum_bin_path
@@ -18,10 +18,10 @@ from phylum.init.cli import main as phylum_init
 
 
 # TODO: Move this function to the `phylum.init` package?
-def get_phylum_cli_version(cli_path):
+def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
-    cmd_line = [cli_path, "--version"]
-    version = subprocess.run(cmd_line, check=True, capture_output=True, text=True).stdout.strip().lower()
+    cmd = f"{cli_path} --version"
+    version = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip().lower()
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     prefix = "phylum "
@@ -33,25 +33,25 @@ def get_phylum_cli_version(cli_path):
 
 
 # TODO: Move this function to the `phylum.init` package?
-def get_phylum_bin_path(version=None):
+def get_phylum_bin_path(version: str = None) -> tuple[Optional[Path], Optional[str]]:
     """Get the current path and corresponding version to the Phylum CLI binary and return them.
 
     Provide a CLI version as a fallback method for looking on an explicit path,
     based on the expected path for that version.
     """
     # Look for `phylum` on the PATH first
-    cli_path = shutil.which("phylum")
+    which_cli_path = shutil.which("phylum")
 
-    if cli_path is None and version is not None:
+    if which_cli_path is None and version is not None:
         # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
         # context. Look in the specific location expected by the provided version.
         expected_cli_path = get_expected_phylum_bin_path(version)
-        cli_path = shutil.which("phylum", path=expected_cli_path)
+        which_cli_path = shutil.which("phylum", path=expected_cli_path)
 
-    if cli_path is None:
+    if which_cli_path is None:
         return (None, None)
 
-    cli_path = Path(cli_path)
+    cli_path = Path(which_cli_path)
     cli_version = get_phylum_cli_version(cli_path)
     return cli_path, cli_version
 
@@ -79,8 +79,9 @@ class CIBase(ABC):
     """Provide methods for a basic CI environment."""
 
     @abstractmethod
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(self, args: Namespace) -> None:
         self.args = args
+        self._cli_path: Optional[Path] = None
 
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
@@ -107,6 +108,11 @@ class CIBase(ABC):
         return self._lockfile_changed
 
     @property
+    def cli_path(self) -> Optional[Path]:
+        """Get the path to the Phylum CLI binary."""
+        return self._cli_path
+
+    @property
     @abstractmethod
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`.
@@ -116,7 +122,7 @@ class CIBase(ABC):
 
     @contextmanager
     @abstractmethod
-    def check_prerequisites(self) -> None:
+    def check_prerequisites(self) -> Generator:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
@@ -134,7 +140,7 @@ class CIBase(ABC):
         yield
         print(" [+] All pre-requisites met")
 
-    def init_cli(self):
+    def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and return the path to its binary."""
         cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
         if cli_path is None:
@@ -147,8 +153,7 @@ class CIBase(ABC):
         cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
         print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
 
-        # TODO: Set a class property with the `cli_path` value?
-        return cli_path
+        self._cli_path = cli_path
 
     @abstractmethod
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
