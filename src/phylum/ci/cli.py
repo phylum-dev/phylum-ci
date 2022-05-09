@@ -9,20 +9,30 @@ from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
+from phylum.ci.ci_precommit import CIPreCommit
 from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import version_check
 
 
-def detect_ci_platform(args: argparse.Namespace) -> CIBase:
+def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase:
     """Detect CI platform via known CI-based environment variables."""
     ci_envs = []
+
+    # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":
         print(" [+] CI environment detected: GitLab CI")
         ci_envs.append(CIGitLab(args))
 
+    # Detect pre-commit environment
+    # This might be a naive strategy for detecting the `pre-commit` case, but there is at least
+    # an attempt, via a pre-requisite check, to ensure all the extra arguments are staged files.
+    if remainder:
+        print(" [+] Extra arguments provided. Assuming a `pre-commit` working environment.")
+        ci_envs.append(CIPreCommit(args, remainder))
+
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
-        raise SystemExit(f" Multiple CI environments detected: {ci_platform_names}")
+        raise SystemExit(f" [!] Multiple CI environments detected: {ci_platform_names}")
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
@@ -76,15 +86,15 @@ def get_args(args=None):
         version=f"{SCRIPT_NAME} {__version__}",
     )
 
-    return parser.parse_args(args=args)
+    return parser.parse_known_args(args=args)
 
 
 def main(args=None):
     """Main entrypoint."""
-    args = get_args(args=args)
+    parsed_args, remainder_args = get_args(args=args)
 
     # Detect which CI environment, if any, we are in
-    ci_env = detect_ci_platform(args)
+    ci_env = detect_ci_platform(parsed_args, remainder_args)
 
     # Ensure all pre-requisites are met
     ci_env.check_prerequisites()
@@ -93,10 +103,16 @@ def main(args=None):
     if ci_env.lockfile:
         print(f" [+] lockfile in use: {ci_env.lockfile}")
     else:
-        print(" [+] No lockfile detected or lockfile has no changes. Nothing to do.")
+        print(" [+] No lockfile detected. Nothing to do.")
         return 0
 
-    # Generate PHYLUM_LABEL
+    if ci_env.is_lockfile_changed:
+        print(" [+] The lockfile has changed")
+    else:
+        print(" [+] The lockfile has not changed. Nothing to do.")
+        return 0
+
+    # Generate PHYLUM_LABEL and report it
     print(f" [+] phylum_label: {ci_env.phylum_label}")
 
     # Check for the existence of the CLI and install it if needed

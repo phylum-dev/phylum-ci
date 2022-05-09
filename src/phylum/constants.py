@@ -35,7 +35,7 @@ SUPPORTED_PLATFORMS = {
 TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 
 # These are the currently supported lockfiles.
-# Keys are the standard lockfile filename.
+# Keys are the standard lockfile filename, optionally specified with glob syntax.
 # Values are the name of the tool that generates the lockfile.
 SUPPORTED_LOCKFILES = {
     # Javascript/Typescript

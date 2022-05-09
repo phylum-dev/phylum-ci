@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
+from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_expected_phylum_bin_path
 from phylum.init.cli import main as phylum_init
 
@@ -55,6 +56,25 @@ def get_phylum_bin_path(version=None):
     return cli_path, cli_version
 
 
+def detect_lockfile() -> Optional[Path]:
+    """Detect the lockfile in use and return it.
+
+    This method has some assumptions:
+      * It is called from the root of a repository
+      * There is only one lockfile allowed
+    """
+    cwd = Path.cwd()
+    lockfiles_in_cwd = [path.resolve() for lockfile_glob in SUPPORTED_LOCKFILES for path in cwd.glob(lockfile_glob)]
+    if not lockfiles_in_cwd:
+        return None
+    if len(lockfiles_in_cwd) > 1:
+        lockfiles = ", ".join(str(lockfile) for lockfile in lockfiles_in_cwd)
+        print(f" [!] Multiple lockfiles detected: {lockfiles}")
+        raise SystemExit(" [!] Only one lockfile is supported at this time. Consider specifying it with `--lockfile`.")
+    lockfile = lockfiles_in_cwd[0]
+    return lockfile
+
+
 class CIBase(ABC):
     """Provide methods for a basic CI environment."""
 
@@ -65,11 +85,34 @@ class CIBase(ABC):
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
         self._lockfile = None
-        lockfile: Path = args.lockfile
-        if lockfile is None or not lockfile.exists():
-            lockfile = self._detect_lockfile()
-        if lockfile and self._is_lockfile_changed(lockfile):
-            self._lockfile = lockfile.resolve()
+        provided_lockfile: Path = args.lockfile
+        if provided_lockfile and provided_lockfile.exists():
+            self._lockfile = provided_lockfile.resolve()
+        else:
+            self._lockfile = detect_lockfile()
+
+        # Assume the lockfile has not changed unless proven otherwise by the specific CI environment
+        self._lockfile_changed = False
+        if self.lockfile:
+            self._lockfile_changed = self._is_lockfile_changed(self.lockfile)
+
+    @property
+    def lockfile(self) -> Optional[Path]:
+        """Get the package lockfile."""
+        return self._lockfile
+
+    @property
+    def is_lockfile_changed(self) -> bool:
+        """Get the lockfile's modification status."""
+        return self._lockfile_changed
+
+    @property
+    @abstractmethod
+    def phylum_label(self) -> str:
+        """Get a custom label for use when submitting jobs with `phylum analyze`.
+
+        Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
+        """
 
     @contextmanager
     @abstractmethod
@@ -106,26 +149,6 @@ class CIBase(ABC):
 
         # TODO: Set a class property with the `cli_path` value?
         return cli_path
-
-    @property
-    def lockfile(self):
-        """Get the package lockfile."""
-        return self._lockfile
-
-    @property
-    @abstractmethod
-    def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`.
-
-        Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
-        """
-
-    @abstractmethod
-    def _detect_lockfile(self) -> Optional[Path]:
-        """Detect the lockfile in use and return it.
-
-        Use the `lockfile` property instead of this method directly.
-        """
 
     @abstractmethod
     def _is_lockfile_changed(self, lockfile: Path) -> bool:

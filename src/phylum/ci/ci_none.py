@@ -8,11 +8,9 @@ import argparse
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
-from phylum.constants import SUPPORTED_LOCKFILES
 
 
 def git_remote() -> str:
@@ -35,8 +33,8 @@ class CINone(CIBase):
     """Provide methods for operating outside of a known CI environment."""
 
     def __init__(self, args: argparse.Namespace) -> None:
-        super().__init__(args)
         self.ci_platform_name = "No CI"
+        super().__init__(args)
 
     def check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
@@ -67,37 +65,26 @@ class CINone(CIBase):
         if self.lockfile:
             cmd_line = ["git", "hash-object", self.lockfile]
             lockfile_hash_object = subprocess.run(cmd_line, check=True, text=True, capture_output=True).stdout.strip()
-            label = f"{SCRIPT_NAME}_NO-CI_{current_branch}_{lockfile_hash_object}"
+            label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
         else:
-            label = f"{SCRIPT_NAME}_NO-CI_{current_branch}_NO-LOCKFILE"
+            label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_NO-LOCKFILE"
+        label = label.replace(" ", "-")
 
         return label
 
-    def _detect_lockfile(self) -> Optional[Path]:
-        """Detect the lockfile in use by the repository and return it.
+    def _is_lockfile_changed(self, lockfile: Path) -> bool:
+        """Predicate for detecting if the given lockfile has changed.
 
         For the case of operating outside of a CI platform, some assumptions are made:
-        * There is only one remote configured for the repository
-        * The diff is comparing against the remote and not another ref
-        * The diff is comparing by using the files at the current HEAD
+          * There is only one remote configured for the repository
+          * The diff is comparing against the remote and not another ref
+          * The diff is comparing by using the files at the current HEAD
+
+        The usefulness of this approach is limited in that lockfile changes must already be committed to be detected.
 
         References:
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
-        remote = git_remote()
-        cmd = f"git diff --name-only {remote}..."
-        changed_files = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout.splitlines()
-        changed_files = [Path(changed_file) for changed_file in changed_files]
-        lockfiles = [file_ for file_ in changed_files if file_.name in SUPPORTED_LOCKFILES]
-        if not lockfiles:
-            return None
-        if len(lockfiles) > 1:
-            raise SystemExit("Only one lockfile is supported at this time. Consider specifying it with `--lockfile`.")
-        lockfile = lockfiles[0]
-        return lockfile
-
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""
         remote = git_remote()
         cmd = f"git diff {remote}... -- {lockfile.resolve()}"
         lockfile_diff = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout
