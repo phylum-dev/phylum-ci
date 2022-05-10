@@ -120,6 +120,10 @@ class CIBase(ABC):
         Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
         """
 
+    @abstractmethod
+    def _is_lockfile_changed(self, lockfile: Path) -> bool:
+        """Predicate for detecting if the given lockfile has changed."""
+
     @contextmanager
     @abstractmethod
     def check_prerequisites(self) -> Generator:
@@ -141,7 +145,7 @@ class CIBase(ABC):
         print(" [+] All pre-requisites met")
 
     def init_cli(self) -> None:
-        """Check for an existing Phylum CLI install, install it if needed, and return the path to its binary."""
+        """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
         cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
         if cli_path is None:
             print(f" [+] Existing Phylum CLI instance not found. Installing version `{self.args.version}` ...")
@@ -154,7 +158,3 @@ class CIBase(ABC):
         print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
 
         self._cli_path = cli_path
-
-    @abstractmethod
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""

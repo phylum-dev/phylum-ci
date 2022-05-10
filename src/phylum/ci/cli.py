@@ -1,7 +1,9 @@
 """Console script for phylum-ci."""
 import argparse
+import json
 import os
 import pathlib
+import subprocess
 import sys
 
 from phylum import __version__
@@ -40,6 +42,18 @@ def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase
         ci_env = CINone(args)
 
     return ci_env
+
+
+def threshold_check(threshold_in: str) -> int:
+    """Check a given threshold for validity and return it as an int."""
+    msg = "threshold must be an integer between 0 and 99, inclusive"
+    try:
+        threshold_out = int(threshold_in)
+    except ValueError as err:
+        raise argparse.ArgumentTypeError(msg) from err
+    if threshold_out not in range(100):
+        raise argparse.ArgumentTypeError(msg)
+    return threshold_out
 
 
 def get_args(args=None):
@@ -81,10 +95,41 @@ def get_args(args=None):
             specify an explicit lockfile path.""",
     )
     parser.add_argument(
-        "--version",
-        action="version",
-        version=f"{SCRIPT_NAME} {__version__}",
+        "-vt",
+        "--vul-threshold",
+        type=threshold_check,
+        default=99,
+        help="Vulnerability risk score threshold value. Must be an integer between 0 and 99, inclusive.",
     )
+    parser.add_argument(
+        "-mt",
+        "--mal-threshold",
+        type=threshold_check,
+        default=99,
+        help="Malicious Code risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+    )
+    parser.add_argument(
+        "-et",
+        "--eng-threshold",
+        type=threshold_check,
+        default=99,
+        help="Engineering risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+    )
+    parser.add_argument(
+        "-lt",
+        "--lic-threshold",
+        type=threshold_check,
+        default=99,
+        help="License risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+    )
+    parser.add_argument(
+        "-at",
+        "--aut-threshold",
+        type=threshold_check,
+        default=99,
+        help="Author risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+    )
+    parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
 
     return parser.parse_known_args(args=args)
 
@@ -119,10 +164,16 @@ def main(args=None):
     ci_env.init_cli()
 
     # TODO: Analyze project lockfile with phylum CLI
+    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}"
+    analysis = json.loads(subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout)
+    print(f"{analysis=}")
 
     # TODO: Replicate test matrix?
 
     # TODO: Compare added dependencies in PR to analysis results
+    #       If using the new `phylum parse` subcommand, that version might need to be included as a pre-req
+
+    # Skip this for now and just handle the CINone and/or pre-commit environments to start with
 
     # TODO: Update the PR/MR with an appropriate comment.
     #       This can be done conditionally based on the CI env, if any, we are in.
