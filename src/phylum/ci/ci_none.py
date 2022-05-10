@@ -57,14 +57,14 @@ class CINone(CIBase):
     @property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
-        cmd_line = ["git", "branch", "--show-current"]
-        current_branch = subprocess.run(cmd_line, check=True, text=True, capture_output=True).stdout.strip()
+        cmd = "git branch --show-current".split()
+        current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
 
         # This is the unique key that git uses to refer to the blob type data object for the lockfile.
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
         if self.lockfile:
-            cmd_line = ["git", "hash-object", self.lockfile]
-            lockfile_hash_object = subprocess.run(cmd_line, check=True, text=True, capture_output=True).stdout.strip()
+            cmd = f"git hash-object {self.lockfile}".split()
+            lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
             label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
         else:
             label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_NO-LOCKFILE"

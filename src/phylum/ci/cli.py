@@ -5,6 +5,7 @@ import os
 import pathlib
 import subprocess
 import sys
+from typing import List
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -16,7 +17,7 @@ from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import version_check
 
 
-def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase:
+def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
     """Detect CI platform via known CI-based environment variables."""
     ci_envs = []
 
@@ -166,7 +167,7 @@ def main(args=None):
     # TODO: Analyze project lockfile with phylum CLI
     cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}"
     analysis = json.loads(subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout)
-    print(f"{analysis=}")
+    print(f"analysis:\n\n{analysis}")
 
     # TODO: Replicate test matrix?
 

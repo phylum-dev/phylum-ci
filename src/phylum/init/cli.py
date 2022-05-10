@@ -183,8 +183,8 @@ def setup_token(token, args):
     # The phylum CLI settings.yaml file won't exist upon initial install
     # but running a command will trigger the CLI to generate it
     if not phylum_settings_path.exists():
-        cmd_line = [phylum_bin_path, "version"]
-        subprocess.run(cmd_line, check=True)
+        cmd = f"{phylum_bin_path} version".split()
+        subprocess.run(cmd, check=True)
 
     yaml = YAML()
     settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
@@ -194,8 +194,8 @@ def setup_token(token, args):
         yaml.dump(settings_dict, f)
 
     # Check that the token was setup correctly by using it to display the current auth status
-    cmd_line = [phylum_bin_path, "auth", "status"]
-    subprocess.run(cmd_line, check=True)
+    cmd = f"{phylum_bin_path} auth status".split()
+    subprocess.run(cmd, check=True)
 
 
 def get_args(args=None):
@@ -271,14 +271,14 @@ def main(args=None):
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 
-        cmd_line = ["sh", "install.sh"]
-        subprocess.run(cmd_line, check=True, cwd=extracted_dir)
+        cmd = "sh install.sh".split()
+        subprocess.run(cmd, check=True, cwd=extracted_dir)
 
     process_token_option(args)
 
     # Check to ensure everything is working
-    cmd_line = [phylum_bin_path, "--help"]
-    subprocess.run(cmd_line, check=True)
+    cmd = f"{phylum_bin_path} --help".split()
+    subprocess.run(cmd, check=True)
 
     return 0
 

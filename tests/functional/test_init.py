@@ -14,8 +14,8 @@ def test_run_as_module():
     This is the `python -m <module_name>` format to "run library module as a script."
     NOTE: The <module_name> is specified as the dotted path to the package where the `__main__.py` module exists.
     """
-    cmd_line = [sys.executable, "-m", "phylum.init", "--help"]
-    ret = subprocess.run(cmd_line)
+    cmd = f"{sys.executable} -m phylum.init --help".split()
+    ret = subprocess.run(cmd)
     assert ret.returncode == 0, "Running the package as a module failed"
 
 
@@ -32,8 +32,8 @@ def test_version_option():
     """Ensure the correct program name and version is displayed when using the `--version` option."""
     # The argparse module adds a newline to the output
     expected_output = f"{SCRIPT_NAME} {__version__}\n"
-    cmd_line = [sys.executable, "-m", "phylum.init", "--version"]
-    ret = subprocess.run(cmd_line, capture_output=True, encoding="utf-8")
+    cmd = f"{sys.executable} -m phylum.init --version".split()
+    ret = subprocess.run(cmd, capture_output=True, encoding="utf-8")
     assert not ret.stderr, "Nothing should be written to stderr"
     assert ret.returncode == 0, "A non-successful return code was provided"
     assert ret.stdout == expected_output, "Output did not match expected input"

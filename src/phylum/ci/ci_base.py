@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from argparse import Namespace
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Generator, Optional, Tuple
 
 from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_expected_phylum_bin_path
@@ -33,7 +33,7 @@ def get_phylum_cli_version(cli_path: Path) -> str:
 
 
 # TODO: Move this function to the `phylum.init` package?
-def get_phylum_bin_path(version: str = None) -> tuple[Optional[Path], Optional[str]]:
+def get_phylum_bin_path(version: str = None) -> Tuple[Optional[Path], Optional[str]]:
     """Get the current path and corresponding version to the Phylum CLI binary and return them.
 
     Provide a CLI version as a fallback method for looking on an explicit path,
