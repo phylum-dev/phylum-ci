@@ -9,8 +9,9 @@ import subprocess
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Generator, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_expected_phylum_bin_path
@@ -75,12 +76,36 @@ def detect_lockfile() -> Optional[Path]:
     return lockfile
 
 
+@dataclass(order=True, frozen=True)
+class PackageDescriptor:
+    """Class for keeping track of packages returned by the `phylum parse` subcommand."""
+
+    name: str
+    version: str
+    type: str
+
+
 class CIBase(ABC):
     """Provide methods for a basic CI environment."""
 
     @abstractmethod
     def __init__(self, args: Namespace) -> None:
         self.args = args
+
+        # The risk vector values returned by the analysis are normalized to (0.0, 1.0]. The option values are converted
+        # internally like this b/c it is more natural to ask users for input as an integer in the range of [0, 100).
+        # TODO: If these are only used in one place, consider removing them from here and converting in place instead.
+        self.vul = args.vul_threshold / 100
+        self.mal = args.mal_threshold / 100
+        self.eng = args.eng_threshold / 100
+        self.lic = args.lic_threshold / 100
+        self.aut = args.aut_threshold / 100
+
+        self.gbl_failed = False
+        self.gbl_incomplete = False
+        self.incomplete_pkgs: List[PackageDescriptor] = []
+        # self.previous_incomplete = False
+
         self._cli_path: Optional[Path] = None
 
         # The lockfile specified as a script argument will be used, if provided.
@@ -146,15 +171,28 @@ class CIBase(ABC):
 
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
-        cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
+        specified_version = self.args.version
+        cli_path, cli_version = get_phylum_bin_path(version=specified_version)
         if cli_path is None:
-            print(f" [+] Existing Phylum CLI instance not found. Installing version `{self.args.version}` ...")
-            install_args = ["--phylum-release", self.args.version, "--phylum-token", self.args.token]
+            print(f" [+] Existing Phylum CLI instance not found. Installing version `{specified_version}` ...")
+            install_args = ["--phylum-release", specified_version, "--phylum-token", self.args.token]
             phylum_init(install_args)
         else:
             print(f" [+] Existing Phylum CLI instance found: {cli_version} at {cli_path}")
+            if cli_version != specified_version:
+                print(f" [+] Existing version {cli_version} does not match the specified version {specified_version}")
+                if self.args.force_install:
+                    print(f" [*] Installing Phylum CLI version {specified_version} ...")
+                    install_args = ["--phylum-release", specified_version, "--phylum-token", self.args.token]
+                    phylum_init(install_args)
+                else:
+                    print(" [+] Using existing version")
+                    # TODO: Account for the case that the existing version does not already have a token in place. This
+                    #       could be the case if the Docker image is built with a known good/compatible CLI version but
+                    #       without a token so that any user can use the image with their own supplied token.
+                    #       https://github.com/phylum-dev/phylum-ci/issues/32
 
-        cli_path, cli_version = get_phylum_bin_path(version=self.args.version)
+        cli_path, cli_version = get_phylum_bin_path(version=specified_version)
         print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
 
         self._cli_path = cli_path
