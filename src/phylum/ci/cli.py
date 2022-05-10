@@ -5,7 +5,7 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import List
+from typing import Iterable, List
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -73,8 +73,15 @@ def get_args(args=None):
         dest="version",
         default="latest",
         type=version_check,
-        help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
-            with or without the leading `v`.""",
+        help="""The version of the Phylum CLI to install, when one is not already installed. Can be specified as
+            `latest` or a specific tagged release, with or without the leading `v`.""",
+    )
+    parser.add_argument(
+        "-f",
+        "--force-install",
+        action="store_true",
+        help="""Specify this flag to ensure the specified Phylum CLI release version is the one that is installed.
+            Otherwise, any existing version will be used.""",
     )
     parser.add_argument(
         "-k",
@@ -130,6 +137,13 @@ def get_args(args=None):
         default=99,
         help="Author risk score threshold value. Must be an integer between 0 and 99, inclusive.",
     )
+    parser.add_argument(
+        "--new-deps-only",
+        action="store_true",
+        help="""Specify this flag to only consider newly added dependencies in analysis results. This can be useful for
+            existing code bases that may not meet established project risk thresholds yet, but don't want to make things
+            worse.""",
+    )
     parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
 
     return parser.parse_known_args(args=args)
@@ -153,7 +167,7 @@ def main(args=None):
         return 0
 
     if ci_env.is_lockfile_changed:
-        print(" [+] The lockfile has changed")
+        print(" [+] The lockfile has changed. Proceeding with analysis ...")
     else:
         print(" [+] The lockfile has not changed. Nothing to do.")
         return 0
@@ -165,16 +179,46 @@ def main(args=None):
     ci_env.init_cli()
 
     # TODO: Analyze project lockfile with phylum CLI
+    print(" [*] Performing analysis ...")
     cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}"
-    analysis = json.loads(subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout)
-    print(f"analysis:\n\n{analysis}")
+    try:
+        analysis_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as err:
+        # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
+        # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
+        if "failed threshold requirements" in err.stderr:
+            analysis_result = err.stdout
+        else:
+            raise
+    analysis = json.loads(analysis_result)
+    # print(f"analysis:\n\n{analysis}")
+
+    project_id = analysis.get("project")
+    project_url = f"https://app.phylum.io/projects/{project_id}"
+    print(f" [+] Project URL: {project_url}")
 
     # TODO: Replicate test matrix?
+
+    # TODO: Review analysis results to determine the overall state
+    if ci_env.args.new_deps_only:
+        print(" [+] Only considering newly added dependencies ...")
+    else:
+        print(" [+] Considering all current dependencies ...")
 
     # TODO: Compare added dependencies in PR to analysis results
     #       If using the new `phylum parse` subcommand, that version might need to be included as a pre-req
 
     # Skip this for now and just handle the CINone and/or pre-commit environments to start with
+    # HINTS: Look at `.git/hooks/pre-commit.sample` for an example
+    #   * Get the <object>
+    #     * git rev-parse --verify HEAD:poetry.lock
+    #   * Get the previous version with an <object>
+    #     * git cat-file blob <object>
+    #     * (maybe also `git show`)
+    #   * Use `phylum parse` to get a list of dicts that can be turned into PackageDescriptors
+    #   * make sets of the PackageDescriptors for the `current` and `previous`
+    #   * find the packages that are in `current` but not in `previous`
+    #     * current.difference(previous)
 
     # TODO: Update the PR/MR with an appropriate comment.
     #       This can be done conditionally based on the CI env, if any, we are in.
