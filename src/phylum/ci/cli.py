@@ -5,7 +5,7 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import Iterable, List
+from typing import List
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -57,12 +57,16 @@ def threshold_check(threshold_in: str) -> int:
     return threshold_out
 
 
+class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+    """Custom argparse formatter to get both default arguments and help text line wrapping."""
+
+
 def get_args(args=None):
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Use Phylum to analyze dependencies in a CI environment",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=CustomFormatter,
     )
 
     # TODO: Add arguments for each of the inputs from the `phylum-analyze-pr-action`.
@@ -193,17 +197,12 @@ def main(args=None):
     analysis = json.loads(analysis_result)
     # print(f"analysis:\n\n{analysis}")
 
-    project_id = analysis.get("project")
-    project_url = f"https://app.phylum.io/projects/{project_id}"
-    print(f" [+] Project URL: {project_url}")
+    return_code = ci_env.analyze(analysis)
+    print(f" [-] Return code: {return_code}")
 
     # TODO: Replicate test matrix?
 
     # TODO: Review analysis results to determine the overall state
-    if ci_env.args.new_deps_only:
-        print(" [+] Only considering newly added dependencies ...")
-    else:
-        print(" [+] Considering all current dependencies ...")
 
     # TODO: Compare added dependencies in PR to analysis results
     #       If using the new `phylum parse` subcommand, that version might need to be included as a pre-req
