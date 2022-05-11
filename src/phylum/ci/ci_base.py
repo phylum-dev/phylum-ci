@@ -5,58 +5,19 @@ integration (CI) environment. Common functionality is provided where possible an
 designated as abstract methods to be defined in specific CI environments.
 """
 import shutil
-import string
 import subprocess
-import textwrap
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from contextlib import contextmanager
-from dataclasses import dataclass
-from enum import IntEnum
 from pathlib import Path
 from typing import Generator, List, Optional, Tuple
 
 from packaging.version import Version
+from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
+from phylum.ci.constants import FAILED_COMMENT, INCOMPLETE_COMMENT_TEMPLATE, SUCCESS_COMMENT
 from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_expected_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-
-# Headers for distinct comment types
-FAILED_COMMENT = textwrap.dedent(
-    """
-    ## Phylum OSS Supply Chain Risk Analysis - FAILED
-
-    <details>
-    <summary>Background</summary>
-    <br />
-    This repository analyzes the risk of new dependencies. An administrator of
-    this repository has set score requirements for Phylum's five risk domains.
-    <br /><br />
-    If you see this comment, one or more dependencies added to the
-    package manager lockfile have failed Phylum's risk analysis.
-    </details>
-
-    """
-)
-SUCCESS_COMMENT = textwrap.dedent(
-    """
-    ## Phylum OSS Supply Chain Risk Analysis - SUCCESS
-
-    The Phylum risk analysis is complete and did not identify any issues.
-    """
-).strip()
-INCOMPLETE_COMMENT_TEMPLATE = string.Template(
-    textwrap.dedent(
-        """
-        ## Phylum OSS Supply Chain Risk Analysis - INCOMPLETE
-
-        The analysis contains $count package(s) Phylum has not yet processed, preventing
-        a complete risk analysis. Phylum is processing these packages currently and
-        should complete within 30 minutes. Please wait for at least 30 minutes,
-        then re-run the analysis.
-        """
-    ).strip()
-)
 
 
 # TODO: Move this function to the `phylum.init` package?
@@ -117,26 +78,6 @@ def detect_lockfile() -> Optional[Path]:
     return lockfile
 
 
-@dataclass(order=True, frozen=True)
-class PackageDescriptor:
-    """Class for keeping track of packages returned by the `phylum parse` subcommand."""
-
-    name: str
-    version: str
-    type: str
-
-
-Packages = List[PackageDescriptor]
-
-
-class ReturnCode(IntEnum):
-    """Integer enumeration to track return codes."""
-
-    SUCCESS = 0
-    FAILURE = 1
-    INCOMPLETE = 5
-
-
 class CIBase(ABC):
     """Provide methods for a basic CI environment."""
 
@@ -162,20 +103,22 @@ class CIBase(ABC):
 
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
-        self._lockfile = None
         provided_lockfile: Path = args.lockfile
         if provided_lockfile and provided_lockfile.exists():
             self._lockfile = provided_lockfile.resolve()
         else:
-            self._lockfile = detect_lockfile()
+            detected_lockfile = detect_lockfile()
+            if detected_lockfile:
+                self._lockfile = detected_lockfile
+            else:
+                raise SystemExit(
+                    " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
+                )
 
-        # Assume the lockfile has not changed unless proven otherwise by the specific CI environment
-        self._lockfile_changed = False
-        if self.lockfile:
-            self._lockfile_changed = self._is_lockfile_changed(self.lockfile)
+        self._lockfile_changed = self._is_lockfile_changed(self.lockfile)
 
     @property
-    def lockfile(self) -> Optional[Path]:
+    def lockfile(self) -> Path:
         """Get the package lockfile."""
         return self._lockfile
 
@@ -225,6 +168,10 @@ class CIBase(ABC):
         yield
         print(" [+] All pre-requisites met")
 
+    @abstractmethod
+    def get_new_deps(self) -> Packages:
+        """Get the new dependencies added to the lockfile and return them."""
+
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
         specified_version = self.args.version
@@ -266,35 +213,39 @@ class CIBase(ABC):
 
         if self.args.new_deps_only:
             print(" [+] Only considering newly added dependencies ...")
+            packages = self.get_new_deps()
+            print(f" [+] {len(packages)} newly added dependencies")
+            print(f"\n packages:\n\n{packages}\n")
+            risk_data = self.parse_risk_data(analysis, packages)
         else:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
             packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
             risk_data = self.parse_risk_data(analysis, packages)
 
+        returncode = ReturnCode.SUCCESS
+        output = ""
+        # Write output only if the analysis failed and all pkgvers are completed
+        if self.gbl_failed and not self.gbl_incomplete:
+            print(" [!] The analysis is complete and there were failures")
+            returncode = ReturnCode.FAILURE
+            output = FAILED_COMMENT
+            for line in risk_data:
+                output += line
+
+        if self.gbl_incomplete:
+            print(f" [+] {len(self.incomplete_pkgs)} packages were incomplete in the analysis results")
+            returncode = ReturnCode.INCOMPLETE
+            output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=len(self.incomplete_pkgs))
+
+        if not self.gbl_failed and not self.gbl_incomplete:
+            print(" [+] The analysis is complete and there were no failures")
             returncode = ReturnCode.SUCCESS
-            output = ""
-            # Write output only if the analysis failed and all pkgvers are completed
-            if self.gbl_failed and not self.gbl_incomplete:
-                print(" [!] The analysis is complete and there were failures")
-                returncode = ReturnCode.FAILURE
-                output = FAILED_COMMENT
-                for line in risk_data:
-                    output += line
+            output = SUCCESS_COMMENT
 
-            if self.gbl_incomplete:
-                print(f" [+] {len(self.incomplete_pkgs)} packages were incomplete in the analysis results")
-                returncode = ReturnCode.INCOMPLETE
-                output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=len(self.incomplete_pkgs))
-
-            if not self.gbl_failed and not self.gbl_incomplete:
-                print(" [+] The analysis is complete and there were no failures")
-                returncode = ReturnCode.SUCCESS
-                output = SUCCESS_COMMENT
-
-            output += f"\n[View this project in the Phylum UI]({project_url})"
-            # TODO: Do something else with the output
-            print(f" [+] Output:\n{output}")
+        output += f"\n[View this project in the Phylum UI]({project_url})"
+        # TODO: Do something else with the output
+        print(f" [+] Output:\n{output}")
 
         return returncode
 

@@ -205,7 +205,6 @@ def main(args=None):
     # TODO: Review analysis results to determine the overall state
 
     # TODO: Compare added dependencies in PR to analysis results
-    #       If using the new `phylum parse` subcommand, that version might need to be included as a pre-req
 
     # Skip this for now and just handle the CINone and/or pre-commit environments to start with
     # HINTS: Look at `.git/hooks/pre-commit.sample` for an example

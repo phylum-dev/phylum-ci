@@ -11,6 +11,7 @@ from pathlib import Path
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
+from phylum.ci.common import PackageDescriptor, Packages
 
 
 def git_remote() -> str:
@@ -62,12 +63,9 @@ class CINone(CIBase):
 
         # This is the unique key that git uses to refer to the blob type data object for the lockfile.
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-        if self.lockfile:
-            cmd = f"git hash-object {self.lockfile}".split()
-            lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
-            label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
-        else:
-            label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_NO-LOCKFILE"
+        cmd = f"git hash-object {self.lockfile}".split()
+        lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+        label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
         label = label.replace(" ", "-")
 
         return label
@@ -89,3 +87,17 @@ class CINone(CIBase):
         cmd = f"git diff {remote}... -- {lockfile.resolve()}"
         lockfile_diff = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout
         return bool(len(lockfile_diff))
+
+    def get_new_deps(self) -> Packages:
+        """Get the new dependencies added to the lockfile and return them."""
+        # HINTS: Look at `.git/hooks/pre-commit.sample` for an example
+        #   * Get the <object>
+        #     * git rev-parse --verify HEAD:poetry.lock
+        #   * Get the previous version with an <object>
+        #     * git cat-file blob <object>
+        #     * (maybe also `git show`)
+        #   * Use `phylum parse` to get a list of dicts that can be turned into PackageDescriptors
+        #   * make sets of the PackageDescriptors for the `current` and `previous`
+        #   * find the packages that are in `current` but not in `previous`
+        #     * current.difference(previous)
+        pass

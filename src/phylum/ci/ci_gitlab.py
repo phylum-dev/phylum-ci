@@ -3,6 +3,7 @@ from argparse import Namespace
 from pathlib import Path
 
 from phylum.ci.ci_base import CIBase
+from phylum.ci.common import Packages
 
 
 # NOTE: This is just a stub for now
@@ -27,3 +28,7 @@ class CIGitLab(CIBase):
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed."""
         return bool("TO DO")
+
+    def get_new_deps(self) -> Packages:
+        """Get the new dependencies added to the lockfile and return them."""
+        # TODO
