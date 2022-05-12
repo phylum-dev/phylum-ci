@@ -3,48 +3,23 @@ import argparse
 import os
 import pathlib
 import platform
+import shutil
 import subprocess
 import sys
 import tempfile
 import zipfile
+from pathlib import Path
+from typing import Optional, Tuple
 
 import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
+from phylum.common import CustomFormatter
+from phylum.constants import SUPPORTED_ARCHES, SUPPORTED_PLATFORMS, SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_minisig
 from ruamel.yaml import YAML
-
-# These are the currently supported Rust target triples
-#
-# Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
-# should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
-# at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
-# type, and the optional fourth is environment type.
-#
-# References:
-#   * https://doc.rust-lang.org/nightly/rustc/platform-support.html
-#   * https://rust-lang.github.io/rfcs/0131-target-specification.html
-SUPPORTED_TARGET_TRIPLES = (
-    "aarch64-apple-darwin",
-    "x86_64-apple-darwin",
-    "x86_64-unknown-linux-musl",
-)
-# Keys are lowercase machine hardware names as returned from `uname -m`.
-# Values are the mapped rustc architecture.
-SUPPORTED_ARCHES = {
-    "arm64": "aarch64",
-    "amd64": "x86_64",
-}
-# Keys are lowercase operating system name as returned from `uname -s`.
-# Values are the mapped rustc platform, which is the vendor-os_type[-environment_type].
-SUPPORTED_PLATFORMS = {
-    "linux": "unknown-linux-musl",
-    "darwin": "apple-darwin",
-}
-
-TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
 
 
 def use_legacy_paths(version):
@@ -72,8 +47,8 @@ def get_phylum_settings_path(version):
     return phylum_config_path
 
 
-def get_phylum_bin_path(version):
-    """Get the path to the Phylum binary based on a provided version."""
+def get_expected_phylum_bin_path(version):
+    """Get the expected path to the Phylum CLI binary based on a provided version."""
     home_dir = pathlib.Path.home()
     version = version_check(version)
 
@@ -82,6 +57,43 @@ def get_phylum_bin_path(version):
         phylum_bin_path = home_dir / ".phylum" / "phylum"
 
     return phylum_bin_path
+
+
+def get_phylum_cli_version(cli_path: Path) -> str:
+    """Get the version of the installed and active Phylum CLI and return it."""
+    cmd = f"{cli_path} --version"
+    version = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip().lower()
+
+    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
+    prefix = "phylum "
+    prefix_len = len(prefix)
+    if version.startswith(prefix):
+        version = version[prefix_len:]
+
+    return version
+
+
+def get_phylum_bin_path(version: str = None) -> Tuple[Optional[Path], Optional[str]]:
+    """Get the current path and corresponding version to the Phylum CLI binary and return them.
+
+    Provide a CLI version as a fallback method for looking on an explicit path,
+    based on the expected path for that version.
+    """
+    # Look for `phylum` on the PATH first
+    which_cli_path = shutil.which("phylum")
+
+    if which_cli_path is None and version is not None:
+        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
+        # context. Look in the specific location expected by the provided version.
+        expected_cli_path = get_expected_phylum_bin_path(version)
+        which_cli_path = shutil.which("phylum", path=expected_cli_path)
+
+    if which_cli_path is None:
+        return (None, None)
+
+    cli_path = Path(which_cli_path)
+    cli_version = get_phylum_cli_version(cli_path)
+    return cli_path, cli_version
 
 
 def get_latest_version():
@@ -206,14 +218,14 @@ def process_token_option(args):
 
 def setup_token(token, args):
     """Setup the CLI credentials with a provided token and path to phylum binary."""
-    phylum_bin_path = get_phylum_bin_path(args.version)
+    phylum_bin_path = get_expected_phylum_bin_path(args.version)
     phylum_settings_path = get_phylum_settings_path(args.version)
 
     # The phylum CLI settings.yaml file won't exist upon initial install
     # but running a command will trigger the CLI to generate it
     if not phylum_settings_path.exists():
-        cmd_line = [phylum_bin_path, "version"]
-        subprocess.run(cmd_line, check=True)
+        cmd = f"{phylum_bin_path} version".split()
+        subprocess.run(cmd, check=True)
 
     yaml = YAML()
     settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
@@ -223,16 +235,16 @@ def setup_token(token, args):
         yaml.dump(settings_dict, f)
 
     # Check that the token was setup correctly by using it to display the current auth status
-    cmd_line = [phylum_bin_path, "auth", "status"]
-    subprocess.run(cmd_line, check=True)
+    cmd = f"{phylum_bin_path} auth status".split()
+    subprocess.run(cmd, check=True)
 
 
-def get_args():
+def get_args(args=None):
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Fetch and install the Phylum CLI",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=CustomFormatter,
     )
 
     parser.add_argument(
@@ -267,12 +279,12 @@ def get_args():
         version=f"{SCRIPT_NAME} {__version__}",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(args=args)
 
 
-def main():
+def main(args=None):
     """Main entrypoint."""
-    args = get_args()
+    args = get_args(args=args)
 
     target_triple = args.target
     if target_triple not in SUPPORTED_TARGET_TRIPLES:
@@ -282,7 +294,7 @@ def main():
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(args.version, archive_name)
     minisig_url = f"{archive_url}.minisig"
-    phylum_bin_path = get_phylum_bin_path(args.version)
+    phylum_bin_path = get_expected_phylum_bin_path(args.version)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
@@ -300,14 +312,14 @@ def main():
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 
-        cmd_line = ["sh", "install.sh"]
-        subprocess.run(cmd_line, check=True, cwd=extracted_dir)
+        cmd = "sh install.sh".split()
+        subprocess.run(cmd, check=True, cwd=extracted_dir)
 
     process_token_option(args)
 
     # Check to ensure everything is working
-    cmd_line = [phylum_bin_path, "--help"]
-    subprocess.run(cmd_line, check=True)
+    cmd = f"{phylum_bin_path} --help".split()
+    subprocess.run(cmd, check=True)
 
     return 0
 

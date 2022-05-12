@@ -24,8 +24,10 @@ It can also also be installed in an isolated environment with the excellent [`pi
 ```sh
 # Globally install the app(s) on your system in an isolated virtual environment for the package
 pipx install phylum
+
 # Use the apps from the package in an ephemeral environment
 pipx run --spec phylum phylum-init <options>
+pipx run --spec phylum phylum-ci <options>
 ```
 
 It requires Python 3.7+ to run.
@@ -37,15 +39,17 @@ To view the options available from the CLI, print the help message from one of t
 
 ```sh
 phylum-init -h
+phylum-ci -h
 ```
 
 The functionality can also be accessed by calling the module:
 
 ```sh
 python -m phylum.init -h
+python -m phylum.ci -h
 ```
 
-#### `phylum-init`
+#### `phylum-init` Script Entry Point
 
 The `phylum-init` script can be used to fetch and install the Phylum CLI.
 It will attempt to install the latest released version of the CLI but can be specified to fetch a specific version.
@@ -54,6 +58,19 @@ a specific release target can be specified.
 It will accept a Phylum token from an environment variable or specified as an option, but will also function in the case
 that no token is provided. This can be because there is already a token set that should continue to be used or because
 no token exists and one will need to be manually created or set, after the CLI is installed.
+
+#### `phylum-ci` Script Entry Point
+
+The `phylum-ci` script is for analyzing lockfile changes.
+The script can be used locally or from within a Continuous Integration (CI) environment.
+It will attempt to detect the CI platform based on the environment from which it is run and act accordingly.
+The current CI platforms/environments supported are:
+
+* None (local use)
+  * This is the "fall-through" case used when no other environment is detected
+  * Can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI system
+    * Establishing a successful submission prior to submitting a PR/MR to a CI system
+    * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
 
 ## License
 
