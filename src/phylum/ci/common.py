@@ -23,3 +23,4 @@ class ReturnCode(IntEnum):
     SUCCESS = 0
     FAILURE = 1
     INCOMPLETE = 5
+    FAILURE_INCOMPLETE = 6

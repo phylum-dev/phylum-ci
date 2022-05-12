@@ -13,6 +13,7 @@ from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
+from phylum.ci.common import ReturnCode
 from phylum.common import CustomFormatter
 from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import version_check
@@ -203,6 +204,9 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     #       https://github.com/phylum-dev/phylum-ci/issues/31
     ci_env.post_output()
 
+    # Don't return a failure code if the results are unknown at this point
+    if return_code == ReturnCode.INCOMPLETE:
+        return 0
     return return_code.value
 
 

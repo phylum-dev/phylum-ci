@@ -12,7 +12,12 @@ from typing import Generator, List, Optional, Tuple
 
 from packaging.version import Version
 from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
-from phylum.ci.constants import FAILED_COMMENT, INCOMPLETE_COMMENT_TEMPLATE, SUCCESS_COMMENT
+from phylum.ci.constants import (
+    FAILED_COMMENT,
+    FAILED_INCOMPLETE_COMMENT_TEMPLATE,
+    INCOMPLETE_COMMENT_TEMPLATE,
+    SUCCESS_COMMENT,
+)
 from phylum.constants import SUPPORTED_LOCKFILES
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
@@ -190,9 +195,18 @@ class CIBase(ABC):
                 output += line
 
         if self.gbl_incomplete:
-            print(f" [+] {len(self.incomplete_pkgs)} packages were incomplete in the analysis results")
-            returncode = ReturnCode.INCOMPLETE
-            output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=len(self.incomplete_pkgs))
+            incomplete_pkg_count = len(self.incomplete_pkgs)
+            print(f" [+] {incomplete_pkg_count} packages were incomplete in the analysis results")
+            if self.gbl_failed:
+                print(" [!] There were failures in one or more completed packages")
+                returncode = ReturnCode.FAILURE_INCOMPLETE
+                output = FAILED_INCOMPLETE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
+                for line in risk_data:
+                    output += line
+            else:
+                print(" [+] There were no failures in the packages that have completed so far")
+                returncode = ReturnCode.INCOMPLETE
+                output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
 
         if not self.gbl_failed and not self.gbl_incomplete:
             print(" [+] The analysis is complete and there were NO failures")
