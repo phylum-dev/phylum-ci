@@ -31,10 +31,10 @@ INCOMPLETE_COMMENT_TEMPLATE = string.Template(
         """
         ## Phylum OSS Supply Chain Risk Analysis - INCOMPLETE
 
-        The analysis contains $count package(s) Phylum has not yet processed, preventing
-        a complete risk analysis. Phylum is processing these packages currently and
-        should complete within 30 minutes. Please wait for at least 30 minutes,
-        then re-run the analysis.
+        The analysis contains $count package(s) Phylum has not yet processed,
+        preventing a complete risk analysis. Phylum is processing these
+        packages currently and should complete soon.
+        Please wait for up to 30 minutes, then re-run the analysis.
         """
     ).strip()
 )

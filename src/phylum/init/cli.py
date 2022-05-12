@@ -3,15 +3,19 @@ import argparse
 import os
 import pathlib
 import platform
+import shutil
 import subprocess
 import sys
 import tempfile
 import zipfile
+from pathlib import Path
+from typing import Optional, Tuple
 
 import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
+from phylum.common import CustomFormatter
 from phylum.constants import SUPPORTED_ARCHES, SUPPORTED_PLATFORMS, SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_minisig
@@ -53,6 +57,43 @@ def get_expected_phylum_bin_path(version):
         phylum_bin_path = home_dir / ".phylum" / "phylum"
 
     return phylum_bin_path
+
+
+def get_phylum_cli_version(cli_path: Path) -> str:
+    """Get the version of the installed and active Phylum CLI and return it."""
+    cmd = f"{cli_path} --version"
+    version = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip().lower()
+
+    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
+    prefix = "phylum "
+    prefix_len = len(prefix)
+    if version.startswith(prefix):
+        version = version[prefix_len:]
+
+    return version
+
+
+def get_phylum_bin_path(version: str = None) -> Tuple[Optional[Path], Optional[str]]:
+    """Get the current path and corresponding version to the Phylum CLI binary and return them.
+
+    Provide a CLI version as a fallback method for looking on an explicit path,
+    based on the expected path for that version.
+    """
+    # Look for `phylum` on the PATH first
+    which_cli_path = shutil.which("phylum")
+
+    if which_cli_path is None and version is not None:
+        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
+        # context. Look in the specific location expected by the provided version.
+        expected_cli_path = get_expected_phylum_bin_path(version)
+        which_cli_path = shutil.which("phylum", path=expected_cli_path)
+
+    if which_cli_path is None:
+        return (None, None)
+
+    cli_path = Path(which_cli_path)
+    cli_version = get_phylum_cli_version(cli_path)
+    return cli_path, cli_version
 
 
 def get_latest_version():
@@ -203,7 +244,7 @@ def get_args(args=None):
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Fetch and install the Phylum CLI",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=CustomFormatter,
     )
 
     parser.add_argument(

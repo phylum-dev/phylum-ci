@@ -5,9 +5,12 @@ This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
 import argparse
+import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
+from typing import Any
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
@@ -37,7 +40,7 @@ class CINone(CIBase):
         self.ci_platform_name = "No CI"
         super().__init__(args)
 
-    def check_prerequisites(self) -> None:
+    def check_prerequisites(self) -> Any:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for when no CI environments/platforms is detected:
@@ -90,14 +93,43 @@ class CINone(CIBase):
 
     def get_new_deps(self) -> Packages:
         """Get the new dependencies added to the lockfile and return them."""
-        # HINTS: Look at `.git/hooks/pre-commit.sample` for an example
-        #   * Get the <object>
-        #     * git rev-parse --verify HEAD:poetry.lock
-        #   * Get the previous version with an <object>
-        #     * git cat-file blob <object>
-        #     * (maybe also `git show`)
-        #   * Use `phylum parse` to get a list of dicts that can be turned into PackageDescriptors
-        #   * make sets of the PackageDescriptors for the `current` and `previous`
-        #   * find the packages that are in `current` but not in `previous`
-        #     * current.difference(previous)
-        pass
+        try:
+            # LEFT OFF HERE
+            cmd = f"git rev-parse --verify HEAD:{self.lockfile.name}".split()
+            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        except subprocess.CalledProcessError as err:
+            # There could be a true error, but the working assumption when here is a previous version does not exist
+            print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
+            prev_lockfile_object = None
+
+        # Get the current lockfile packages
+        cmd = f"{self.cli_path} parse {self.lockfile}".split()
+        parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        parsed_pkgs = json.loads(parse_result)
+        curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+
+        # When no previous version exists, assume all packages in the lockfile are new
+        if not prev_lockfile_object:
+            print(" [+] No previous lockfile object found. Assuming all packages in the current lockfile are new.")
+            return curr_lockfile_packages
+
+        with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
+            cmd = f"git cat-file blob {prev_lockfile_object}".split()
+            prev_lockfile_contents = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+            prev_lockfile_fd.write(prev_lockfile_contents)
+            cmd = f"{self.cli_path} parse {prev_lockfile_fd.name}".split()
+            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+
+        parsed_pkgs = json.loads(parse_result)
+        prev_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+        prev_pkg_set = set(prev_lockfile_packages)
+        curr_pkg_set = set(curr_lockfile_packages)
+        new_deps = curr_pkg_set.difference(prev_pkg_set)
+        print(f" [+] New dependencies: {new_deps}")
+        return list(new_deps)
+
+    def post_output(self) -> None:
+        """Post the output of the analysis in the means appropriate for the CI environment."""
+        # This is a bit of a placeholder for now. The output works in that it is human readable.
+        # However, it is more meant for display on the web, as HTML and rendered Markdown.
+        print(f" [+] Analysis output:\n{self.analysis_output}")

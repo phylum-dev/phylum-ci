@@ -1,7 +1,12 @@
-"""Define an implementation for when called as a pre-commit hook.
+"""Define an implementation for when called as a Python pre-commit hook.
 
-This is the case when the `phylum-ci` command is run directly, from the CLI, but not within a CI environment.
-The command will be issued by the `pre-commit` tool and include extra arguments representing a list of staged files.
+This is the case when the `phylum-ci` command is run directly, from the CLI, but not within a CI environment. The
+command will be issued by the Python `pre-commit` tool and include extra arguments representing a list of staged files.
+
+References:
+  * https://pre-commit.com/index.html#creating-new-hooks
+  * https://pre-commit.com/index.html#pre-commit-during-commits
+  * https://pre-commit.com/index.html#arguments-pattern-in-hooks
 """
 import argparse
 import json
@@ -9,7 +14,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
@@ -24,7 +29,7 @@ class CIPreCommit(CIBase):
         self.ci_platform_name = "pre-commit"
         super().__init__(args)
 
-    def check_prerequisites(self) -> None:
+    def check_prerequisites(self) -> Any:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for operating within a pre-commit hook:
@@ -75,7 +80,7 @@ class CIPreCommit(CIBase):
             prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
-            print(f" [!] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
+            print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
             prev_lockfile_object = None
 
         # Get the current lockfile packages
@@ -101,5 +106,11 @@ class CIPreCommit(CIBase):
         prev_pkg_set = set(prev_lockfile_packages)
         curr_pkg_set = set(curr_lockfile_packages)
         new_deps = curr_pkg_set.difference(prev_pkg_set)
-        print(f"{new_deps=}")
+        print(f" [+] New dependencies: {new_deps}")
         return list(new_deps)
+
+    def post_output(self) -> None:
+        """Post the output of the analysis in the means appropriate for the CI environment."""
+        # TODO: Change this placeholder when the real Python pre-commit hook is ready.
+        #       https://github.com/phylum-dev/phylum-ci/issues/35
+        print(f" [+] Analysis output:\n{self.analysis_output}")

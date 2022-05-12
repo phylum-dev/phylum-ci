@@ -4,8 +4,6 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
-import shutil
-import subprocess
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from contextlib import contextmanager
@@ -16,47 +14,8 @@ from packaging.version import Version
 from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
 from phylum.ci.constants import FAILED_COMMENT, INCOMPLETE_COMMENT_TEMPLATE, SUCCESS_COMMENT
 from phylum.constants import SUPPORTED_LOCKFILES
-from phylum.init.cli import get_expected_phylum_bin_path
+from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-
-
-# TODO: Move this function to the `phylum.init` package?
-def get_phylum_cli_version(cli_path: Path) -> str:
-    """Get the version of the installed and active Phylum CLI and return it."""
-    cmd = f"{cli_path} --version"
-    version = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip().lower()
-
-    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-    prefix = "phylum "
-    prefix_len = len(prefix)
-    if version.startswith(prefix):
-        version = version[prefix_len:]
-
-    return version
-
-
-# TODO: Move this function to the `phylum.init` package?
-def get_phylum_bin_path(version: str = None) -> Tuple[Optional[Path], Optional[str]]:
-    """Get the current path and corresponding version to the Phylum CLI binary and return them.
-
-    Provide a CLI version as a fallback method for looking on an explicit path,
-    based on the expected path for that version.
-    """
-    # Look for `phylum` on the PATH first
-    which_cli_path = shutil.which("phylum")
-
-    if which_cli_path is None and version is not None:
-        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
-        # context. Look in the specific location expected by the provided version.
-        expected_cli_path = get_expected_phylum_bin_path(version)
-        which_cli_path = shutil.which("phylum", path=expected_cli_path)
-
-    if which_cli_path is None:
-        return (None, None)
-
-    cli_path = Path(which_cli_path)
-    cli_version = get_phylum_cli_version(cli_path)
-    return cli_path, cli_version
 
 
 def detect_lockfile() -> Optional[Path]:
@@ -84,22 +43,11 @@ class CIBase(ABC):
     @abstractmethod
     def __init__(self, args: Namespace) -> None:
         self.args = args
-
-        # The risk vector values returned by the analysis are normalized to (0.0, 1.0]. The option values are converted
-        # internally like this b/c it is more natural to ask users for input as an integer in the range of [0, 100).
-        # TODO: If these are only used in one place, consider removing them from here and converting in place instead.
-        self.vul = args.vul_threshold / 100
-        self.mal = args.mal_threshold / 100
-        self.eng = args.eng_threshold / 100
-        self.lic = args.lic_threshold / 100
-        self.aut = args.aut_threshold / 100
-
+        self._cli_path: Optional[Path] = None
         self.gbl_failed = False
         self.gbl_incomplete = False
         self.incomplete_pkgs: Packages = []
-        # self.previous_incomplete = False
-
-        self._cli_path: Optional[Path] = None
+        self._analysis_output = "No analysis output yet"
 
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
@@ -133,6 +81,11 @@ class CIBase(ABC):
         return self._cli_path
 
     @property
+    def analysis_output(self) -> str:
+        """Get the output from the overall analysis."""
+        return self._analysis_output
+
+    @property
     @abstractmethod
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`.
@@ -146,7 +99,7 @@ class CIBase(ABC):
 
     @contextmanager
     @abstractmethod
-    def check_prerequisites(self) -> Generator:
+    def check_prerequisites(self) -> Generator[None, None, None]:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
@@ -160,6 +113,7 @@ class CIBase(ABC):
             print(" [+] Existing `.phylum_project` file was found at the current working directory")
         else:
             # TODO: Consider using CI specific error reporting
+            #       https://github.com/phylum-dev/phylum-ci/issues/31
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
         if Version("v3.2.0") >= Version(self.args.version):
@@ -171,6 +125,10 @@ class CIBase(ABC):
     @abstractmethod
     def get_new_deps(self) -> Packages:
         """Get the new dependencies added to the lockfile and return them."""
+
+    @abstractmethod
+    def post_output(self) -> None:
+        """Post the output of the analysis in the means appropriate for the CI environment."""
 
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
@@ -190,7 +148,7 @@ class CIBase(ABC):
                     phylum_init(install_args)
                 else:
                     print(" [+] Attempting to use existing version ...")
-                    if Version("v3.2.0") >= Version(cli_version):
+                    if Version("v3.2.0") >= Version(str(cli_version)):
                         raise SystemExit(" [!] The existing CLI version must be greater than v3.2.0")
 
                     # TODO: Account for the case that the existing version does not already have a token in place. This
@@ -206,7 +164,7 @@ class CIBase(ABC):
         self._cli_path = cli_path
 
     def analyze(self, analysis: dict) -> ReturnCode:
-        """TODO."""
+        """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
         project_id = analysis.get("project")
         project_url = f"https://app.phylum.io/projects/{project_id}"
         print(f" [+] Project URL: {project_url}")
@@ -215,7 +173,6 @@ class CIBase(ABC):
             print(" [+] Only considering newly added dependencies ...")
             packages = self.get_new_deps()
             print(f" [+] {len(packages)} newly added dependencies")
-            print(f"\n packages:\n\n{packages}\n")
             risk_data = self.parse_risk_data(analysis, packages)
         else:
             print(" [+] Considering all current dependencies ...")
@@ -225,7 +182,6 @@ class CIBase(ABC):
 
         returncode = ReturnCode.SUCCESS
         output = ""
-        # Write output only if the analysis failed and all pkgvers are completed
         if self.gbl_failed and not self.gbl_incomplete:
             print(" [!] The analysis is complete and there were failures")
             returncode = ReturnCode.FAILURE
@@ -239,13 +195,12 @@ class CIBase(ABC):
             output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=len(self.incomplete_pkgs))
 
         if not self.gbl_failed and not self.gbl_incomplete:
-            print(" [+] The analysis is complete and there were no failures")
+            print(" [+] The analysis is complete and there were NO failures")
             returncode = ReturnCode.SUCCESS
             output = SUCCESS_COMMENT
 
         output += f"\n[View this project in the Phylum UI]({project_url})"
-        # TODO: Do something else with the output
-        print(f" [+] Output:\n{output}")
+        self._analysis_output = output
 
         return returncode
 
@@ -283,38 +238,40 @@ class CIBase(ABC):
         fail_string += "|Risk Domain|Identified Score|Requirement|\n"
         fail_string += "|-----------|----------------|-----------|\n"
 
+        # The risk vector values returned by the analysis are normalized to (0.0, 1.0]. The option values are converted
+        # internally like this b/c it is more natural to ask users for input as an integer in the range of [0, 100).
         pkg_vul = risk_vectors.get("vulnerability", 1.0)
-        pkg_mal = risk_vectors.get("malicious_code", 1.0)
-        pkg_eng = risk_vectors.get("engineering", 1.0)
-        pkg_lic = risk_vectors.get("license", 1.0)
-        pkg_aut = risk_vectors.get("author", 1.0)
-        if pkg_vul <= self.vul:
+        if pkg_vul <= self.args.vul_threshold / 100:
             failed_flag = True
             issue_flags.append("vulnerability")
-            fail_string += f"|Software Vulnerability|{pkg_vul*100}|{self.vul*100}|\n"
-        if pkg_mal <= self.mal:
+            fail_string += f"|Software Vulnerability|{pkg_vul*100}|{self.args.vul_threshold}|\n"
+        pkg_mal = risk_vectors.get("malicious_code", 1.0)
+        if pkg_mal <= self.args.mal_threshold / 100:
             failed_flag = True
             issue_flags.append("malicious_code")
-            fail_string += f"|Malicious Code|{pkg_mal*100}|{self.mal*100}|\n"
-        if pkg_eng <= self.eng:
+            fail_string += f"|Malicious Code|{pkg_mal*100}|{self.args.mal_threshold}|\n"
+        pkg_eng = risk_vectors.get("engineering", 1.0)
+        if pkg_eng <= self.args.eng_threshold / 100:
             failed_flag = True
             issue_flags.append("engineering")
-            fail_string += f"|Engineering|{pkg_eng*100}|{self.eng*100}|\n"
-        if pkg_lic <= self.lic:
+            fail_string += f"|Engineering|{pkg_eng*100}|{self.args.eng_threshold}|\n"
+        pkg_lic = risk_vectors.get("license", 1.0)
+        if pkg_lic <= self.args.lic_threshold / 100:
             failed_flag = True
             issue_flags.append("license")
-            fail_string += f"|License|{pkg_lic*100}|{self.lic*100}|\n"
-        if pkg_aut <= self.aut:
+            fail_string += f"|License|{pkg_lic*100}|{self.args.lic_threshold}|\n"
+        pkg_aut = risk_vectors.get("author", 1.0)
+        if pkg_aut <= self.args.aut_threshold / 100:
             failed_flag = True
             issue_flags.append("author")
-            fail_string += f"|Author|{pkg_aut*100}|{self.aut*100}|\n"
+            fail_string += f"|Author|{pkg_aut*100}|{self.args.aut_threshold}|\n"
 
         fail_string += "\n"
         fail_string += "#### Issues Summary\n"
         fail_string += "|Risk Domain|Risk Level|Title|\n"
         fail_string += "|-----------|----------|-----|\n"
 
-        issue_list = self.build_issues_list(package_result, issue_flags)
+        issue_list = build_issues_list(package_result, issue_flags)
         for risk_domain, risk_level, title in issue_list:
             fail_string += f"|{risk_domain}|{risk_level}|{title}|\n"
 
@@ -323,15 +280,16 @@ class CIBase(ABC):
             return fail_string
         return None
 
-    def build_issues_list(self, package_result: dict, issue_flags: List[str]) -> List[Tuple[str, str, str]]:
-        """TODO."""
-        issues = []
-        pkg_issues = package_result.get("issues", [])
-        for flag in issue_flags:
-            for pkg_issue in pkg_issues:
-                if flag == pkg_issue.get("risk_domain"):
-                    risk_domain = pkg_issue.get("risk_domain")
-                    risk_level = pkg_issue.get("risk_level")
-                    title = pkg_issue.get("title")
-                    issues.append((risk_domain, risk_level, title))
-        return issues
+
+def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[Tuple[str, str, str]]:
+    """Build a list of issues from a given package's result object and return it."""
+    issues = []
+    pkg_issues = package_result.get("issues", [])
+    for flag in issue_flags:
+        for pkg_issue in pkg_issues:
+            if flag == pkg_issue.get("risk_domain"):
+                risk_domain = pkg_issue.get("risk_domain")
+                risk_level = pkg_issue.get("risk_level")
+                title = pkg_issue.get("title")
+                issues.append((risk_domain, risk_level, title))
+    return issues

@@ -5,7 +5,7 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import List
+from typing import List, Optional, Sequence, Tuple
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -13,6 +13,7 @@ from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
+from phylum.common import CustomFormatter
 from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import version_check
 
@@ -26,11 +27,11 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
         print(" [+] CI environment detected: GitLab CI")
         ci_envs.append(CIGitLab(args))
 
-    # Detect pre-commit environment
+    # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least
     # an attempt, via a pre-requisite check, to ensure all the extra arguments are staged files.
     if remainder:
-        print(" [+] Extra arguments provided. Assuming a `pre-commit` working environment.")
+        print(" [+] Extra arguments provided. Assuming a Python `pre-commit` working environment.")
         ci_envs.append(CIPreCommit(args, remainder))
 
     if len(ci_envs) > 1:
@@ -57,11 +58,7 @@ def threshold_check(threshold_in: str) -> int:
     return threshold_out
 
 
-class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
-    """Custom argparse formatter to get both default arguments and help text line wrapping."""
-
-
-def get_args(args=None):
+def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, List[str]]:
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
@@ -69,8 +66,9 @@ def get_args(args=None):
         formatter_class=CustomFormatter,
     )
 
-    # TODO: Add arguments for each of the inputs from the `phylum-analyze-pr-action`.
-    #       Allow them to be specified as environment variables as well.
+    # TODO: Allow all arguments to be specified as environment variables as well,
+    #       to support both GitHub Actions and Gitlab CI (and maybe more).
+    #       https://github.com/phylum-dev/phylum-ci/issues/31
     parser.add_argument(
         "-r",
         "--phylum-release",
@@ -148,12 +146,16 @@ def get_args(args=None):
             existing code bases that may not meet established project risk thresholds yet, but don't want to make things
             worse.""",
     )
-    parser.add_argument("--version", action="version", version=f"{SCRIPT_NAME} {__version__}")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{SCRIPT_NAME} {__version__}",
+    )
 
     return parser.parse_known_args(args=args)
 
 
-def main(args=None):
+def main(args: Optional[Sequence[str]] = None) -> int:
     """Main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
 
@@ -162,31 +164,26 @@ def main(args=None):
 
     # Ensure all pre-requisites are met
     ci_env.check_prerequisites()
+    print(f" [+] lockfile in use: {ci_env.lockfile}")
 
-    # Determine lockfile type and report it.
-    if ci_env.lockfile:
-        print(f" [+] lockfile in use: {ci_env.lockfile}")
-    else:
-        print(" [+] No lockfile detected. Nothing to do.")
-        return 0
-
+    # Bail early if there are no changes to the lockfile
     if ci_env.is_lockfile_changed:
         print(" [+] The lockfile has changed. Proceeding with analysis ...")
     else:
         print(" [+] The lockfile has not changed. Nothing to do.")
         return 0
 
-    # Generate PHYLUM_LABEL and report it
+    # Generate a label to use for analysis and report it
     print(f" [+] phylum_label: {ci_env.phylum_label}")
 
     # Check for the existence of the CLI and install it if needed
     ci_env.init_cli()
 
-    # TODO: Analyze project lockfile with phylum CLI
+    # Analyze current project lockfile with phylum CLI
     print(" [*] Performing analysis ...")
     cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}"
     try:
-        analysis_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True)
+        analysis_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
         # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
         # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
@@ -195,36 +192,26 @@ def main(args=None):
         else:
             raise
     analysis = json.loads(analysis_result)
-    # print(f"analysis:\n\n{analysis}")
 
+    # Review analysis results to determine the overall state
     return_code = ci_env.analyze(analysis)
     print(f" [-] Return code: {return_code}")
 
-    # TODO: Replicate test matrix?
-
-    # TODO: Review analysis results to determine the overall state
-
-    # TODO: Compare added dependencies in PR to analysis results
-
-    # Skip this for now and just handle the CINone and/or pre-commit environments to start with
-    # HINTS: Look at `.git/hooks/pre-commit.sample` for an example
-    #   * Get the <object>
-    #     * git rev-parse --verify HEAD:poetry.lock
-    #   * Get the previous version with an <object>
-    #     * git cat-file blob <object>
-    #     * (maybe also `git show`)
-    #   * Use `phylum parse` to get a list of dicts that can be turned into PackageDescriptors
-    #   * make sets of the PackageDescriptors for the `current` and `previous`
-    #   * find the packages that are in `current` but not in `previous`
-    #     * current.difference(previous)
-
+    # Output the results of the analysis
     # TODO: Update the PR/MR with an appropriate comment.
-    #       This can be done conditionally based on the CI env, if any, we are in.
-    #       Not being in a CI env could be the case when run locally...and may be the basis for a good pre-commit hook.
     #       Look into the `python-gitlab` package.
+    #       https://github.com/phylum-dev/phylum-ci/issues/31
+    ci_env.post_output()
 
-    return 0
+    return return_code.value
+
+
+def script_main() -> None:
+    """Script entry point.
+
+    The only point of this function is to ensure the proper exit code is set when called from the script entry point."""
+    sys.exit(main())
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    script_main()
