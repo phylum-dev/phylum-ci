@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
@@ -40,23 +39,25 @@ class CINone(CIBase):
         self.ci_platform_name = "No CI"
         super().__init__(args)
 
-    def check_prerequisites(self) -> Any:
+    def check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for when no CI environments/platforms is detected:
           * Have `git` installed and available for use on the PATH
           * Run the script from the root of a git repository
         """
-        with super().check_prerequisites():
-            if shutil.which("git"):
-                print(" [+] `git` binary found on the PATH")
-            else:
-                raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
-            git_dir = Path.cwd() / ".git"
-            if git_dir.is_dir():
-                print(" [+] Existing `.git` directory was found at the current working directory")
-            else:
-                raise SystemExit(" [!] This script expects to be run from the top level of a `git` repository")
+        super().check_prerequisites()
+
+        if shutil.which("git"):
+            print(" [+] `git` binary found on the PATH")
+        else:
+            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+
+        git_dir = Path.cwd() / ".git"
+        if git_dir.is_dir():
+            print(" [+] Existing `.git` directory was found at the current working directory")
+        else:
+            raise SystemExit(" [!] This script expects to be run from the top level of a `git` repository")
 
     @property
     def phylum_label(self) -> str:
@@ -87,15 +88,14 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        cmd = f"git diff {remote}... -- {lockfile.resolve()}"
-        lockfile_diff = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout
-        return bool(len(lockfile_diff))
+        cmd = f"git diff --exit-code --quiet refs/remotes/{remote}/HEAD... -- {lockfile.resolve()}".split()
+        return bool(subprocess.run(cmd).returncode)
 
     def get_new_deps(self) -> Packages:
         """Get the new dependencies added to the lockfile and return them."""
         # Get the common ancestor
         remote = git_remote()
-        cmd = f"git merge-base --octopus HEAD {remote}".split()
+        cmd = f"git merge-base HEAD refs/remotes/{remote}/HEAD".split()
         common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         try:
             cmd = f"git rev-parse --verify {common_ancestor_commit}:{self.lockfile.name}".split()

@@ -6,9 +6,8 @@ designated as abstract methods to be defined in specific CI environments.
 """
 from abc import ABC, abstractmethod
 from argparse import Namespace
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from packaging.version import Version
 from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
@@ -102,9 +101,8 @@ class CIBase(ABC):
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed."""
 
-    @contextmanager
     @abstractmethod
-    def check_prerequisites(self) -> Generator[None, None, None]:
+    def check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
@@ -121,11 +119,8 @@ class CIBase(ABC):
             #       https://github.com/phylum-dev/phylum-ci/issues/31
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
-        if Version("v3.2.0") >= Version(self.args.version):
-            raise SystemExit(" [!] The CLI version must be greater than v3.2.0")
-
-        yield
-        print(" [+] All pre-requisites met")
+        if Version(self.args.version) < Version("v3.3.0-rc1"):
+            raise SystemExit(" [!] The CLI version must be at least v3.3.0-rc1")
 
     @abstractmethod
     def get_new_deps(self) -> Packages:

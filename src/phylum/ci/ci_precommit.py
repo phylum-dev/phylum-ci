@@ -14,7 +14,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
@@ -29,25 +29,26 @@ class CIPreCommit(CIBase):
         self.ci_platform_name = "pre-commit"
         super().__init__(args)
 
-    def check_prerequisites(self) -> Any:
+    def check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for operating within a pre-commit hook:
           * Have `git` installed and available for use on the PATH
           * The extra unparsed arguments passed to the CLI represent the staged files, no more and no less
         """
-        with super().check_prerequisites():
-            if shutil.which("git"):
-                print(" [+] `git` binary found on the PATH")
-            else:
-                raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+        super().check_prerequisites()
 
-            cmd = "git diff --cached --name-only".split()
-            staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
-            if sorted(staged_files) == sorted(self.extra_args):
-                print(" [+] The extra args provided exactly match the list of staged files")
-            else:
-                raise SystemExit(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
+        if shutil.which("git"):
+            print(" [+] `git` binary found on the PATH")
+        else:
+            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+
+        cmd = "git diff --cached --name-only".split()
+        staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
+        if sorted(staged_files) == sorted(self.extra_args):
+            print(" [+] The extra args provided exactly match the list of staged files")
+        else:
+            raise SystemExit(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
 
     @property
     def phylum_label(self) -> str:

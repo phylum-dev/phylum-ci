@@ -1,7 +1,6 @@
 """Define an implementation for the GitLab CI platform."""
 from argparse import Namespace
 from pathlib import Path
-from typing import Any
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.common import Packages
@@ -21,10 +20,10 @@ class CIGitLab(CIBase):
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         return "TO DO"
 
-    def check_prerequisites(self) -> Any:
+    def check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't."""
-        with super().check_prerequisites():
-            print("TO DO")
+        super().check_prerequisites()
+        print("TO DO")
 
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed."""

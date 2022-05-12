@@ -163,11 +163,12 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
-    # Ensure all pre-requisites are met
+    # Ensure all pre-requisites are met and bail when they aren't
     ci_env.check_prerequisites()
-    print(f" [+] lockfile in use: {ci_env.lockfile}")
+    print(" [+] All pre-requisites met")
 
     # Bail early if there are no changes to the lockfile
+    print(f" [+] lockfile in use: {ci_env.lockfile}")
     if ci_env.is_lockfile_changed:
         print(" [+] The lockfile has changed. Proceeding with analysis ...")
     else:
@@ -182,9 +183,9 @@ def main(args: Optional[Sequence[str]] = None) -> int:
 
     # Analyze current project lockfile with phylum CLI
     print(" [*] Performing analysis ...")
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}"
+    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}".split()
     try:
-        analysis_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
+        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
         # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
         # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
