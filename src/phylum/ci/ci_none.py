@@ -93,9 +93,12 @@ class CINone(CIBase):
 
     def get_new_deps(self) -> Packages:
         """Get the new dependencies added to the lockfile and return them."""
+        # Get the common ancestor
+        remote = git_remote()
+        cmd = f"git merge-base --octopus HEAD {remote}".split()
+        common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         try:
-            # LEFT OFF HERE
-            cmd = f"git rev-parse --verify HEAD:{self.lockfile.name}".split()
+            cmd = f"git rev-parse --verify {common_ancestor_commit}:{self.lockfile.name}".split()
             prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist

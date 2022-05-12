@@ -183,6 +183,7 @@ class CIBase(ABC):
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
             packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
+            print(f" [+] {len(packages)} current dependencies")
             risk_data = self.parse_risk_data(analysis, packages)
 
         returncode = ReturnCode.SUCCESS
