@@ -190,7 +190,7 @@ def process_token_option(args):
     """Process the token option as parsed from the arguments."""
     phylum_settings_path = get_phylum_settings_path(args.version)
 
-    # The option takes precedence over the matching environment variable.
+    # The token option takes precedence over the Phylum API key environment variable.
     token = os.getenv(TOKEN_ENVVAR_NAME)
     if args.token is not None:
         token = args.token

@@ -15,8 +15,8 @@ from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
 from phylum.common import CustomFormatter
-from phylum.constants import TOKEN_ENVVAR_NAME
-from phylum.init.cli import version_check
+from phylum.constants import SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
+from phylum.init.cli import get_target_triple, version_check
 
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
@@ -78,6 +78,13 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         type=version_check,
         help="""The version of the Phylum CLI to install, when one is not already installed. Can be specified as
             `latest` or a specific tagged release, with or without the leading `v`.""",
+    )
+    parser.add_argument(
+        "-t",
+        "--target",
+        choices=SUPPORTED_TARGET_TRIPLES,
+        default=get_target_triple(),
+        help="The target platform type where the CLI will be installed.",
     )
     parser.add_argument(
         "-f",

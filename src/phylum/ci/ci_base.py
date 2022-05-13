@@ -4,6 +4,8 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
+import os
+import subprocess
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
@@ -17,7 +19,7 @@ from phylum.ci.constants import (
     INCOMPLETE_COMMENT_TEMPLATE,
     SUCCESS_COMMENT,
 )
-from phylum.constants import SUPPORTED_LOCKFILES
+from phylum.constants import SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
 
@@ -52,6 +54,13 @@ class CIBase(ABC):
         self.gbl_incomplete = False
         self.incomplete_pkgs: Packages = []
         self._analysis_output = "No analysis output yet"
+
+        # The token option takes precedence over the Phylum API key environment variable.
+        token = os.getenv(TOKEN_ENVVAR_NAME)
+        if args.token is not None:
+            token = args.token
+            os.environ[TOKEN_ENVVAR_NAME] = args.token
+        self.args.token = token
 
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
@@ -133,10 +142,16 @@ class CIBase(ABC):
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
         specified_version = self.args.version
+        # fmt: off
+        install_args = [
+            "--phylum-release", specified_version,
+            "--target", self.args.target,
+            "--phylum-token", self.args.token,
+        ]
+        # fmt: on
         cli_path, cli_version = get_phylum_bin_path(version=specified_version)
         if cli_path is None:
             print(f" [+] Existing Phylum CLI instance not found. Installing version `{specified_version}` ...")
-            install_args = ["--phylum-release", specified_version, "--phylum-token", self.args.token]
             phylum_init(install_args)
         else:
             print(f" [+] Existing Phylum CLI instance found: {cli_version} at {cli_path}")
@@ -144,24 +159,23 @@ class CIBase(ABC):
                 print(f" [+] Existing version {cli_version} does not match the specified version {specified_version}")
                 if self.args.force_install:
                     print(f" [*] Installing Phylum CLI version {specified_version} ...")
-                    install_args = ["--phylum-release", specified_version, "--phylum-token", self.args.token]
                     phylum_init(install_args)
                 else:
                     print(" [+] Attempting to use existing version ...")
-                    if Version("v3.2.0") >= Version(str(cli_version)):
+                    if Version(str(cli_version)) < Version("v3.2.0"):
                         raise SystemExit(" [!] The existing CLI version must be greater than v3.2.0")
-
-                    # TODO: Account for the case that the existing version does not already have a token in place. This
-                    #       could be the case if the Docker image is built with a known good/compatible CLI version but
-                    #       without a token so that any user can use the image with their own supplied token.
-                    #       https://github.com/phylum-dev/phylum-ci/issues/32
-
                     print(" [+] Version checks succeeded. Using existing version.")
 
         cli_path, cli_version = get_phylum_bin_path(version=specified_version)
         print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
 
         self._cli_path = cli_path
+
+        # Exit condition: a Phylum API key should be in place or available at this point.
+        # Ensure `capture_output` is used for the subprocess, to keep the token from being printed in (CI log) output
+        cmd = f"{cli_path} auth token".split()
+        if bool(subprocess.run(cmd, capture_output=True).returncode):
+            raise SystemExit(" [!] A Phylum API key is required to continue.")
 
     def analyze(self, analysis: dict) -> ReturnCode:
         """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
