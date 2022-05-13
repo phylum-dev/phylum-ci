@@ -123,6 +123,12 @@ jobs:
           --pip-args="--extra-index-url=https://pypi.org/simple/"
           phylum-init -h
 
+          pipx run
+          --index-url https://test.pypi.org/simple/
+          --spec "phylum==${{ env.phylum_release_version }}"
+          --pip-args="--extra-index-url=https://pypi.org/simple/"
+          phylum-ci -h
+
       # This step is needed b/c otherwise the Python Semantic Release `publish` cmd would bump the version a 2nd time.
       - name: Revert to original version
         run: poetry version ${{ env.phylum_original_version }}
@@ -140,3 +146,14 @@ jobs:
             poetry run semantic-release publish -v DEBUG
           fi
           echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_release_version }}/"
+
+      - name: Build and push docker images
+        run: |
+          docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          docker build --file Dockerfile.ci --tag phylumio/phylum-ci:latest .
+          docker tag phylumio/phylum-ci:latest phylumio/phylum-ci:${{ env.phylum_release_version }}
+          docker push --all-tags phylumio/phylum-ci
+
+      - name: Logout of Docker Hub
+        if: always()
+        run: docker logout

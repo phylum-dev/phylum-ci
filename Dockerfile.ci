@@ -1,15 +1,19 @@
-# This Dockerfile can be used to build the project's package within the image it creates.
+# This Dockerfile is meant to be used in CI, as part of the release pipeline.
+# The goal is to ensure that the exact Python package that was built and released
+# is the one that is installed while creating this image. Prerequisites are:
+#   * The package has already been built (e.g., `poetry build -vvv`)
+#   * There is only one wheel built and put in the `dist` directory
 
 FROM python:3.10-slim AS builder
 
-RUN mkdir /src
-COPY . /src/
+RUN mkdir /dist
+COPY dist/phylum*.whl /dist
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && apt update \
     # Install build tools to compile dependencies that don't have prebuilt wheels
     && apt install -y git build-essential \
-    && cd /src \
-    && pip install --user --no-cache-dir .
+    && cd /dist \
+    && pip install --user --no-cache-dir phylum*.whl
 
 FROM python:3.10-slim
 
