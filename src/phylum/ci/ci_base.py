@@ -128,7 +128,9 @@ class CIBase(ABC):
             #       https://github.com/phylum-dev/phylum-ci/issues/31
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
-        if Version(self.args.version) < Version("v3.3.0"):
+        # The `parse` command was available in the pre-releases, but it makes the
+        # error message cleaner to only mention the release version.
+        if Version(self.args.version) < Version("v3.3.0-rc1"):
             raise SystemExit(" [!] The CLI version must be at least v3.3.0")
 
     @abstractmethod
@@ -172,9 +174,10 @@ class CIBase(ABC):
         self._cli_path = cli_path
 
         # Exit condition: a Phylum API key should be in place or available at this point.
-        # Ensure `capture_output` is used for the subprocess, to keep the token from being printed in (CI log) output
+        # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
         cmd = f"{cli_path} auth token".split()
-        if bool(subprocess.run(cmd, capture_output=True).returncode):
+        # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
+        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
             raise SystemExit(" [!] A Phylum API key is required to continue.")
 
     def analyze(self, analysis: dict) -> ReturnCode:

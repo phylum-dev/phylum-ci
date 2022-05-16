@@ -15,7 +15,7 @@
 # $ export PKG_NAME=phylum-*.whl
 # $ docker build --tag phylumio/phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
 
-FROM python:3.10-slim AS builder
+FROM amd64/python:3.10-slim AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
 # distribution/wheel. Both can optionally be specified in glob form. When not defined,
@@ -31,7 +31,7 @@ RUN apt update \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --user --no-cache-dir ${PKG_NAME:-.}
 
-FROM python:3.10-slim
+FROM amd64/python:3.10-slim
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 
 # copy only Python packages to limit the image size
@@ -44,10 +44,7 @@ RUN apt update \
     && apt clean \
     && apt purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives \
-    # NOTE: The target option is required here b/c this image returns a self
-    #       reported platform triple of `aarch64-unknown-linux-musl`, which is
-    #       not supported. However, `x86_64-unknown-linux-musl` does appear to work.
-    && phylum-init --target x86_64-unknown-linux-musl
+    && phylum-init
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["phylum-ci"]

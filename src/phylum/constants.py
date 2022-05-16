@@ -18,8 +18,9 @@ SUPPORTED_TARGET_TRIPLES = (
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
 SUPPORTED_ARCHES = {
-    "arm64": "aarch64",
     "aarch64": "aarch64",
+    "arm64": "aarch64",
+    "x86_64": "x86_64",
     "amd64": "x86_64",
 }
 # Keys are lowercase operating system name as returned from `uname -s`.
