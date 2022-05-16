@@ -49,6 +49,27 @@ python -m phylum.init -h
 python -m phylum.ci -h
 ```
 
+The functionality is also exposed in the form of a Docker image:
+
+```sh
+# Get the `latest` tagged image
+docker pull phylumio/phylum-ci
+
+# View the help
+docker run -it --rm phylumio/phylum-ci "phylum-ci --help"
+
+# Export a Phylum token (e.g., from `phylum auth token`)
+export PHYLUM_API_KEY=$(phylum auth token)
+
+# Run it from a git repo directory containing a `.phylum_project` and a lockfile
+docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=`pwd`,dst=/phylum -w /phylum phylumio/phylum-ci
+```
+
+The Docker image contains `git` and the installed `phylum` Python package.
+It also contains an installed version of the Phylum CLI. The version of the Phylum CLI is the `latest` at the time of
+the Docker image creation. An advantage of using the Docker image is that the complete environment is packaged and made
+available with components that are known to work together.
+
 #### `phylum-init` Script Entry Point
 
 The `phylum-init` script can be used to fetch and install the Phylum CLI.
