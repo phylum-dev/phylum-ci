@@ -147,12 +147,23 @@ jobs:
           fi
           echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_release_version }}/"
 
-      - name: Build and push docker images
+      - name: Build docker image
         run: |
           export PKG_SRC=dist/phylum-*.whl
           export PKG_NAME=phylum-*.whl
           docker build --tag phylumio/phylum-ci:latest --build-arg PKG_SRC --build-arg PKG_NAME .
           docker tag phylumio/phylum-ci:latest phylumio/phylum-ci:${{ env.phylum_release_version }}
+
+      - name: Test docker image with pre-built distributions
+        run: |
+          docker run --rm phylumio/phylum-ci:latest "git --version"
+          docker run --rm phylumio/phylum-ci:latest "phylum-ci --version"
+          docker run --rm phylumio/phylum-ci:latest "phylum-ci --help"
+          docker run --rm phylumio/phylum-ci:latest "phylum-init --help"
+          docker run --rm phylumio/phylum-ci:latest "phylum --help"
+
+      - name: Push docker image
+        run: |
           docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           docker push --all-tags phylumio/phylum-ci
 
