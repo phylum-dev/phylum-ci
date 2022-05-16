@@ -1,26 +1,50 @@
 # This Dockerfile can be used to build the project's package within the image it creates.
+# To do so, simply build the image WITHOUT any build args specified (e.g., `--build-arg`):
+#
+# $ docker build --tag phylumio/phylum-ci .
+#
+# This Dockerfile can also be used in CI, as part of the release pipeline.
+# The goal there is to ensure that the exact Python package that was built and
+# released is the one that is installed while creating this image. Prerequisites are:
+#   * The package has already been built (e.g., `poetry build -vvv`)
+#   * There is only one wheel built and put in the `dist` directory
+#
+# To make use of this feature, build the image WITH build args specified:
+#
+# $ export PKG_SRC=dist/phylum-*.whl
+# $ export PKG_NAME=phylum-*.whl
+# $ docker build --tag phylumio/phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
 
 FROM python:3.10-slim AS builder
 
+# PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
+# distribution/wheel. Both can optionally be specified in glob form. When not defined,
+# the values will default to the root of the package (i.e., `pyproject.toml` path).
+ARG PKG_SRC
+ARG PKG_NAME
 RUN mkdir /src
-COPY . /src/
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && apt update \
+COPY "${PKG_SRC:-.}" /src/
+RUN apt update \
+    && apt upgrade -y \
     # Install build tools to compile dependencies that don't have prebuilt wheels
     && apt install -y git build-essential \
     && cd /src \
-    && pip install --user --no-cache-dir .
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --user --no-cache-dir ${PKG_NAME:-.}
 
 FROM python:3.10-slim
+LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 
 # copy only Python packages to limit the image size
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 
 RUN apt update \
+    && apt upgrade -y \
     && apt install -y git \
     && apt clean \
-    && rm -rf /var/lib/apt/lists/* \
+    && apt purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives \
     # TODO: Remove the specific phylum release here to get the `latest` release.
     #       It is required for now, until at least CLI v3.3.0 is released.
     # NOTE: The target option is required here b/c this image returns a self

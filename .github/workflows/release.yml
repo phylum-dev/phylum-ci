@@ -149,9 +149,11 @@ jobs:
 
       - name: Build and push docker images
         run: |
-          docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          docker build --file Dockerfile.ci --tag phylumio/phylum-ci:latest .
+          export PKG_SRC=dist/phylum-*.whl
+          export PKG_NAME=phylum-*.whl
+          docker build --tag phylumio/phylum-ci:latest --build-arg PKG_SRC --build-arg PKG_NAME .
           docker tag phylumio/phylum-ci:latest phylumio/phylum-ci:${{ env.phylum_release_version }}
+          docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           docker push --all-tags phylumio/phylum-ci
 
       - name: Logout of Docker Hub
