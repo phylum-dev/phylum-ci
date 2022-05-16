@@ -15,13 +15,14 @@
 # $ export PKG_NAME=phylum-*.whl
 # $ docker build --tag phylumio/phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
 
-FROM amd64/python:3.10-slim AS builder
+FROM --platform=linux/amd64 python:3.10-slim AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
 # distribution/wheel. Both can optionally be specified in glob form. When not defined,
 # the values will default to the root of the package (i.e., `pyproject.toml` path).
 ARG PKG_SRC
 ARG PKG_NAME
+
 WORKDIR /app
 COPY "${PKG_SRC:-.}" .
 RUN apt update \
@@ -31,13 +32,12 @@ RUN apt update \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --user --no-cache-dir ${PKG_NAME:-.}
 
-FROM amd64/python:3.10-slim
-LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
+FROM --platform=linux/amd64 python:3.10-slim
 
+LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 # copy only Python packages to limit the image size
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
-
 RUN apt update \
     && apt upgrade -y \
     && apt install -y git \
