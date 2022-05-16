@@ -128,8 +128,8 @@ class CIBase(ABC):
             #       https://github.com/phylum-dev/phylum-ci/issues/31
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
-        if Version(self.args.version) < Version("v3.3.0-rc1"):
-            raise SystemExit(" [!] The CLI version must be at least v3.3.0-rc1")
+        if Version(self.args.version) < Version("v3.3.0"):
+            raise SystemExit(" [!] The CLI version must be at least v3.3.0")
 
     @abstractmethod
     def get_new_deps(self) -> Packages:
