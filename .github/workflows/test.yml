@@ -111,11 +111,11 @@ jobs:
 
       - name: Test docker image built from source
         run: |
-          docker run --rm phylum-ci:from-src "git --version"
-          docker run --rm phylum-ci:from-src "phylum-ci --version"
-          docker run --rm phylum-ci:from-src "phylum-ci --help"
-          docker run --rm phylum-ci:from-src "phylum-init --help"
-          docker run --rm phylum-ci:from-src "phylum --help"
+          docker run --rm phylum-ci:from-src git --version
+          docker run --rm phylum-ci:from-src phylum-ci --version
+          docker run --rm phylum-ci:from-src phylum-ci --help
+          docker run --rm phylum-ci:from-src phylum-init --help
+          docker run --rm phylum-ci:from-src phylum --help
 
       - name: Build wheel and source distribution
         run: poetry build -vvv
@@ -128,8 +128,8 @@ jobs:
 
       - name: Test docker image built from dist
         run: |
-          docker run --rm phylum-ci:from-dist "git --version"
-          docker run --rm phylum-ci:from-dist "phylum-ci --version"
-          docker run --rm phylum-ci:from-dist "phylum-ci --help"
-          docker run --rm phylum-ci:from-dist "phylum-init --help"
-          docker run --rm phylum-ci:from-dist "phylum --help"
+          docker run --rm phylum-ci:from-dist git --version
+          docker run --rm phylum-ci:from-dist phylum-ci --version
+          docker run --rm phylum-ci:from-dist phylum-ci --help
+          docker run --rm phylum-ci:from-dist phylum-init --help
+          docker run --rm phylum-ci:from-dist phylum --help
