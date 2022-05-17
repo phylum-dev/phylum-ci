@@ -15,6 +15,7 @@
 # $ export PKG_NAME=phylum-*.whl
 # $ docker build --tag phylumio/phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
 
+# Explicitly specify a platform that is supported by `phylum-init`
 FROM --platform=linux/amd64 python:3.10-slim AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
@@ -32,6 +33,7 @@ RUN apt update \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --user --no-cache-dir ${PKG_NAME:-.}
 
+# Explicitly specify a platform that is supported by `phylum-init`
 FROM --platform=linux/amd64 python:3.10-slim
 
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
@@ -46,5 +48,4 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives \
     && phylum-init
 
-ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["phylum-ci"]
