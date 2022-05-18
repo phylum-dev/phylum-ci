@@ -68,3 +68,68 @@ jobs:
         if: needs.test-matrix.result == 'success'
         shell: bash
         run: echo "All jobs in the test matrix were successful"
+
+  # This job is meant to be a sanity check on the Docker image...that it can be created and
+  # have the script entry points called without error.
+  docker:
+    name: Docker smoke test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
+        python-version: ["3.10"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      # TODO: Use a "CI" group to ensure only the dependencies needed for running in the CI environment are installed.
+      #       This should be possible when Poetry 1.2 is available, using the groups feature:
+      #       https://github.com/python-poetry/poetry/issues/1644
+      #       https://github.com/phylum-dev/phylum-ci/issues/15
+      - name: Install the project with poetry
+        run: |
+          poetry env use python${{ matrix.python-version }}
+          poetry install --verbose --no-root
+
+      - name: Build docker image from source
+        run: docker build --tag phylum-ci:from-src .
+
+      - name: Test docker image built from source
+        run: |
+          docker run --rm phylum-ci:from-src git --version
+          docker run --rm phylum-ci:from-src phylum-ci --version
+          docker run --rm phylum-ci:from-src phylum-ci --help
+          docker run --rm phylum-ci:from-src phylum-init --help
+          docker run --rm phylum-ci:from-src phylum --help
+
+      - name: Build wheel and source distribution
+        run: poetry build -vvv
+
+      - name: Build docker image with pre-built distributions
+        run: |
+          export PKG_SRC=dist/phylum-*.whl
+          export PKG_NAME=phylum-*.whl
+          docker build --tag phylum-ci:from-dist --build-arg PKG_SRC --build-arg PKG_NAME .
+
+      - name: Test docker image built from dist
+        run: |
+          docker run --rm phylum-ci:from-dist git --version
+          docker run --rm phylum-ci:from-dist phylum-ci --version
+          docker run --rm phylum-ci:from-dist phylum-ci --help
+          docker run --rm phylum-ci:from-dist phylum-init --help
+          docker run --rm phylum-ci:from-dist phylum --help

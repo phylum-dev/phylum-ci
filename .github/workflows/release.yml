@@ -123,6 +123,12 @@ jobs:
           --pip-args="--extra-index-url=https://pypi.org/simple/"
           phylum-init -h
 
+          pipx run
+          --index-url https://test.pypi.org/simple/
+          --spec "phylum==${{ env.phylum_release_version }}"
+          --pip-args="--extra-index-url=https://pypi.org/simple/"
+          phylum-ci -h
+
       # This step is needed b/c otherwise the Python Semantic Release `publish` cmd would bump the version a 2nd time.
       - name: Revert to original version
         run: poetry version ${{ env.phylum_original_version }}
@@ -140,3 +146,29 @@ jobs:
             poetry run semantic-release publish -v DEBUG
           fi
           echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_release_version }}/"
+
+      - name: Build docker image
+        run: |
+          export PKG_SRC=dist/phylum-*.whl
+          export PKG_NAME=phylum-*.whl
+          docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
+          docker tag phylum-ci phylumio/phylum-ci:latest
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_release_version }}
+
+      - name: Test docker image with pre-built distributions
+        run: |
+          docker run --rm phylumio/phylum-ci:latest git --version
+          docker run --rm phylumio/phylum-ci:latest phylum-ci --version
+          docker run --rm phylumio/phylum-ci:latest phylum-ci --help
+          docker run --rm phylumio/phylum-ci:latest phylum-init --help
+          docker run --rm phylumio/phylum-ci:latest phylum --help
+
+      - name: Push docker image
+        run: |
+          docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          docker push phylumio/phylum-ci:${{ env.phylum_release_version }}
+          docker push phylumio/phylum-ci:latest
+
+      - name: Logout of Docker Hub
+        if: always()
+        run: docker logout

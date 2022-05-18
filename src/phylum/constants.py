@@ -18,7 +18,9 @@ SUPPORTED_TARGET_TRIPLES = (
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
 SUPPORTED_ARCHES = {
+    "aarch64": "aarch64",
     "arm64": "aarch64",
+    "x86_64": "x86_64",
     "amd64": "x86_64",
 }
 # Keys are lowercase operating system name as returned from `uname -s`.
@@ -31,8 +33,7 @@ SUPPORTED_PLATFORMS = {
 # Environment variable name to hold the Phylum CLI token used to access the backend API.
 # The API token can also be set via the environment variable `PHYLUM_API_KEY`, which will take precedence over
 # the `offline_access` parameter in the `settings.yaml` file.
-# TODO: Change this to `PHYLUM_API_KEY` or otherwise account for both tokens?
-TOKEN_ENVVAR_NAME = "PHYLUM_TOKEN"
+TOKEN_ENVVAR_NAME = "PHYLUM_API_KEY"
 
 # These are the currently supported lockfiles.
 # Keys are the standard lockfile filename, optionally specified with glob syntax.
