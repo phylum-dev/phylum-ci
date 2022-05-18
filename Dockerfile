@@ -1,7 +1,7 @@
 # This Dockerfile can be used to build the project's package within the image it creates.
 # To do so, simply build the image WITHOUT any build args specified (e.g., `--build-arg`):
 #
-# $ docker build --tag phylumio/phylum-ci .
+# $ docker build --tag phylum-ci .
 #
 # This Dockerfile can also be used in CI, as part of the release pipeline.
 # The goal there is to ensure that the exact Python package that was built and
@@ -13,7 +13,7 @@
 #
 # $ export PKG_SRC=dist/phylum-*.whl
 # $ export PKG_NAME=phylum-*.whl
-# $ docker build --tag phylumio/phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
+# $ docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
 
 # Explicitly specify a platform that is supported by `phylum-init`
 FROM --platform=linux/amd64 python:3.10-slim AS builder
