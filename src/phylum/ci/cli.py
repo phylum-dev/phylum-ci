@@ -9,7 +9,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
-from phylum.ci.ci_base import CIBase
+from phylum.ci.ci_base import CIBase, CIEnvs
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
@@ -21,7 +21,7 @@ from phylum.init.cli import get_target_triple, version_check
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
     """Detect CI platform via known CI-based environment variables."""
-    ci_envs: List[CIBase] = []
+    ci_envs: CIEnvs = []
 
     # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":

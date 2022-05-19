@@ -426,6 +426,10 @@ class CIBase(ABC):
         return None
 
 
+# Type alias
+CIEnvs = List[CIBase]
+
+
 def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[Tuple[str, str, str]]:
     """Build a list of issues from a given package's result object and return it."""
     issues = []

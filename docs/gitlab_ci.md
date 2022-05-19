@@ -13,7 +13,7 @@ thresholds for any of the five Phylum risk domains:
 * License (aka `lic`)
 * Author (aka `aut`)
 
-See [Phylum Risk Domains documenation](https://docs.phylum.io/docs/phylum-package-score#risk-domains) for more detail.
+See [Phylum Risk Domains documentation](https://docs.phylum.io/docs/phylum-package-score#risk-domains) for more detail.
 
 There will be no note if no dependencies were added or modified for a given MR.
 If one or more dependencies are still processing (no results available), then the note will make that clear and the CI
@@ -32,8 +32,8 @@ The pre-requisites for using this image are:
     * See also [`phylum auth register`](https://docs.phylum.io/docs/phylum_auth_register) command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
-  * That usually means a connection to the internet
-  * Support for proxies or on-premises installs are not available at this time
+  * That usually means a connection to the internet, optionally via a proxy
+  * Support for on-premises installs are not available at this time
 * A `.phylum_project` file exists at the root of the repository
   * See [`phylum project`](https://docs.phylum.io/docs/phylum_project) and
     [`phylum project create`](https://docs.phylum.io/docs/phylum_project_create) command documentation
