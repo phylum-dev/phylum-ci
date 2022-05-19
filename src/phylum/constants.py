@@ -33,7 +33,7 @@ SUPPORTED_PLATFORMS = {
 # Environment variable name to hold the Phylum CLI token used to access the backend API.
 # The API token can also be set via the environment variable `PHYLUM_API_KEY`, which will take precedence over
 # the `offline_access` parameter in the `settings.yaml` file.
-TOKEN_ENVVAR_NAME = "PHYLUM_API_KEY"
+TOKEN_ENVVAR_NAME = "PHYLUM_API_KEY"  # nosec ; this is NOT a hard-coded password
 
 # These are the currently supported lockfiles.
 # Keys are the standard lockfile filename, optionally specified with glob syntax.
@@ -55,3 +55,7 @@ SUPPORTED_LOCKFILES = {
     "pom.xml": "mvn",
     "gradle.lockfile": "gradle",
 }
+
+# Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
+# Reference: https://2.python-requests.org/en/master/user/quickstart/#timeouts
+REQ_TIMEOUT: float = 5.0

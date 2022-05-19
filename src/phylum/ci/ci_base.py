@@ -4,8 +4,11 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
+import json
 import os
+import shutil
 import subprocess
+import tempfile
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
@@ -33,6 +36,7 @@ def detect_lockfile() -> Optional[Path]:
     """
     cwd = Path.cwd()
     lockfiles_in_cwd = [path.resolve() for lockfile_glob in SUPPORTED_LOCKFILES for path in cwd.glob(lockfile_glob)]
+    lockfiles_in_cwd = [path for path in lockfiles_in_cwd if path.stat().st_size]
     if not lockfiles_in_cwd:
         return None
     if len(lockfiles_in_cwd) > 1:
@@ -48,12 +52,24 @@ class CIBase(ABC):
 
     @abstractmethod
     def __init__(self, args: Namespace) -> None:
+        """Initialize the base class object.
+
+        Each child class is expected to at least:
+          * define `self.ci_platform_name`
+          * call `super().__init__(args)`
+        """
         self.args = args
+
+        # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
+        self._check_prerequisites()
+        print(" [+] All pre-requisites met")
+
         self._cli_path: Optional[Path] = None
         self.gbl_failed = False
         self.gbl_incomplete = False
         self.incomplete_pkgs: Packages = []
         self._analysis_output = "No analysis output yet"
+        self.ci_platform_name = "Unknown"
 
         # The token option takes precedence over the Phylum API key environment variable.
         token = os.getenv(TOKEN_ENVVAR_NAME)
@@ -65,7 +81,7 @@ class CIBase(ABC):
         # The lockfile specified as a script argument will be used, if provided.
         # Otherwise, an attempt will be made to automatically detect the lockfile.
         provided_lockfile: Path = args.lockfile
-        if provided_lockfile and provided_lockfile.exists():
+        if provided_lockfile and provided_lockfile.exists() and provided_lockfile.stat().st_size:
             self._lockfile = provided_lockfile.resolve()
         else:
             detected_lockfile = detect_lockfile()
@@ -105,18 +121,31 @@ class CIBase(ABC):
 
         Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
         """
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def common_lockfile_ancestor_commit(self) -> Optional[str]:
+        """Find the common lockfile ancestor commit.
+
+        When found, it should be returned as a string of the SHA1 sum representing the commit.
+        When it can't be found (or there is an error), `None` should be returned.
+        """
+        raise NotImplementedError()
 
     @abstractmethod
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed."""
+        raise NotImplementedError()
 
     @abstractmethod
-    def check_prerequisites(self) -> None:
+    def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
           * A `.phylum_project` file exists at the working directory
-          * Phylum CLI v3.3.0+, to make use of the `parse` subcommand
+          * Phylum CLI v3.3.0+, to make use of the `parse` command
+          * Have `git` installed and available for use on the PATH
         """
         print(" [+] Confirming pre-requisites ...")
 
@@ -124,8 +153,6 @@ class CIBase(ABC):
         if phylum_project_file.exists():
             print(" [+] Existing `.phylum_project` file was found at the current working directory")
         else:
-            # TODO: Consider using CI specific error reporting
-            #       https://github.com/phylum-dev/phylum-ci/issues/31
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
         # The `parse` command was available in the pre-releases, but it makes the
@@ -133,13 +160,104 @@ class CIBase(ABC):
         if Version(self.args.version) < Version("v3.3.0-rc1"):
             raise SystemExit(" [!] The CLI version must be at least v3.3.0")
 
-    @abstractmethod
-    def get_new_deps(self) -> Packages:
-        """Get the new dependencies added to the lockfile and return them."""
+        if shutil.which("git"):
+            print(" [+] `git` binary found on the PATH")
+        else:
+            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
 
     @abstractmethod
     def post_output(self) -> None:
         """Post the output of the analysis in the means appropriate for the CI environment."""
+        raise NotImplementedError()
+
+    # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
+    #       https://github.com/phylum-dev/phylum-ci/issues/18
+    @property
+    def current_lockfile_packages(self) -> Packages:
+        """Get the current lockfile packages.
+
+        This property expects the Phylum CLI path to be known and will raise `SystemExit` when that path is unknown.
+        """
+        if not self.cli_path:
+            raise SystemExit(" [!] Phylum CLI path is unknown. Try using the `init_cli` method first.")
+        try:
+            cmd = f"{self.cli_path} parse {self.lockfile}".split()
+            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        except subprocess.CalledProcessError as err:
+            print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
+            print(f" [!] stderr:\n{err.stderr}")
+            raise SystemExit(f" [!] Is {self.lockfile} valid? If so, please report this as a bug.") from err
+        parsed_pkgs = json.loads(parse_result)
+        curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+        return curr_lockfile_packages
+
+    @property
+    def previous_lockfile_object(self) -> Optional[str]:
+        """Get the previous git object for the lockfile."""
+        if not self.common_lockfile_ancestor_commit:
+            return None
+        try:
+            cmd_line = f"git rev-parse --verify {self.common_lockfile_ancestor_commit}:{self.lockfile.name}".split()
+            prev_lockfile_object = subprocess.run(cmd_line, check=True, capture_output=True, text=True).stdout.strip()
+        except subprocess.CalledProcessError as err:
+            # There could be a true error, but the working assumption when here is a previous version does not exist
+            print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
+            print(f" [?] stderr: {err.stderr}")
+            print(" [+] Assuming a previous lockfile version does not exist ...")
+            prev_lockfile_object = None
+        return prev_lockfile_object
+
+    def get_previous_lockfile_packages(self, prev_lockfile_object: str) -> Packages:
+        """Get the previous lockfile packages from the corresponding git object and return them.
+
+        Expects the Phylum CLI path to be known and will raise `SystemExit` when that path is unknown.
+        """
+        if not self.cli_path:
+            raise SystemExit(" [!] Phylum CLI path is unknown. Try using the `init_cli` method first.")
+
+        with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
+            try:
+                cmd = f"git cat-file blob {prev_lockfile_object}"
+                prev_lockfile_contents = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
+                prev_lockfile_fd.write(prev_lockfile_contents)
+                prev_lockfile_fd.flush()
+            except subprocess.CalledProcessError as err:
+                print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
+                print(f" [!] stdout:\n{err.stdout}")
+                print(f" [!] stderr:\n{err.stderr}")
+                print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
+                return []
+            try:
+                cmd = f"{self.cli_path} parse {prev_lockfile_fd.name}"
+                parse_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip()
+            except subprocess.CalledProcessError as err:
+                print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
+                print(f" [!] stdout:\n{err.stdout}")
+                print(f" [!] stderr:\n{err.stderr}")
+                print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
+                return []
+
+        parsed_pkgs = json.loads(parse_result)
+        prev_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+        return prev_lockfile_packages
+
+    def get_new_deps(self) -> Packages:
+        """Get the new dependencies added to the lockfile and return them."""
+        curr_lockfile_packages = self.current_lockfile_packages
+
+        prev_lockfile_object = self.previous_lockfile_object
+        if not prev_lockfile_object:
+            print(" [+] No previous lockfile object found. Assuming all packages in the current lockfile are new.")
+            return curr_lockfile_packages
+
+        prev_lockfile_packages = self.get_previous_lockfile_packages(prev_lockfile_object)
+
+        prev_pkg_set = set(prev_lockfile_packages)
+        curr_pkg_set = set(curr_lockfile_packages)
+        new_deps = curr_pkg_set.difference(prev_pkg_set)
+        print(f" [+] New dependencies: {new_deps}")
+
+        return list(new_deps)
 
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""

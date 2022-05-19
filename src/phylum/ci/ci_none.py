@@ -5,15 +5,12 @@ This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
 import argparse
-import json
-import shutil
 import subprocess
-import tempfile
 from pathlib import Path
+from typing import Optional
 
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase
-from phylum.ci.common import PackageDescriptor, Packages
 
 
 def git_remote() -> str:
@@ -39,19 +36,13 @@ class CINone(CIBase):
         self.ci_platform_name = "No CI"
         super().__init__(args)
 
-    def check_prerequisites(self) -> None:
+    def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for when no CI environments/platforms is detected:
-          * Have `git` installed and available for use on the PATH
           * Run the script from the root of a git repository
         """
-        super().check_prerequisites()
-
-        if shutil.which("git"):
-            print(" [+] `git` binary found on the PATH")
-        else:
-            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+        super()._check_prerequisites()
 
         git_dir = Path.cwd() / ".git"
         if git_dir.is_dir():
@@ -74,6 +65,18 @@ class CINone(CIBase):
 
         return label
 
+    @property
+    def common_lockfile_ancestor_commit(self) -> Optional[str]:
+        """Find the common lockfile ancestor commit."""
+        remote = git_remote()
+        cmd = f"git merge-base HEAD refs/remotes/{remote}/HEAD".split()
+        try:
+            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        except subprocess.CalledProcessError as err:
+            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            common_ancestor_commit = None
+        return common_ancestor_commit
+
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed.
 
@@ -89,47 +92,15 @@ class CINone(CIBase):
         """
         remote = git_remote()
         cmd = f"git diff --exit-code --quiet refs/remotes/{remote}/HEAD... -- {lockfile.resolve()}".split()
-        return bool(subprocess.run(cmd).returncode)
-
-    def get_new_deps(self) -> Packages:
-        """Get the new dependencies added to the lockfile and return them."""
-        # Get the common ancestor
-        remote = git_remote()
-        cmd = f"git merge-base HEAD refs/remotes/{remote}/HEAD".split()
-        common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         try:
-            cmd = f"git rev-parse --verify {common_ancestor_commit}:{self.lockfile.name}".split()
-            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
+            # Any other exit code is an error and a reason to re-raise.
+            subprocess.run(cmd, check=True)
+            return False
         except subprocess.CalledProcessError as err:
-            # There could be a true error, but the working assumption when here is a previous version does not exist
-            print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
-            prev_lockfile_object = None
-
-        # Get the current lockfile packages
-        cmd = f"{self.cli_path} parse {self.lockfile}".split()
-        parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
-        parsed_pkgs = json.loads(parse_result)
-        curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-
-        # When no previous version exists, assume all packages in the lockfile are new
-        if not prev_lockfile_object:
-            print(" [+] No previous lockfile object found. Assuming all packages in the current lockfile are new.")
-            return curr_lockfile_packages
-
-        with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
-            cmd = f"git cat-file blob {prev_lockfile_object}".split()
-            prev_lockfile_contents = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
-            prev_lockfile_fd.write(prev_lockfile_contents)
-            cmd = f"{self.cli_path} parse {prev_lockfile_fd.name}".split()
-            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
-
-        parsed_pkgs = json.loads(parse_result)
-        prev_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-        prev_pkg_set = set(prev_lockfile_packages)
-        curr_pkg_set = set(curr_lockfile_packages)
-        new_deps = curr_pkg_set.difference(prev_pkg_set)
-        print(f" [+] New dependencies: {new_deps}")
-        return list(new_deps)
+            if err.returncode == 1:
+                return True
+            raise
 
     def post_output(self) -> None:
         """Post the output of the analysis in the means appropriate for the CI environment."""
