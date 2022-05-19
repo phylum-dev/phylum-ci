@@ -9,7 +9,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
-from phylum.ci.ci_base import CIBase
+from phylum.ci.ci_base import CIBase, CIEnvs
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
@@ -21,7 +21,7 @@ from phylum.init.cli import get_target_triple, version_check
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
     """Detect CI platform via known CI-based environment variables."""
-    ci_envs = []
+    ci_envs: CIEnvs = []
 
     # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":
@@ -31,7 +31,7 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least
     # an attempt, via a pre-requisite check, to ensure all the extra arguments are staged files.
-    if remainder:
+    if any(remainder):
         print(" [+] Extra arguments provided. Assuming a Python `pre-commit` working environment.")
         ci_envs.append(CIPreCommit(args, remainder))
 
@@ -45,6 +45,24 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
         ci_env = CINone(args)
 
     return ci_env
+
+
+def get_phylum_analysis(ci_env: CIBase) -> dict:
+    """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
+    print(" [*] Performing analysis ...")
+    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}".split()
+    try:
+        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+    except subprocess.CalledProcessError as err:
+        # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
+        # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
+        if "failed threshold requirements" in err.stderr:
+            analysis_result = err.stdout
+        else:
+            print(f" [!] stderr: {err.stderr}")
+            raise
+    analysis = json.loads(analysis_result)
+    return analysis
 
 
 def threshold_check(threshold_in: str) -> int:
@@ -67,9 +85,6 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         formatter_class=CustomFormatter,
     )
 
-    # TODO: Allow all arguments to be specified as environment variables as well,
-    #       to support both GitHub Actions and Gitlab CI (and maybe more).
-    #       https://github.com/phylum-dev/phylum-ci/issues/31
     parser.add_argument(
         "-r",
         "--phylum-release",
@@ -170,10 +185,6 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
-    # Ensure all pre-requisites are met and bail when they aren't
-    ci_env.check_prerequisites()
-    print(" [+] All pre-requisites met")
-
     # Bail early if there are no changes to the lockfile
     print(f" [+] lockfile in use: {ci_env.lockfile}")
     if ci_env.is_lockfile_changed:
@@ -189,27 +200,13 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     ci_env.init_cli()
 
     # Analyze current project lockfile with phylum CLI
-    print(" [*] Performing analysis ...")
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}".split()
-    try:
-        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
-    except subprocess.CalledProcessError as err:
-        # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
-        # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
-        if "failed threshold requirements" in err.stderr:
-            analysis_result = err.stdout
-        else:
-            raise
-    analysis = json.loads(analysis_result)
+    analysis = get_phylum_analysis(ci_env)
 
     # Review analysis results to determine the overall state
     return_code = ci_env.analyze(analysis)
     print(f" [-] Return code: {return_code}")
 
     # Output the results of the analysis
-    # TODO: Update the PR/MR with an appropriate comment.
-    #       Look into the `python-gitlab` package.
-    #       https://github.com/phylum-dev/phylum-ci/issues/31
     ci_env.post_output()
 
     # Don't return a failure code if the results are unknown at this point

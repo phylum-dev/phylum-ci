@@ -16,7 +16,13 @@ from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
 from phylum.common import CustomFormatter
-from phylum.constants import SUPPORTED_ARCHES, SUPPORTED_PLATFORMS, SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
+from phylum.constants import (
+    REQ_TIMEOUT,
+    SUPPORTED_ARCHES,
+    SUPPORTED_PLATFORMS,
+    SUPPORTED_TARGET_TRIPLES,
+    TOKEN_ENVVAR_NAME,
+)
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_minisig
 from ruamel.yaml import YAML
@@ -101,7 +107,7 @@ def get_latest_version():
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
 
-    req = requests.get(github_api_url, timeout=5.0)
+    req = requests.get(github_api_url, timeout=REQ_TIMEOUT)
     req.raise_for_status()
     req_json = req.json()
 
@@ -141,7 +147,7 @@ def get_target_triple():
 def save_file_from_url(url, path):
     """Save a file from a given URL to a local file path, in binary mode."""
     print(f" [*] Getting {url} file ...", end="")
-    req = requests.get(url, timeout=5.0)
+    req = requests.get(url, timeout=REQ_TIMEOUT)
     req.raise_for_status()
     print("Done")
 

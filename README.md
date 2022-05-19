@@ -30,7 +30,8 @@ pipx run --spec phylum phylum-init <options>
 pipx run --spec phylum phylum-ci <options>
 ```
 
-It requires Python 3.7+ to run.
+These installation methods require Python 3.7+ to run. For a self contained environment, consider using the Docker
+image as described below.
 
 ### Usage
 
@@ -56,13 +57,13 @@ The functionality is also exposed in the form of a Docker image:
 docker pull phylumio/phylum-ci
 
 # View the help
-docker run -it --rm phylumio/phylum-ci "phylum-ci --help"
+docker run --rm phylumio/phylum-ci phylum-ci --help
 
 # Export a Phylum token (e.g., from `phylum auth token`)
 export PHYLUM_API_KEY=$(phylum auth token)
 
 # Run it from a git repo directory containing a `.phylum_project` and a lockfile
-docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=`pwd`,dst=/phylum -w /phylum phylumio/phylum-ci
+docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=$(pwd),dst=/phylum -w /phylum phylumio/phylum-ci
 ```
 
 The Docker image contains `git` and the installed `phylum` Python package.
@@ -86,6 +87,9 @@ The `phylum-ci` script is for analyzing lockfile changes.
 The script can be used locally or from within a Continuous Integration (CI) environment.
 It will attempt to detect the CI platform based on the environment from which it is run and act accordingly.
 The current CI platforms/environments supported are:
+
+* GitLab CI
+  * See the [GitLab CI Integration documentation](docs/gitlab_ci.md) for more info
 
 * None (local use)
   * This is the "fall-through" case used when no other environment is detected
