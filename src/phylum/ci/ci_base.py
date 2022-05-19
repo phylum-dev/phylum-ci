@@ -417,8 +417,8 @@ class CIBase(ABC):
         fail_string += "|-----------|----------|-----|\n"
 
         issue_list = build_issues_list(package_result, issue_flags)
-        for risk_domain, risk_level, title in issue_list:
-            fail_string += f"|{risk_domain}|{risk_level}|{title}|\n"
+        for domain, severity, title in issue_list:
+            fail_string += f"|{domain}|{severity}|{title}|\n"
 
         if failed_flag:
             self.gbl_failed = True
@@ -436,9 +436,9 @@ def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[Tupl
     pkg_issues = package_result.get("issues", [])
     for flag in issue_flags:
         for pkg_issue in pkg_issues:
-            if flag == pkg_issue.get("risk_domain"):
-                risk_domain = pkg_issue.get("risk_domain")
-                risk_level = pkg_issue.get("risk_level")
+            if flag == pkg_issue.get("domain"):
+                domain = pkg_issue.get("domain")
+                severity = pkg_issue.get("severity")
                 title = pkg_issue.get("title")
-                issues.append((risk_domain, risk_level, title))
+                issues.append((domain, severity, title))
     return issues
