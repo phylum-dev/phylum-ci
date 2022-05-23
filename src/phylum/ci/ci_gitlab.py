@@ -15,6 +15,7 @@ from typing import Optional
 
 import requests
 from phylum.ci.ci_base import CIBase
+from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
 
 
@@ -92,13 +93,35 @@ class CIGitLab(CIBase):
 
     def post_output(self) -> None:
         """Post the output of the analysis as a note (comment) on the GitLab CI Merge Request (MR)."""
-        # API Reference: https://docs.gitlab.com/ee/api/notes.html#create-new-merge-request-note
+        # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
         gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
         mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
         mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
-        create_new_mr_note_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
-        url = f"{gitlab_api_v4_root_url}{create_new_mr_note_api_endpoint}"
+        # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
+        base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
+        url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
         headers = {"PRIVATE-TOKEN": self.gitlab_token}
+
+        print(f" [*] Getting all current merge request notes with GET URL: {url} ...")
+        req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)
+        req.raise_for_status()
+        mr_notes = req.json()
+
+        print(" [*] Checking existing merge request notes for existing content to avoid duplication ...")
+        # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
+        #       Detecting Phylum notes is done simply by looking for those notes that start with a known string value.
+        #       We only care about the most recent Phylum note.
+        for mr_note in mr_notes:
+            if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
+                print(" [+] The most recently posted Phylum merge request note was found.")
+                if mr_note.get("body", "") == self.analysis_output:
+                    print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                    return
+                print(" [+] It does not contain the same content as the current analysis.")
+                break
+
+        # If we got here, then the most recent Phylum MR note does not match the current analysis output or
+        # there were no Phylum MR notes. Either way, create a new MR note.
         data = {"body": self.analysis_output}
         print(f" [*] Creating new merge request note with POST URL: {url} ...")
         response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
