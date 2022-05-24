@@ -18,8 +18,8 @@ from packaging.version import Version
 from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
 from phylum.ci.constants import (
     FAILED_COMMENT,
-    FAILED_INCOMPLETE_COMMENT_TEMPLATE,
     INCOMPLETE_COMMENT_TEMPLATE,
+    INCOMPLETE_WITH_FAILURE_COMMENT_TEMPLATE,
     SUCCESS_COMMENT,
 )
 from phylum.constants import SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
@@ -167,7 +167,11 @@ class CIBase(ABC):
 
     @abstractmethod
     def post_output(self) -> None:
-        """Post the output of the analysis in the means appropriate for the CI environment."""
+        """Post the output of the analysis in the means appropriate for the CI environment.
+
+        Output in the form of comments on a pull/merge request should be unique and not added multiple times as
+        the review changes but the lock file doesn't.
+        """
         raise NotImplementedError()
 
     # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
@@ -331,7 +335,7 @@ class CIBase(ABC):
             if self.gbl_failed:
                 print(" [!] There were failures in one or more completed packages")
                 returncode = ReturnCode.FAILURE_INCOMPLETE
-                output = FAILED_INCOMPLETE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
+                output = INCOMPLETE_WITH_FAILURE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
                 for line in risk_data:
                     output += line
             else:
@@ -379,7 +383,7 @@ class CIBase(ABC):
         failed_flag = False
         risk_vectors = package_result.get("riskVectors", {})
         issue_flags = []
-        fail_string = f"### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
+        fail_string = f"\n### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
         fail_string += "|Risk Domain|Identified Score|Requirement|\n"
         fail_string += "|-----------|----------------|-----------|\n"
 
