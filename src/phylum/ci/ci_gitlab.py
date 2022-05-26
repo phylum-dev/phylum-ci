@@ -23,8 +23,8 @@ class CIGitLab(CIBase):
     """Provide methods for a GitLab CI environment."""
 
     def __init__(self, args: Namespace) -> None:
-        self.ci_platform_name = "GitLab CI"
         super().__init__(args)
+        self.ci_platform_name = "GitLab CI"
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
