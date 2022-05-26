@@ -4,7 +4,7 @@
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from a
 lockfile during a Merge Request (MR) and output the results as a note (comment) on the MR.
-The CI job will return an error (i.e., fail the build) if any dependencies fail to meet the specified project risk
+The CI job will return an error (i.e., fail the build) if any dependencies fail to meet the project risk
 thresholds for any of the five Phylum risk domains:
 
 * Vulnerability (aka `vul`)

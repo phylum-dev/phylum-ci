@@ -17,6 +17,38 @@ class PackageDescriptor:
 Packages = List[PackageDescriptor]
 
 
+@dataclass()
+class ProjectThresholdInfo:
+    """Class for keeping track of project risk threshold information.
+
+    `threshold`: The risk domain threshold value in use.
+    `req_src`: The source of the threshold requirement. Possible values are:
+      * `phylum-ci option`: The threshold in use came from using a command line option
+      * `project setting`: The threshold in use comes from the Phylum project settings
+      * `N/A (fail safe)`: No source was found/determined; used with a default secure value for `threshold`
+    """
+
+    threshold: float
+    req_src: str
+
+
+@dataclass(order=True, frozen=True)
+class RiskDomain:
+    """Class for keeping track of a specific risk domain.
+
+    Each risk domain can be referenced in various ways. See "Phylum Risk Domains" documentation for more detail:
+    https://docs.phylum.io/docs/phylum-package-score#risk-domains
+
+    * `output_name`: The descriptive name; useful for output expected to be read by humans
+    * `project_name`: Key name returned from a Phylum analysis as known by the overall project threshold mapping
+    * `package_name`: Key name returned from a Phylum analysis as known by an individual package riskVectors mapping
+    """
+
+    output_name: str
+    project_name: str
+    package_name: str
+
+
 class ReturnCode(IntEnum):
     """Integer enumeration to track return codes."""
 

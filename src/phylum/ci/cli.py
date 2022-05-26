@@ -14,7 +14,6 @@ from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
-from phylum.common import CustomFormatter
 from phylum.constants import SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_target_triple, version_check
 
@@ -67,12 +66,12 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
 
 def threshold_check(threshold_in: str) -> int:
     """Check a given threshold for validity and return it as an int."""
-    msg = "threshold must be an integer between 0 and 99, inclusive"
+    msg = "threshold must be an integer between 0 and 100, inclusive"
     try:
         threshold_out = int(threshold_in)
     except ValueError as err:
         raise argparse.ArgumentTypeError(msg) from err
-    if threshold_out not in range(100):
+    if threshold_out not in range(101):
         raise argparse.ArgumentTypeError(msg)
     return threshold_out
 
@@ -82,33 +81,33 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Use Phylum to analyze dependencies in a CI environment",
-        formatter_class=CustomFormatter,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     parser.add_argument(
-        "-r",
-        "--phylum-release",
-        dest="version",
-        default="latest",
-        type=version_check,
-        help="""The version of the Phylum CLI to install, when one is not already installed. Can be specified as
-            `latest` or a specific tagged release, with or without the leading `v`.""",
+        "--version",
+        action="version",
+        version=f"{SCRIPT_NAME} {__version__}",
     )
-    parser.add_argument(
-        "-t",
-        "--target",
-        choices=SUPPORTED_TARGET_TRIPLES,
-        default=get_target_triple(),
-        help="The target platform type where the CLI will be installed.",
+
+    analysis_group = parser.add_argument_group(title="Lockfile Analysis Options")
+    analysis_group.add_argument(
+        "-l",
+        "--lockfile",
+        type=pathlib.Path,
+        help="""Path to the package lockfile to analyze. If not specified, an attempt will be made to automatically
+            detect the lockfile. Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that they
+            can be named differently and may or may not contain strict dependencies. In these cases, it is best to
+            specify an explicit lockfile path.""",
     )
-    parser.add_argument(
-        "-f",
-        "--force-install",
+    analysis_group.add_argument(
+        "--new-deps-only",
         action="store_true",
-        help="""Specify this flag to ensure the specified Phylum CLI release version is the one that is installed.
-            Otherwise, any existing version will be used.""",
+        help="""Specify this flag to only consider newly added dependencies in analysis results. This can be useful for
+            existing code bases that may not meet established project risk thresholds yet, but don't want to make things
+            worse.""",
     )
-    parser.add_argument(
+    analysis_group.add_argument(
         "-k",
         "--phylum-token",
         dest="token",
@@ -118,61 +117,75 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             already set in the Phylum config file or (2) to manually populate the token with a `phylum auth login` or
             `phylum auth register` command after install.""",
     )
-    parser.add_argument(
-        "-l",
-        "--lockfile",
-        type=pathlib.Path,
-        help="""Path to the package lockfile to analyze. If not specified, an attempt will be made to automatically
-            detect the lockfile. Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that they
-            can be named differently and may or may not contain strict dependencies. In these cases, it is best to
-            specify an explicit lockfile path.""",
+
+    threshold_group = parser.add_argument_group(
+        title="Risk Domain Threshold Options",
+        description="""Thresholds for the five risk domains may already be set at the Phylum project level.
+            They can be set differently here for CI environments to "fail the build."
+            The default is to use the project level setting unless overridden by a value specified in this group.
+            Values must be an integer between 0 and 100, inclusive. Setting the value to zero (0) has the
+            effect of disabling analysis against that risk domain. See "Phylum Risk Domains" documentation for more
+            detail: https://docs.phylum.io/docs/phylum-package-score#risk-domains""",
     )
-    parser.add_argument(
+    threshold_group.add_argument(
         "-vt",
         "--vul-threshold",
         type=threshold_check,
-        default=99,
-        help="Vulnerability risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+        help="Vulnerability risk score threshold value.",
     )
-    parser.add_argument(
+    threshold_group.add_argument(
         "-mt",
         "--mal-threshold",
         type=threshold_check,
-        default=99,
-        help="Malicious Code risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+        help="Malicious Code risk score threshold value.",
     )
-    parser.add_argument(
+    threshold_group.add_argument(
         "-et",
         "--eng-threshold",
         type=threshold_check,
-        default=99,
-        help="Engineering risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+        help="Engineering risk score threshold value.",
     )
-    parser.add_argument(
+    threshold_group.add_argument(
         "-lt",
         "--lic-threshold",
         type=threshold_check,
-        default=99,
-        help="License risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+        help="License risk score threshold value.",
     )
-    parser.add_argument(
+    threshold_group.add_argument(
         "-at",
         "--aut-threshold",
         type=threshold_check,
-        default=99,
-        help="Author risk score threshold value. Must be an integer between 0 and 99, inclusive.",
+        help="Author risk score threshold value.",
     )
-    parser.add_argument(
-        "--new-deps-only",
+
+    cli_group = parser.add_argument_group(
+        title="Phylum CLI Options",
+        description="""Use the options here to control the Phylum CLI version in use during analysis.
+            Examples of when this may be useful are: for troubleshooting, maintaining a consistent evironment,
+            ensuring the latest version, or reverting to a previous version when the installed one causes an issue.""",
+    )
+    cli_group.add_argument(
+        "-r",
+        "--phylum-release",
+        dest="version",
+        default="latest",
+        type=version_check,
+        help="""The version of the Phylum CLI to install, when one is not already installed. Can be specified as
+            `latest` or a specific tagged release, with or without the leading `v`.""",
+    )
+    cli_group.add_argument(
+        "-t",
+        "--target",
+        choices=SUPPORTED_TARGET_TRIPLES,
+        default=get_target_triple(),
+        help="The target platform type where the CLI will be installed.",
+    )
+    cli_group.add_argument(
+        "-f",
+        "--force-install",
         action="store_true",
-        help="""Specify this flag to only consider newly added dependencies in analysis results. This can be useful for
-            existing code bases that may not meet established project risk thresholds yet, but don't want to make things
-            worse.""",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"{SCRIPT_NAME} {__version__}",
+        help="""Specify this flag to ensure the specified Phylum CLI release version is the one that is installed.
+            Otherwise, any existing version will be used.""",
     )
 
     return parser.parse_known_args(args=args)

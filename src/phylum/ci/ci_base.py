@@ -15,11 +15,12 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 from packaging.version import Version
-from phylum.ci.common import PackageDescriptor, Packages, ReturnCode
+from phylum.ci.common import PackageDescriptor, Packages, ProjectThresholdInfo, ReturnCode, RiskDomain
 from phylum.ci.constants import (
     FAILED_COMMENT,
     INCOMPLETE_COMMENT_TEMPLATE,
     INCOMPLETE_WITH_FAILURE_COMMENT_TEMPLATE,
+    PROJECT_THRESHOLD_OPTIONS,
     SUCCESS_COMMENT,
 )
 from phylum.constants import SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
@@ -361,12 +362,13 @@ class CIBase(ABC):
         and the overall PR will be allowed to pass, but with a note about re-running again later.
         """
         analysis_pkgs = analysis_results.get("packages", [])
+        project_thresholds = analysis_results.get("thresholds", {})
         risk_scores = []
         for package in packages:
             for phylum_pkg in analysis_pkgs:
                 if phylum_pkg.get("name") == package.name and phylum_pkg.get("version") == package.version:
                     if phylum_pkg.get("status") == "complete":
-                        risk_score = self.check_risk_scores(phylum_pkg)
+                        risk_score = self.check_risk_scores(phylum_pkg, project_thresholds)
                         if risk_score:
                             risk_scores.append(risk_score)
                     elif phylum_pkg.get("status") == "incomplete":
@@ -375,45 +377,28 @@ class CIBase(ABC):
 
         return risk_scores
 
-    def check_risk_scores(self, package_result: dict) -> Optional[str]:
-        """Check risk scores of a package against user-provided thresholds.
+    def check_risk_scores(self, package_result: dict, project_thresholds: dict) -> Optional[str]:
+        """Check risk scores of a package against project or user-provided thresholds.
 
+        Thresholds provided via the corresponding option will take precedence over the project defined threshold value.
         If a package has a risk score below the threshold, set the fail flag and generate the markdown output.
+        Return None when the package meets or exceeds all threshold values.
         """
         failed_flag = False
         risk_vectors = package_result.get("riskVectors", {})
         issue_flags = []
-        fail_string = f"\n### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
-        fail_string += "|Risk Domain|Identified Score|Requirement|\n"
-        fail_string += "|-----------|----------------|-----------|\n"
 
-        # The risk vector values returned by the analysis are normalized to (0.0, 1.0]. The option values are converted
-        # internally like this b/c it is more natural to ask users for input as an integer in the range of [0, 100).
-        pkg_vul = risk_vectors.get("vulnerability", 1.0)
-        if pkg_vul <= self.args.vul_threshold / 100:
-            failed_flag = True
-            issue_flags.append("vulnerability")
-            fail_string += f"|Software Vulnerability|{pkg_vul*100}|{self.args.vul_threshold}|\n"
-        pkg_mal = risk_vectors.get("malicious_code", 1.0)
-        if pkg_mal <= self.args.mal_threshold / 100:
-            failed_flag = True
-            issue_flags.append("malicious_code")
-            fail_string += f"|Malicious Code|{pkg_mal*100}|{self.args.mal_threshold}|\n"
-        pkg_eng = risk_vectors.get("engineering", 1.0)
-        if pkg_eng <= self.args.eng_threshold / 100:
-            failed_flag = True
-            issue_flags.append("engineering")
-            fail_string += f"|Engineering|{pkg_eng*100}|{self.args.eng_threshold}|\n"
-        pkg_lic = risk_vectors.get("license", 1.0)
-        if pkg_lic <= self.args.lic_threshold / 100:
-            failed_flag = True
-            issue_flags.append("license")
-            fail_string += f"|License|{pkg_lic*100}|{self.args.lic_threshold}|\n"
-        pkg_aut = risk_vectors.get("author", 1.0)
-        if pkg_aut <= self.args.aut_threshold / 100:
-            failed_flag = True
-            issue_flags.append("author")
-            fail_string += f"|Author|{pkg_aut*100}|{self.args.aut_threshold}|\n"
+        fail_string = f"\n### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
+        fail_string += "|Risk Domain|Identified Score|Requirement|Requirement Source|\n"
+        fail_string += "|-----------|----------------|-----------|------------------|\n"
+
+        for threshold_option, risk_domain in PROJECT_THRESHOLD_OPTIONS.items():
+            pti = self._get_project_threshold_info(project_thresholds, threshold_option)
+            vul = risk_vectors.get(risk_domain.package_name, 1.0)
+            if vul < pti.threshold:
+                failed_flag = True
+                issue_flags.append(risk_domain.package_name)
+                fail_string += f"|{risk_domain.output_name}|{vul*100:.0f}|{pti.threshold*100:.0f}|{pti.req_src}|\n"
 
         fail_string += "\n"
         fail_string += "#### Issues Summary\n"
@@ -428,6 +413,32 @@ class CIBase(ABC):
             self.gbl_failed = True
             return fail_string
         return None
+
+    def _get_project_threshold_info(self, project_thresholds: dict, threshold_type: str) -> ProjectThresholdInfo:
+        """Determine the project threshold info in effect for a given threshold type.
+
+        Thresholds for the five risk domains can be set individually in several ways.
+        They can be set at the Phylum project level from either the Phylum CLI or the web UI.
+        They can be set by `phylum-ci` options (e.g., `--vul-threshold`), which are distinguished by `threshold_type`.
+        The default is to use the project level setting unless overridden by a value specified by a `phylum-ci` option.
+        A default secure value will be used when neither of these sources are used to set the value.
+        """
+        threshold = getattr(self.args, threshold_type, None)
+        req_src = "phylum-ci option"
+        if threshold is None:
+            risk_domain: RiskDomain = PROJECT_THRESHOLD_OPTIONS.get(threshold_type, RiskDomain("", "", ""))
+            threshold = project_thresholds.get(risk_domain.project_name)
+            req_src = "project setting"
+            if threshold is None:
+                threshold = 1.0
+                req_src = "N/A (fail safe)"
+        else:
+            # The project risk threshold values returned by the analysis are normalized to [0.0, 1.0].
+            # They are converted internally like this because it is more natural to ask users for input
+            # as an integer in the range of [0, 100].
+            threshold /= 100
+        pti = ProjectThresholdInfo(threshold=threshold, req_src=req_src)
+        return pti
 
 
 # Type alias
