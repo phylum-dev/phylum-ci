@@ -106,6 +106,12 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         help="Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.",
     )
     analysis_group.add_argument(
+        "-fa",
+        "--force-analysis",
+        action="store_true",
+        help="Specify this flag to force analysis, even when the lockfile has not changed.",
+    )
+    analysis_group.add_argument(
         "-k",
         "--phylum-token",
         dest="token",
@@ -179,7 +185,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         help="The target platform type where the CLI will be installed.",
     )
     cli_group.add_argument(
-        "-f",
+        "-fi",
         "--force-install",
         action="store_true",
         help="""Specify this flag to ensure the specified Phylum CLI release version is the one that is installed.
@@ -198,11 +204,14 @@ def main(args: Optional[Sequence[str]] = None) -> int:
 
     # Bail early if there are no changes to the lockfile
     print(f" [+] lockfile in use: {ci_env.lockfile}")
-    if ci_env.is_lockfile_changed:
-        print(" [+] The lockfile has changed. Proceeding with analysis ...")
+    if parsed_args.force_analysis:
+        print(" [+] `--force-analysis` flag specified. Proceeding with analysis ...")
     else:
-        print(" [+] The lockfile has not changed. Nothing to do.")
-        return 0
+        if ci_env.is_lockfile_changed:
+            print(" [+] The lockfile has changed. Proceeding with analysis ...")
+        else:
+            print(" [+] The lockfile has not changed. Nothing to do.")
+            return 0
 
     # Generate a label to use for analysis and report it
     print(f" [+] phylum_label: {ci_env.phylum_label}")

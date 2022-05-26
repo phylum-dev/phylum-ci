@@ -181,3 +181,10 @@ poetry install
 # Use the `poetry run` command to ensure the installed project is used
 poetry run phylum-init -h
 ```
+
+To iterate during development of the `phylum-ci` integrations, it can be helpful to force the analysis of the lockfile,
+even when it has not changed. It can also be useful to ensure all dependencies are considered. To do so, use the flags:
+
+```sh
+poetry run phylum-ci --force-analysis --all-deps
+```
