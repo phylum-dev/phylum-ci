@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
@@ -26,6 +27,7 @@ from phylum.ci.constants import (
 from phylum.constants import SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
+from ruamel.yaml import YAML
 
 
 def detect_lockfile() -> Optional[Path]:
@@ -60,6 +62,7 @@ class CIBase(ABC):
           * call `super().__init__(args)`
         """
         self.args = args
+        self._phylum_project_file = Path.cwd().joinpath(".phylum_project").resolve()
 
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
@@ -106,6 +109,11 @@ class CIBase(ABC):
         return self._lockfile_changed
 
     @property
+    def phylum_project_file(self) -> Path:
+        """Get the path to the Phylum project file `.phylum_project`."""
+        return self._phylum_project_file
+
+    @property
     def cli_path(self) -> Optional[Path]:
         """Get the path to the Phylum CLI binary."""
         return self._cli_path
@@ -150,9 +158,8 @@ class CIBase(ABC):
         """
         print(" [+] Confirming pre-requisites ...")
 
-        phylum_project_file = Path.cwd() / ".phylum_project"
-        if phylum_project_file.exists():
-            print(" [+] Existing `.phylum_project` file was found at the current working directory")
+        if self.phylum_project_file.exists():
+            print(f" [+] Existing `.phylum_project` file found at: {self.phylum_project_file}")
         else:
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
@@ -303,12 +310,24 @@ class CIBase(ABC):
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
             raise SystemExit(" [!] A Phylum API key is required to continue.")
 
+    def get_project_url(self, project_id: str) -> str:
+        """Construct a project URL from a given project ID and return it.
+
+        The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
+        """
+        query = {"label": self.phylum_label}
+        yaml = YAML()
+        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+        group_name = settings_dict.get("group_name")
+        if group_name is not None:
+            query.setdefault("group", group_name)
+        query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
+        project_url = f"https://app.phylum.io/projects/{project_id}?{query_params}"
+        print(f" [+] Project URL: {project_url}")
+        return project_url
+
     def analyze(self, analysis: dict) -> ReturnCode:
         """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
-        project_id = analysis.get("project")
-        project_url = f"https://app.phylum.io/projects/{project_id}"
-        print(f" [+] Project URL: {project_url}")
-
         if self.args.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
@@ -349,6 +368,8 @@ class CIBase(ABC):
             returncode = ReturnCode.SUCCESS
             output = SUCCESS_COMMENT
 
+        project_id = analysis.get("project", "00000000-0000-0000-0000-000000000000")
+        project_url = self.get_project_url(project_id)
         output += f"\n[View this project in the Phylum UI]({project_url})"
         self._analysis_output = output
 
