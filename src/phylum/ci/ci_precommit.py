@@ -22,8 +22,8 @@ class CIPreCommit(CIBase):
 
     def __init__(self, args: argparse.Namespace, remainder: List[str]) -> None:
         self.extra_args = remainder
-        self.ci_platform_name = "pre-commit"
         super().__init__(args)
+        self.ci_platform_name = "pre-commit"
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.

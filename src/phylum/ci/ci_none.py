@@ -33,8 +33,8 @@ class CINone(CIBase):
     """Provide methods for operating outside of a known CI environment."""
 
     def __init__(self, args: argparse.Namespace) -> None:
-        self.ci_platform_name = "No CI"
         super().__init__(args)
+        self.ci_platform_name = "No CI"
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
