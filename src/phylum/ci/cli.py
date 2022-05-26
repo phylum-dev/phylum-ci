@@ -101,11 +101,9 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             specify an explicit lockfile path.""",
     )
     analysis_group.add_argument(
-        "--new-deps-only",
+        "--all-deps",
         action="store_true",
-        help="""Specify this flag to only consider newly added dependencies in analysis results. This can be useful for
-            existing code bases that may not meet established project risk thresholds yet, but don't want to make things
-            worse.""",
+        help="Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.",
     )
     analysis_group.add_argument(
         "-k",

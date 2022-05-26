@@ -309,16 +309,16 @@ class CIBase(ABC):
         project_url = f"https://app.phylum.io/projects/{project_id}"
         print(f" [+] Project URL: {project_url}")
 
-        if self.args.new_deps_only:
-            print(" [+] Only considering newly added dependencies ...")
-            packages = self.get_new_deps()
-            print(f" [+] {len(packages)} newly added dependencies")
-            risk_data = self.parse_risk_data(analysis, packages)
-        else:
+        if self.args.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
             packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
             print(f" [+] {len(packages)} current dependencies")
+            risk_data = self.parse_risk_data(analysis, packages)
+        else:
+            print(" [+] Only considering newly added dependencies ...")
+            packages = self.get_new_deps()
+            print(f" [+] {len(packages)} newly added dependencies")
             risk_data = self.parse_risk_data(analysis, packages)
 
         returncode = ReturnCode.SUCCESS
