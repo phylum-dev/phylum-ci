@@ -58,4 +58,4 @@ SUPPORTED_LOCKFILES = {
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
 # Reference: https://2.python-requests.org/en/master/user/quickstart/#timeouts
-REQ_TIMEOUT: float = 5.0
+REQ_TIMEOUT: float = 10.0

@@ -15,7 +15,6 @@ import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
-from phylum.common import CustomFormatter
 from phylum.constants import (
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
@@ -250,7 +249,7 @@ def get_args(args=None):
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Fetch and install the Phylum CLI",
-        formatter_class=CustomFormatter,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     parser.add_argument(

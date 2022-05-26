@@ -2,6 +2,8 @@
 import string
 import textwrap
 
+from phylum.ci.common import RiskDomain
+
 # The common Phylum header that must exist as the first text in the first line of all analysis output
 PHYLUM_HEADER = "## Phylum OSS Supply Chain Risk Analysis"
 
@@ -69,3 +71,17 @@ INCOMPLETE_COMMENT_TEMPLATE = string.Template(
         """
     )
 )
+
+# These are the project threshold options.
+# Keys are the risk domain threshold options, as provided/known by argparse.
+# Values are a RiskDomain dataclass object containing:
+#   * the descriptive name
+#   * key name returned from a Phylum analysis as known by the overall project threshold mapping
+#   * key name returned from a Phylum analysis as known by an individual package riskVectors mapping
+PROJECT_THRESHOLD_OPTIONS = {
+    "vul_threshold": RiskDomain("Software Vulnerability", "vulnerability", "vulnerability"),
+    "mal_threshold": RiskDomain("Malicious Code", "malicious", "malicious_code"),
+    "eng_threshold": RiskDomain("Engineering", "engineering", "engineering"),
+    "lic_threshold": RiskDomain("License", "license", "license"),
+    "aut_threshold": RiskDomain("Author", "author", "author"),
+}
