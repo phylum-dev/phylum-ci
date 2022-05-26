@@ -4,8 +4,8 @@
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from a
 lockfile during a Merge Request (MR) and output the results as a note (comment) on the MR.
-The CI job will return an error (i.e., fail the build) if any dependencies fail to meet the project risk
-thresholds for any of the five Phylum risk domains:
+The CI job will return an error (i.e., fail the build) if any of the newly added/modified dependencies from the MR fail
+to meet the project risk thresholds for any of the five Phylum risk domains:
 
 * Vulnerability (aka `vul`)
 * Malicious Code (aka `mal`)
@@ -105,6 +105,8 @@ However, to be certain that the image does not change...or be warned when it doe
 For instance, at the time of this writing, all of these tag references pointed to the same image:
 
 ```yaml
+  # NOTE: These are examples. Only one image line for `phylum-ci` is expected.
+
   # not specifying a tag means a default of `latest`
   image: phylumio/phylum-ci
 
@@ -131,6 +133,8 @@ It _may_ also be necessary to specify the depth of cloning if/when there is not 
 
 A GitLab token with API access is required to use the API (e.g., to post notes/comments).
 This can be a personal, project, or group access token.
+The account used to create the token will be the one that appears to post the notes/comments on the merge request.
+Therefore, it might be worth looking into using a bot account, which is available for project and group access tokens.
 See the [GitLab Token Overview](https://docs.gitlab.com/ee/security/token_overview.html) documentation for more info.
 
 Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token, by
@@ -181,11 +185,16 @@ output as specified in the [Usage section of the top-level README.md](../README.
   # NOTE: These are examples. Only one script entry line for `phylum-ci` is expected.
   script:
     # Use the defaults for all the arguments.
+    # The default behavior is to only analyze newly added dependencies against
+    # the risk domain threshold levels set at the Phylum project level.
     - phylum-ci
 
-    # Only analyze newly added dependencies. This can be useful for existing code bases that
-    # may not meet established project risk thresholds yet, but don't want to make things worse.
-    - phylum-ci --new-deps-only
+    # Consider all dependencies in analysis results instead of just the newly added ones.
+    # The default is to only analyze newly added dependencies, which can be useful for
+    # existing code bases that may not meet established project risk thresholds yet,
+    # but don't want to make things worse. Specifying `--all-deps` can be useful for
+    # casting the widest net for strict adherence to Quality Assurance (QA) standards.
+    - phylum-ci --all-deps
 
     # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
     # they can be named differently and may or may not contain strict dependencies.
@@ -205,7 +214,7 @@ output as specified in the [Usage section of the top-level README.md](../README.
     - phylum-ci --phylum-release 3.3.0 --force-install
 
     # Mix and match for your specific use case.
-    - phylum-ci -vt 60 -mt 60 -et 70 -lt 90 -at 80 --lockfile requirements-prod.txt --new-deps-only
+    - phylum-ci -vt 60 -mt 60 -et 70 -lt 90 -at 80 --lockfile requirements-prod.txt --all-deps
 ```
 
 ## Alternatives

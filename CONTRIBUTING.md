@@ -33,6 +33,14 @@ Look through the GitHub issues for bugs to work on, which will be labeled with `
 
 Look through the GitHub issues for features to work on, which will be labeled with `enhancement`.
 
+### Add New Integrations
+
+Got a continuous integration (CI) environment where you'd like to see `phylum-ci` operate? Just add a new integration
+for it by writing an implementation for that platform. It's simply a matter of defining a new class that inherits from
+the `CIBase` class and defining the handful of abstract methods needed to represent the unique features of operating in
+that CI environment. Look at existing CI integrations for examples and inspiration. The base class docstrings provide
+more details about the expected inputs and outputs for each of the abstract methods.
+
 ### Write Documentation
 
 The `phylum-ci` project could always use more documentation, whether as part of the
