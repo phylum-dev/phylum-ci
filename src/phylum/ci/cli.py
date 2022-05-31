@@ -101,12 +101,13 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             specify an explicit lockfile path.""",
     )
     analysis_group.add_argument(
+        "-a",
         "--all-deps",
         action="store_true",
         help="Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.",
     )
     analysis_group.add_argument(
-        "-fa",
+        "-f",
         "--force-analysis",
         action="store_true",
         help="Specify this flag to force analysis, even when the lockfile has not changed.",
@@ -132,34 +133,34 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             detail: https://docs.phylum.io/docs/phylum-package-score#risk-domains""",
     )
     threshold_group.add_argument(
-        "-vt",
+        "-u",
         "--vul-threshold",
         type=threshold_check,
-        help="Vulnerability risk score threshold value.",
+        help="v(u)lnerability risk score threshold value.",
     )
     threshold_group.add_argument(
-        "-mt",
+        "-m",
         "--mal-threshold",
         type=threshold_check,
-        help="Malicious Code risk score threshold value.",
+        help="(m)alicious Code risk score threshold value.",
     )
     threshold_group.add_argument(
-        "-et",
+        "-e",
         "--eng-threshold",
         type=threshold_check,
-        help="Engineering risk score threshold value.",
+        help="(e)ngineering risk score threshold value.",
     )
     threshold_group.add_argument(
-        "-lt",
+        "-c",
         "--lic-threshold",
         type=threshold_check,
-        help="License risk score threshold value.",
+        help="li(c)ense risk score threshold value.",
     )
     threshold_group.add_argument(
-        "-at",
+        "-o",
         "--aut-threshold",
         type=threshold_check,
-        help="Author risk score threshold value.",
+        help="auth(o)r risk score threshold value.",
     )
 
     cli_group = parser.add_argument_group(
@@ -185,7 +186,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         help="The target platform type where the CLI will be installed.",
     )
     cli_group.add_argument(
-        "-fi",
+        "-i",
         "--force-install",
         action="store_true",
         help="""Specify this flag to ensure the specified Phylum CLI release version is the one that is installed.
