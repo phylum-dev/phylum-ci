@@ -186,5 +186,9 @@ To iterate during development of the `phylum-ci` integrations, it can be helpful
 even when it has not changed. It can also be useful to ensure all dependencies are considered. To do so, use the flags:
 
 ```sh
+# long form options
 poetry run phylum-ci --force-analysis --all-deps
+
+# short form options
+poetry run phylum-ci -fa
 ```

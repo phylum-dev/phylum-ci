@@ -15,6 +15,10 @@ to meet the project risk thresholds for any of the five Phylum risk domains:
 
 See [Phylum Risk Domains documentation](https://docs.phylum.io/docs/phylum-package-score#risk-domains) for more detail.
 
+**NOTE**: It is not enough to have the total project threshold set. Individual risk domain threshold values must be set,
+either in the UI or with `phylum-ci` options, in order to enable analysis results for CI. Otherwise, the risk domain is
+considered disabled and the threshold value used will be zero (0).
+
 There will be no note if no dependencies were added or modified for a given MR.
 If one or more dependencies are still processing (no results available), then the note will make that clear and the CI
 job will only fail if dependencies that have _completed analysis results_ do not meet the specified project risk
@@ -204,8 +208,8 @@ output as specified in the [Usage section of the top-level README.md](../README.
     # Thresholds for the five risk domains may be set at the Phylum project level.
     # They can be set differently for CI environments to "fail the build."
     # NOTE: The shortened form is used here for brevity, but the long form might be more
-    #       descriptive for future readers. For instance `--vul-threshold` instead of `-vt`.
-    - phylum-ci -vt 60 -mt 60 -et 70 -lt 90 -at 80
+    #       descriptive for future readers. For instance `--vul-threshold` instead of `-u`.
+    - phylum-ci -u 60 -m 60 -e 70 -c 90 -o 80
 
     # Ensure the latest Phylum CLI is installed.
     - phylum-ci --force-install
@@ -214,7 +218,7 @@ output as specified in the [Usage section of the top-level README.md](../README.
     - phylum-ci --phylum-release 3.3.0 --force-install
 
     # Mix and match for your specific use case.
-    - phylum-ci -vt 60 -mt 60 -et 70 -lt 90 -at 80 --lockfile requirements-prod.txt --all-deps
+    - phylum-ci -u 60 -m 60 -e 70 -c 90 -o 80 --lockfile requirements-prod.txt --all-deps
 ```
 
 ## Alternatives
