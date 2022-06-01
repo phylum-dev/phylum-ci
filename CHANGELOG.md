@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.7.0 (2022-06-01)
+### Feature
+* Use a single character for "single dash" options ([`6a4b032`](https://github.com/phylum-dev/phylum-ci/commit/6a4b032262222173e69463fbcc232555f499c97e))
+
+### Breaking
+* The short options for the following arguments changed: * `--force-analysis` was changed from `-fa` to `-f` * `--force-install` was changed from `-fi` to `-i` * `--vul-threshold` was changed from `-vt` to `-u` * `--mal-threshold` was changed from `-mt` to `-m` * `--eng-threshold` was changed from `-et` to `-e` * `--lic-threshold` was changed from `-lt` to `-c` * `--aut-threshold` was changed from `-at` to `-o`  ([`6a4b032`](https://github.com/phylum-dev/phylum-ci/commit/6a4b032262222173e69463fbcc232555f499c97e))
+
 ## v0.6.0 (2022-05-27)
 ### Feature
 * Provide an option to force analysis ([#55](https://github.com/phylum-dev/phylum-ci/pull/55)) ([`4d6fc3b`](https://github.com/phylum-dev/phylum-ci/commit/4d6fc3b842cec004d655d1c1a63553a0c54e1d54))
