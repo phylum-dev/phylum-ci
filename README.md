@@ -106,6 +106,11 @@ MIT - with complete text available in the [LICENSE](LICENSE) file.
 Suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
 More information is available on the [contributing documentation](CONTRIBUTING.md) page.
 
+## Security Disclosures
+
+Found a security issue in this repository? See the [security policy](docs/security.md)
+for details on coordinated disclosure.
+
 ## Change log
 
 All notable changes to this project are documented in the [CHANGELOG](CHANGELOG.md).
