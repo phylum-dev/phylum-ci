@@ -86,8 +86,6 @@ ENV PATH=/root/.local/bin:$PATH \
 RUN set -eux; \
     apk add --update --no-cache git; \
     phylum-init; \
-    find / -type f -name '*.pyc' -delete; \
-    # Ensure no keys used during image creation are leaked through
-    unset PHYLUM_API_KEY
+    find / -type f -name '*.pyc' -delete
 
 CMD ["phylum-ci"]
