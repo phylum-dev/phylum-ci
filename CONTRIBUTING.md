@@ -65,6 +65,12 @@ If you are proposing a feature, please use the feature request template which sh
 * Provide additional context
 * Add acceptance criteria
 
+## Code of Conduct
+
+Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is
+expected to treat other people with respect and more generally to follow the guidelines articulated in the
+[Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## Local Development
 
 Ready to contribute with code submissions and pull requests (PRs)?

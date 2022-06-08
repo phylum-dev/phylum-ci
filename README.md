@@ -6,6 +6,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/issues)
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub)](https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 
 Python package for handling CI and other integrations
 
@@ -105,6 +106,12 @@ MIT - with complete text available in the [LICENSE](LICENSE) file.
 
 Suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
 More information is available on the [contributing documentation](CONTRIBUTING.md) page.
+
+## Code of Conduct
+
+Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is
+expected to treat other people with respect and more generally to follow the guidelines articulated in the
+[Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Change log
 
