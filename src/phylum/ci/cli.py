@@ -85,6 +85,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     )
 
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",

@@ -279,6 +279,7 @@ def get_args(args=None):
             `phylum auth register` command after install.""",
     )
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",
