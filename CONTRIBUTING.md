@@ -65,6 +65,11 @@ If you are proposing a feature, please use the feature request template which sh
 * Provide additional context
 * Add acceptance criteria
 
+## Security Disclosures
+
+Found a security issue in this repository? See the [security policy](docs/security.md)
+for details on coordinated disclosure.
+
 ## Code of Conduct
 
 Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is

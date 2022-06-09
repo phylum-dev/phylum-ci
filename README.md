@@ -113,6 +113,11 @@ Everyone participating in the `phylum-ci` project, and in particular in the issu
 expected to treat other people with respect and more generally to follow the guidelines articulated in the
 [Code of Conduct](./CODE_OF_CONDUCT.md).
 
+## Security Disclosures
+
+Found a security issue in this repository? See the [security policy](docs/security.md)
+for details on coordinated disclosure.
+
 ## Change log
 
 All notable changes to this project are documented in the [CHANGELOG](CHANGELOG.md).
