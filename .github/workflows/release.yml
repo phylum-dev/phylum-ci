@@ -98,8 +98,8 @@ jobs:
             poetry version $(poetry run semantic-release print-version --next)
           fi
 
-      - name: Set phylum_release_version value
-        run: echo "phylum_release_version=$(poetry version --short)" >> $GITHUB_ENV
+      - name: Set phylum_rel_ver value
+        run: echo "phylum_rel_ver=$(poetry version --short)" >> $GITHUB_ENV
 
       # NOTE: Run the tests for the current active Python version, as a sanity check.
       - name: Run tox via poetry
@@ -121,13 +121,13 @@ jobs:
         run: >
           pipx run
           --index-url https://test.pypi.org/simple/
-          --spec "phylum==${{ env.phylum_release_version }}"
+          --spec "phylum==${{ env.phylum_rel_ver }}"
           --pip-args="--extra-index-url=https://pypi.org/simple/"
           phylum-init -h
 
           pipx run
           --index-url https://test.pypi.org/simple/
-          --spec "phylum==${{ env.phylum_release_version }}"
+          --spec "phylum==${{ env.phylum_rel_ver }}"
           --pip-args="--extra-index-url=https://pypi.org/simple/"
           phylum-ci -h
 
@@ -147,28 +147,36 @@ jobs:
           else
             poetry run semantic-release publish -v DEBUG
           fi
-          echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_release_version }}/"
+          echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_rel_ver }}/"
 
       - name: Build docker image
         run: |
           export PKG_SRC=dist/phylum-*.whl
           export PKG_NAME=phylum-*.whl
           docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME --build-arg BUILDKIT_INLINE_CACHE=1 .
-          docker tag phylum-ci phylumio/phylum-ci:latest
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_release_version }}
 
       - name: Test docker image with pre-built distributions
         run: |
-          docker run --rm phylumio/phylum-ci:latest git --version
-          docker run --rm phylumio/phylum-ci:latest phylum-ci --version
-          docker run --rm phylumio/phylum-ci:latest phylum-ci --help
-          docker run --rm phylumio/phylum-ci:latest phylum-init --help
-          docker run --rm phylumio/phylum-ci:latest phylum --help
+          docker run --rm phylum-ci git --version
+          docker run --rm phylum-ci phylum-ci --version
+          docker run --rm phylum-ci phylum-ci --help
+          docker run --rm phylum-ci phylum-init --help
+          docker run --rm phylum-ci phylum --help
 
-      - name: Push docker image
+      - name: Login to Docker Hub
+        run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Tag and push unique docker image
         run: |
-          docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          docker push phylumio/phylum-ci:${{ env.phylum_release_version }}
+          echo "cli_rel_ver=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')" >> $GITHUB_ENV
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI${{ env.cli_rel_ver }}
+          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI${{ env.cli_rel_ver }}
+
+      - name: Tag and push latest docker image
+        # Only tag and push `latest` when it's not a phylum-ci pre-release
+        if: ! github.event.inputs.prerelease
+        run: |
+          docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest
 
       - name: Logout of Docker Hub
