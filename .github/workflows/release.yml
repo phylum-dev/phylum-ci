@@ -92,7 +92,7 @@ jobs:
 
       - name: Set to next version for build
         run: |
-          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
             poetry version $(poetry run semantic-release print-version --next --prerelease)
           else
             poetry version $(poetry run semantic-release print-version --next)
@@ -141,7 +141,7 @@ jobs:
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
             poetry run semantic-release publish -v DEBUG --prerelease
           else
             poetry run semantic-release publish -v DEBUG
@@ -173,7 +173,7 @@ jobs:
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a phylum-ci pre-release
-        if: ! github.event.inputs.prerelease
+        if: inputs.prerelease == false
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest
