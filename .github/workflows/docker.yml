@@ -66,6 +66,8 @@ jobs:
           ref: ${{ env.phylum_rel_ver }}
 
       - name: Get phylum wheel from latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release download ${{ env.phylum_rel_ver }} --pattern '*.whl'
 
       - name: Build docker image with latest phylum wheel
