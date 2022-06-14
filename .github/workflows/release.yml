@@ -173,7 +173,7 @@ jobs:
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a phylum-ci pre-release
-        if: ! github.event.inputs.prerelease
+        if: github.event.inputs.prerelease == false
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest

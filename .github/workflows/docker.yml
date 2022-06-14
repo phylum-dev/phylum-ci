@@ -97,7 +97,7 @@ jobs:
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a CLI pre-release
-        if: ! contains(github.event.client_payload.CLI_version, 'rc')
+        if: contains(github.event.client_payload.CLI_version, 'rc') != true
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest
