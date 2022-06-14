@@ -81,5 +81,5 @@ jobs:
           retention-days: 7
 
       - name: Publish to TestPyPI
-        if: github.event.inputs.TestPyPI == 'true'
+        if: inputs.TestPyPI
         run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
