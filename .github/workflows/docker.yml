@@ -44,11 +44,20 @@ jobs:
     steps:
       - name: Get latest phylum-ci release version
         # The API is called directly here instead of using git commands because the repo is not checked out yet
-        run: >
-          echo "phylum_rel_ver=$(curl --silent
-          https://api.github.com/repos/phylum-dev/phylum-ci/releases/latest
-          | jq --raw-output .tag_name)"
-          >> $GITHUB_ENV
+        run: |
+          export phylum_release_version=$( \
+            curl \
+              --silent \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/phylum-dev/phylum-ci/releases/latest \
+            | \
+            jq \
+              --raw-output \
+              --exit-status \
+              .tag_name \
+          )
+          echo $phylum_release_version
+          echo "phylum_rel_ver=$phylum_release_version" >> $GITHUB_ENV
 
       - name: Checkout the repo
         uses: actions/checkout@v3
@@ -60,14 +69,14 @@ jobs:
         run: gh release download ${{ env.phylum_rel_ver }} --pattern '*.whl'
 
       - name: Build docker image with latest phylum wheel
-        run: >
-          docker build
-          --tag phylum-ci
-          --build-arg PKG_SRC=phylum-*.whl
-          --build-arg PKG_NAME=phylum-*.whl
-          --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }}
-          --build-arg BUILDKIT_INLINE_CACHE=1
-          .
+        run: |
+          docker build \
+            --tag phylum-ci \
+            --build-arg PKG_SRC=phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
 
       - name: Test docker image with latest phylum wheel
         run: |

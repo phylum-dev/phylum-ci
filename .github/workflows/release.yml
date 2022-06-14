@@ -118,18 +118,17 @@ jobs:
       # "reviewers" for that environment would be notified of the release and could check that the package verification
       # step(s) worked as intended before approving the release to proceed.
       - name: Verify the package
-        run: >
-          pipx run
-          --index-url https://test.pypi.org/simple/
-          --spec "phylum==${{ env.phylum_rel_ver }}"
-          --pip-args="--extra-index-url=https://pypi.org/simple/"
-          phylum-init -h
-
-          pipx run
-          --index-url https://test.pypi.org/simple/
-          --spec "phylum==${{ env.phylum_rel_ver }}"
-          --pip-args="--extra-index-url=https://pypi.org/simple/"
-          phylum-ci -h
+        run: |
+          pipx run \
+            --index-url https://test.pypi.org/simple/ \
+            --spec "phylum==${{ env.phylum_rel_ver }}" \
+            --pip-args="--extra-index-url=https://pypi.org/simple/" \
+            phylum-init -h
+          pipx run \
+            --index-url https://test.pypi.org/simple/ \
+            --spec "phylum==${{ env.phylum_rel_ver }}" \
+            --pip-args="--extra-index-url=https://pypi.org/simple/" \
+            phylum-ci -h
 
       # This step is needed b/c otherwise the Python Semantic Release `publish` cmd would bump the version a 2nd time.
       - name: Revert to original version
@@ -168,9 +167,9 @@ jobs:
 
       - name: Tag and push unique docker image
         run: |
-          echo "cli_rel_ver=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')" >> $GITHUB_ENV
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI${{ env.cli_rel_ver }}
-          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI${{ env.cli_rel_ver }}
+          export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
+          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a phylum-ci pre-release

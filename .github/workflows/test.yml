@@ -123,17 +123,13 @@ jobs:
         run: poetry build -vvv
 
       - name: Build docker image with pre-built distributions
-        run: >
-          export PKG_SRC=dist/phylum-*.whl
-
-          export PKG_NAME=phylum-*.whl
-
-          docker build
-          --tag phylum-ci:from-dist
-          --cache-from phylumio/phylum-ci:latest
-          --build-arg PKG_SRC
-          --build-arg PKG_NAME
-          .
+        run: |
+          docker build \
+            --tag phylum-ci:from-dist \
+            --cache-from phylumio/phylum-ci:latest \
+            --build-arg PKG_SRC=dist/phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            .
 
       - name: Test docker image built from dist
         run: |
