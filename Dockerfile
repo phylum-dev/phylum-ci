@@ -15,13 +15,17 @@
 # The goal there is to ensure that the exact Python package that was built and
 # released is the one that is installed while creating this image. Prerequisites are:
 #   * The package has already been built (e.g., `poetry build -vvv`)
-#   * There is only one wheel built and put in the `dist` directory
+#   * There is exactly one wheel available to reference by glob expression
 #
 # To make use of this feature, build the image WITH build args specified:
 #
 # $ export PKG_SRC=dist/phylum-*.whl
 # $ export PKG_NAME=phylum-*.whl
 # $ docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
+#
+# Another build arg is exposed to optionally specify the Phylum CLI version to install:
+#
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.5.0 .
 #
 # To make use of BuildKit's inline layer caching feature, add the `BUILDKIT_INLINE_CACHE`
 # build argument to any instance of building an image. Then, that image can be used
@@ -75,6 +79,11 @@ RUN find /root/.local -type f -name '*.pyc' -delete
 # Explicitly specify a platform that is supported by `phylum-init`
 FROM --platform=linux/amd64 python:3.10-alpine
 
+# CLI_VER specifies the Phylum CLI version to install in the image.
+# Values should be provided in a format acceptable to the `phylum-init` script.
+# When not defined, the value will default to `latest`.
+ARG CLI_VER
+
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 
 # Copy only Python packages to limit the image size
@@ -85,7 +94,7 @@ ENV PATH=/root/.local/bin:$PATH \
 
 RUN set -eux; \
     apk add --update --no-cache git; \
-    phylum-init; \
+    phylum-init --phylum-release ${CLI_VER:-latest}; \
     find / -type f -name '*.pyc' -delete
 
 CMD ["phylum-ci"]

@@ -1,0 +1,107 @@
+# This is a workflow for building and pushing Docker images.
+#
+# It is configured to be triggered by repository dispatch events which come from outside of this repository.
+# It requires write access to the repository by providing a personal access token (PAT) with `repo` scope.
+#
+# The `event_type` parameter is expected to be `build-push-docker-images`.
+# The `client_payload` parameter is expected to contain the following data:
+#   * `CLI_version`: a string containing the Phylum CLI version to include in the image
+#
+# Here is an example repository dispatch event, triggered with `curl` from the command line:
+#
+# curl \
+#   -X POST \
+#   --fail-with-body \
+#   -H "Accept: application/vnd.github.v3+json" \
+#   -H "Authorization: token <PAT>" \
+#   -d '{"event_type":"build-push-docker-images","client_payload":{"CLI_version":"v3.5.0"}}' \
+#   https://api.github.com/repos/phylum-dev/phylum-ci/dispatches
+#
+# References:
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#repository_dispatch
+# https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
+---
+name: Build and push images
+
+concurrency: Production
+
+on:
+  repository_dispatch:
+    types: [build-push-docker-images]
+
+jobs:
+  docker:
+    name: Build and push Docker images
+    environment:
+      name: Production
+      url: https://hub.docker.com/r/phylumio/phylum-ci/tags
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Get latest phylum-ci release version
+        # The API is called directly here instead of using git commands because the repo is not checked out yet
+        run: |
+          export phylum_release_version=$( \
+            curl \
+              --silent \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/phylum-dev/phylum-ci/releases/latest \
+            | \
+            jq \
+              --raw-output \
+              --exit-status \
+              .tag_name \
+          )
+          echo $phylum_release_version
+          echo "phylum_rel_ver=$phylum_release_version" >> $GITHUB_ENV
+
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+        with:
+          # This will ensure the checkout matches the tag for the latest release
+          ref: ${{ env.phylum_rel_ver }}
+
+      - name: Get phylum wheel from latest release
+        run: gh release download ${{ env.phylum_rel_ver }} --pattern '*.whl'
+
+      - name: Build docker image with latest phylum wheel
+        run: |
+          docker build \
+            --tag phylum-ci \
+            --build-arg PKG_SRC=phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
+
+      - name: Test docker image with latest phylum wheel
+        run: |
+          docker run --rm phylum-ci git --version
+          docker run --rm phylum-ci phylum-ci --version
+          docker run --rm phylum-ci phylum-ci --help
+          docker run --rm phylum-ci phylum-init --help
+          docker run --rm phylum-ci phylum --help
+
+      - name: Login to Docker Hub
+        run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Tag and push unique docker image
+        run: |
+          export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
+          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
+
+      - name: Tag and push latest docker image
+        # Only tag and push `latest` when it's not a CLI pre-release
+        if: ! contains(github.event.client_payload.CLI_version, 'rc')
+        run: |
+          docker tag phylum-ci phylumio/phylum-ci:latest
+          docker push phylumio/phylum-ci:latest
+
+      - name: Logout of Docker Hub
+        if: always()
+        run: docker logout

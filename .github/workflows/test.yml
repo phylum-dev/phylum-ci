@@ -109,7 +109,7 @@ jobs:
           poetry install --verbose --no-root
 
       - name: Build docker image from source
-        run: docker build --tag phylum-ci:from-src .
+        run: docker build --tag phylum-ci:from-src --cache-from phylumio/phylum-ci:latest .
 
       - name: Test docker image built from source
         run: |
@@ -124,9 +124,12 @@ jobs:
 
       - name: Build docker image with pre-built distributions
         run: |
-          export PKG_SRC=dist/phylum-*.whl
-          export PKG_NAME=phylum-*.whl
-          docker build --tag phylum-ci:from-dist --build-arg PKG_SRC --build-arg PKG_NAME .
+          docker build \
+            --tag phylum-ci:from-dist \
+            --cache-from phylumio/phylum-ci:latest \
+            --build-arg PKG_SRC=dist/phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            .
 
       - name: Test docker image built from dist
         run: |
