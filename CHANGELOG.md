@@ -10,6 +10,24 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.8.0 (2022-06-15)
+### Feature
+* Coordinate phylum-ci Docker image releases with new CLI releases ([#63](https://github.com/phylum-dev/phylum-ci/issues/63)) ([`82b57e2`](https://github.com/phylum-dev/phylum-ci/commit/82b57e2d7040c0db3b2892730763a407fe642e1b))
+* Expose version arguments with a short form `-V` ([`92e9149`](https://github.com/phylum-dev/phylum-ci/commit/92e9149006e93162d8911a80d65c690ffba0239b))
+
+### Fix
+* Using gh cli requires specifying a token ([#65](https://github.com/phylum-dev/phylum-ci/issues/65)) ([`1e070fd`](https://github.com/phylum-dev/phylum-ci/commit/1e070fdc70bbfb7c7c4bda122fcfddc5a70a1013))
+* Logical prefixed `not` fails GitHub workflow syntax ([#64](https://github.com/phylum-dev/phylum-ci/issues/64)) ([`00a5cb1`](https://github.com/phylum-dev/phylum-ci/commit/00a5cb17c8652129d246eb426c4039170615cda3))
+* Re-enable building docker images with pre-built distributions ([`c5d7aa0`](https://github.com/phylum-dev/phylum-ci/commit/c5d7aa0157b5321ef27015023c66d71d1be71ac3))
+
+### Documentation
+* Add a Code of Conduct ([#60](https://github.com/phylum-dev/phylum-ci/issues/60)) ([`c953f68`](https://github.com/phylum-dev/phylum-ci/commit/c953f68f54ded778ad1cf8210b6ef8154ef29199))
+* Add a security policy ([`21fce1b`](https://github.com/phylum-dev/phylum-ci/commit/21fce1b62a78e906caebbb4dcc340668767cf80e))
+* Reformat code examples to add whitespace lines ([`a31fdce`](https://github.com/phylum-dev/phylum-ci/commit/a31fdce6b9faa2d3e9d6eccf87dcd561e158f981))
+
+### Performance
+* Optimize Docker image ([`0e28066`](https://github.com/phylum-dev/phylum-ci/commit/0e2806655b3adc3779b590f60b8631d7542c6f61))
+
 ## v0.7.0 (2022-06-01)
 ### Feature
 * Use a single character for "single dash" options ([`6a4b032`](https://github.com/phylum-dev/phylum-ci/commit/6a4b032262222173e69463fbcc232555f499c97e))
