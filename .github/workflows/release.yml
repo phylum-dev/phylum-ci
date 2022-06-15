@@ -87,8 +87,8 @@ jobs:
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
 
-      - name: Set phylum_original_version value
-        run: echo "phylum_original_version=$(poetry version --short)" >> $GITHUB_ENV
+      - name: Set PHYLUM_ORIGINAL_VER value
+        run: echo "PHYLUM_ORIGINAL_VER=$(poetry version --short)" >> $GITHUB_ENV
 
       - name: Set to next version for build
         run: |
@@ -98,8 +98,8 @@ jobs:
             poetry version $(poetry run semantic-release print-version --next)
           fi
 
-      - name: Set phylum_rel_ver value
-        run: echo "phylum_rel_ver=$(poetry version --short)" >> $GITHUB_ENV
+      - name: Set PHYLUM_REL_VER value
+        run: echo "PHYLUM_REL_VER=$(poetry version --short)" >> $GITHUB_ENV
 
       # NOTE: Run the tests for the current active Python version, as a sanity check.
       - name: Run tox via poetry
@@ -121,18 +121,18 @@ jobs:
         run: |
           pipx run \
             --index-url https://test.pypi.org/simple/ \
-            --spec "phylum==${{ env.phylum_rel_ver }}" \
+            --spec "phylum==${{ env.PHYLUM_REL_VER }}" \
             --pip-args="--extra-index-url=https://pypi.org/simple/" \
             phylum-init -h
           pipx run \
             --index-url https://test.pypi.org/simple/ \
-            --spec "phylum==${{ env.phylum_rel_ver }}" \
+            --spec "phylum==${{ env.PHYLUM_REL_VER }}" \
             --pip-args="--extra-index-url=https://pypi.org/simple/" \
             phylum-ci -h
 
       # This step is needed b/c otherwise the Python Semantic Release `publish` cmd would bump the version a 2nd time.
       - name: Revert to original version
-        run: poetry version ${{ env.phylum_original_version }}
+        run: poetry version ${{ env.PHYLUM_ORIGINAL_VER }}
 
       - name: Use Python Semantic Release to publish release
         id: psr_release
@@ -146,7 +146,7 @@ jobs:
           else
             poetry run semantic-release publish -v DEBUG
           fi
-          echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.phylum_rel_ver }}/"
+          echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/"
 
       - name: Build docker image
         run: |
@@ -168,12 +168,12 @@ jobs:
       - name: Tag and push unique docker image
         run: |
           export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
-          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
+          docker push phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a phylum-ci pre-release
-        if: inputs.prerelease == false
+        if: ${{ !inputs.prerelease }}
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest

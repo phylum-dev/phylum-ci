@@ -8,7 +8,7 @@
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub)](https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 
-Python package for handling CI and other integrations
+Utilities for handling Phylum integrations
 
 ## Installation and usage
 
@@ -20,7 +20,7 @@ The `phylum` Python package is pip installable for the environment of your choic
 pip install phylum
 ```
 
-It can also also be installed in an isolated environment with the excellent [`pipx` tool](https://pypa.github.io/pipx/):
+It can also be installed in an isolated environment with the excellent [`pipx` tool](https://pypa.github.io/pipx/):
 
 ```sh
 # Globally install the app(s) on your system in an isolated virtual environment for the package
@@ -68,9 +68,21 @@ docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=$(pwd),dst=/phylum -
 ```
 
 The Docker image contains `git` and the installed `phylum` Python package.
-It also contains an installed version of the Phylum CLI. The version of the Phylum CLI is the `latest` at the time of
-the Docker image creation. An advantage of using the Docker image is that the complete environment is packaged and made
-available with components that are known to work together.
+It also contains an installed version of the Phylum CLI.
+An advantage of using the Docker image is that the complete environment is packaged and made available with components
+that are known to work together.
+
+When using the `latest` tagged image, the version of the Phylum CLI is the `latest` available.
+There are additional image tag options available to specify a specific release of the `phylum-ci` project and a specific
+version of the Phylum CLI, in the form of `<phylum-ci version>-CLIv<Phylum CLI version>`. Here are image tag examples:
+
+```sh
+# Get the most current release of *both* `phylum-ci` and the Phylum CLI
+docker pull phylumio/phylum-ci:latest
+
+# Get the image with `phylum-ci` version 0.8.0 and Phylum CLI version 3.5.0
+docker pull phylumio/phylum-ci:0.8.0-CLIv3.5.0
+```
 
 #### `phylum-init` Script Entry Point
 
