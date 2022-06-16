@@ -8,7 +8,7 @@
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub)](https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 
-Utilities for handling Phylum integrations
+Utilities for integrating Phylum into CI pipelines (and beyond)
 
 ## Installation and usage
 
