@@ -5,7 +5,8 @@
 #
 # The `event_type` parameter is expected to be `build-push-docker-images`.
 # The `client_payload` parameter is expected to contain the following data:
-#   * `CLI_version`: a string containing the Phylum CLI version to include in the image
+#   * `CLI_version`: a string containing the Phylum CLI version to include
+#                    in the image, in a format acceptable to `phylum-init`
 #
 # Here is an example repository dispatch event, triggered with `curl` from the command line:
 #
@@ -45,7 +46,7 @@ jobs:
       - name: Get latest phylum-ci release version
         # The API is called directly here instead of using git commands because the repo is not checked out yet
         run: |
-          export phylum_release_version=$( \
+          REL_VER_WITH_v=$( \
             curl \
               --silent \
               -H "Accept: application/vnd.github.v3+json" \
@@ -56,19 +57,21 @@ jobs:
               --exit-status \
               .tag_name \
           )
-          echo $phylum_release_version
-          echo "phylum_rel_ver=$phylum_release_version" >> $GITHUB_ENV
+          REL_VER_WITHOUT_v=$(echo $REL_VER_WITH_v | sed 's/v//')
+          echo $REL_VER_WITH_v $REL_VER_WITHOUT_v
+          echo "REL_VER_WITH_v=$REL_VER_WITH_v" >> $GITHUB_ENV
+          echo "REL_VER_WITHOUT_v=$REL_VER_WITHOUT_v" >> $GITHUB_ENV
 
       - name: Checkout the repo
         uses: actions/checkout@v3
         with:
           # This will ensure the checkout matches the tag for the latest release
-          ref: ${{ env.phylum_rel_ver }}
+          ref: ${{ env.REL_VER_WITH_v }}
 
       - name: Get phylum wheel from latest release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release download ${{ env.phylum_rel_ver }} --pattern '*.whl'
+        run: gh release download ${{ env.REL_VER_WITH_v }} --pattern '*.whl'
 
       - name: Build docker image with latest phylum wheel
         run: |
@@ -94,12 +97,14 @@ jobs:
       - name: Tag and push unique docker image
         run: |
           export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
-          docker push phylumio/phylum-ci:${{ env.phylum_rel_ver }}-CLI$CLI_REL_VER
+          docker tag phylum-ci phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
+          docker push phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a CLI pre-release
-        if: contains(github.event.client_payload.CLI_version, 'rc') != true
+        # NOTE: This is an instance where the expression syntax (`${{ }}`) is required for the `if` conditional,
+        #       contrary to the GitHub workflow syntax documentation. Do not remove the expression syntax.
+        if: ${{ !contains(github.event.client_payload.CLI_version, 'rc') }}
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
           docker push phylumio/phylum-ci:latest
