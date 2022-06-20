@@ -38,7 +38,7 @@ class CIGitLab(CIBase):
         if os.getenv("GITLAB_CI") != "true":
             raise SystemExit(" [!] Must be working within the GitLab CI environment")
 
-        # A GitLab token with API access is required to use the API (e.g., to post notes/comments)
+        # A GitLab token with API access is required to use the API (e.g., to post notes/comments).
         # This can be a personal, project, or group access token...and possibly some other types as well.
         # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
         gitlab_token = os.getenv("GITLAB_TOKEN")
@@ -81,7 +81,7 @@ class CIGitLab(CIBase):
 
         try:
             cmd = f"git diff --exit-code --quiet {mr_diff_base_sha} -- {lockfile.resolve()}"
-            # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
+            # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
             subprocess.run(cmd.split(), check=True)
             return False
