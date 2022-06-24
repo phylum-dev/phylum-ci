@@ -35,6 +35,18 @@
 # $ docker build --tag phylumio/phylum-ci:cache --build-arg BUILDKIT_INLINE_CACHE=1 .
 # $ docker push phylumio/phylum-ci:cache && docker image rm phylumio/phylum-ci:cache
 # $ docker build --tag phylumio/phylum-ci:faster --cache-from phylumio/phylum-ci:cache .
+#
+# There is no ENTRYPOINT in this Dockerfile by design. That way, it is possible to provide
+# unquoted extra parameters to run arbitrary commands in the context of the container:
+#
+# $ docker run --rm phylumio/phylum-ci:latest ls -alh /
+#
+# However, there may be cases where an entrypoint is needed. One is provided and placed in
+# a directory that will be included in the final layer and also known to be part of the
+# $PATH. To make use of it, add the `--entrypoint` option to a docker run command,
+# specifying the `entrypoint.sh` script, providing extra parameters as a *quoted* string:
+#
+# $ docker run --rm --entrypoint entrypoint.sh phylumio/phylum-ci:latest "ls -alh /"
 ##########################################################################################
 
 # Explicitly specify a platform that is supported by `phylum-init`
@@ -76,6 +88,9 @@ COPY "${PKG_SRC:-.}" .
 RUN pip install --user --no-cache-dir ${PKG_NAME:-.}
 RUN find /root/.local -type f -name '*.pyc' -delete
 
+# Place in a directory included in the final layer and also known to be part of the $PATH
+COPY entrypoint.sh /root/.local/bin/
+
 # Explicitly specify a platform that is supported by `phylum-init`
 FROM --platform=linux/amd64 python:3.10-alpine
 
@@ -90,10 +105,12 @@ LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 COPY --from=builder /root/.local /root/.local
 
 ENV PATH=/root/.local/bin:$PATH \
+    PYTHONPATH=/root/.local/lib/python3.10/site-packages \
     PYTHONDONTWRITEBYTECODE=1
 
 RUN set -eux; \
     apk add --update --no-cache git; \
+    chmod +x /root/.local/bin/entrypoint.sh; \
     phylum-init --phylum-release ${CLI_VER:-latest}; \
     find / -type f -name '*.pyc' -delete
 
