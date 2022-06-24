@@ -6,12 +6,13 @@ GitHub References:
   * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
   * https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
   * https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+  * https://docs.github.com/en/rest/overview/resources-in-the-rest-api
   * https://docs.github.com/en/rest/pulls/comments
+  * https://docs.github.com/en/rest/guides/working-with-comments#pull-request-comments
 """
 import json
 import os
 import subprocess
-import urllib.parse
 from argparse import Namespace
 from pathlib import Path
 from typing import Optional
@@ -29,12 +30,18 @@ class CIGitHub(CIBase):
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
 
+        # This is the recommended workaround for container actions, to avoid the `unsafe repository` error.
+        # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
+        github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
+        cmd = f"git config --global --add safe.directory {github_workspace}"
+        subprocess.run(cmd.split(), check=True)
+
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for operating within a GitHub Actions Environment:
           * The environment must actually be within GitHub Actions
-          * A GitHub token providing API access is available
+          * A GitHub token providing `issues` API access is available
           * `pull_request` webhook event payload is available
         """
         super()._check_prerequisites()
@@ -42,22 +49,24 @@ class CIGitHub(CIBase):
         if os.getenv("GITHUB_ACTIONS") != "true":
             raise SystemExit(" [!] Must be working within the GitHub Actions environment")
 
-        # TODO: The basic GITHUB_TOKEN may be good enough??? If so, update the docstring as well
-
-        # A GitHub token with API access is required to use the API (e.g., to post comments).
-        # This can be a personal access token or the default `GITHUB_TOKEN` provided automatically at the start of each
-        # workflow run. See the GitHub Token Documentation for more info:
+        # A GitHub token with API access is required to use the API (e.g., to post comments). This can be the default
+        # `GITHUB_TOKEN` provided automatically at the start of each workflow run or a personal access token (PAT).
+        # A `GITHUB_TOKEN` needs at least write access for `pull-requests` scope (even though the `issues` API is used).
+        # A PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
+        # See the GitHub Token Documentation for more info:
         # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
         # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
         # https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
-            raise SystemExit(" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`")
+            raise SystemExit(" [!] A GitHub token with API access must be set at `GITHUB_TOKEN` environment variable")
         self._github_token = github_token
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
         # Instead, the full event webhook payload can be used to obtain the information. Reference:
         # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+        if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
+            raise SystemExit(" [!] The workflow event must be `pull_request`")
         github_event_path = os.getenv("GITHUB_EVENT_PATH")
         if github_event_path is None:
             raise SystemExit(" [!] Could not read the `GITHUB_EVENT_PATH` environment variable")
@@ -116,32 +125,28 @@ class CIGitHub(CIBase):
 
     def post_output(self) -> None:
         """Post the output of the analysis as a comment on the GitHub Pull Request (PR)."""
-        # API Reference: https://docs.github.com/en/rest/pulls/comments
+        # API Reference: https://docs.github.com/en/rest/issues/comments
         # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
-        review_comments_url = self.pr_event.get("pull_request", {}).get("review_comments_url")
+        comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
 
         headers = {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"token {self.github_token}",
         }
-        query = {
-            "sort": "created",
-            "direction": "desc",
-            "per_page": 100,
-        }
-        query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
-        get_review_comments_url = f"{review_comments_url}?{query_params}"
 
-        print(f" [*] Getting all current pull request review comments with GET URL: {get_review_comments_url} ...")
-        req = requests.get(get_review_comments_url, headers=headers, timeout=REQ_TIMEOUT)
+        query_params = {"per_page": 100}
+        print(f" [*] Getting all current pull request comments with GET URL: {comments_url} ...")
+        req = requests.get(comments_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
         req.raise_for_status()
         pr_comments = req.json()
 
-        print(" [*] Checking existing pull request comments for existing content to avoid duplication ...")
-        # NOTE: The API is called to return the comments in descending order by the `created` field.
+        print(" [*] Checking pull request comments for existing content to avoid duplication ...")
+        if not pr_comments:
+            print(" [+] No existing pull request comments found.")
+        # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
         #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
         #       We only care about the most recent Phylum comment.
-        for pr_comment in pr_comments:
+        for pr_comment in reversed(pr_comments):
             if pr_comment.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
                 print(" [+] The most recently posted Phylum pull request comment was found.")
                 if pr_comment.get("body", "") == self.analysis_output:
@@ -150,18 +155,9 @@ class CIGitHub(CIBase):
                 print(" [+] It does not contain the same content as the current analysis.")
                 break
 
-        # If we got here, then the most recent Phylum PR note does not match the current analysis output or
+        # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
         # there were no Phylum PR comments. Either way, create a new PR comment.
-        pr_head_sha = self.pr_event.get("pull_request", {}).get("head", {}).get("sha", os.getenv("GITHUB_SHA"))
-        body_params = {
-            "body": self.analysis_output,
-            "commit_id": pr_head_sha,
-            "path": self.lockfile.relative_to(Path.cwd()),
-            "side": "RIGHT",
-            "line": 1,
-            "start_line": 1,
-            "start_side": "RIGHT",
-        }
-        print(f" [*] Creating new pull request comment with POST URL: {review_comments_url} ...")
-        response = requests.post(review_comments_url, data=body_params, headers=headers, timeout=REQ_TIMEOUT)
+        body_params = {"body": self.analysis_output}
+        print(f" [*] Creating new pull request comment with POST URL: {comments_url} ...")
+        response = requests.post(comments_url, headers=headers, json=body_params, timeout=REQ_TIMEOUT)
         response.raise_for_status()

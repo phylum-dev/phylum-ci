@@ -108,6 +108,8 @@ class CIGitLab(CIBase):
         mr_notes = req.json()
 
         print(" [*] Checking existing merge request notes for existing content to avoid duplication ...")
+        if not mr_notes:
+            print(" [+] No existing merge request notes found.")
         # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
         #       Detecting Phylum notes is done simply by looking for those notes that start with a known string value.
         #       We only care about the most recent Phylum note.
