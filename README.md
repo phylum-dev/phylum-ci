@@ -2,13 +2,22 @@
 [![PyPI](https://img.shields.io/pypi/v/phylum)](https://pypi.org/project/phylum/)
 ![PyPI - Status](https://img.shields.io/pypi/status/phylum)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/phylum)](https://pypi.org/project/phylum/)
-[![GitHub](https://img.shields.io/github/license/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/phylum-dev/phylum-ci)](https://github.com/phylum-dev/phylum-ci/issues)
+[![GitHub](https://img.shields.io/github/license/phylum-dev/phylum-ci)][license]
+[![GitHub issues](https://img.shields.io/github/issues/phylum-dev/phylum-ci)][issues]
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub)](https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
+[![GitHub Workflow Status (branch)][workflow_shield]][workflow_test]
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
+
+[license]: https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE
+[issues]: https://github.com/phylum-dev/phylum-ci/issues
+[workflow_shield]: https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub
+[workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
+[CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
+[contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
+[changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md
+[security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
 
 ## Installation and usage
 
@@ -102,7 +111,10 @@ It will attempt to detect the CI platform based on the environment from which it
 The current CI platforms/environments supported are:
 
 * GitLab CI
-  * See the [GitLab CI Integration documentation](docs/gitlab_ci.md) for more info
+  * See the [GitLab CI Integration documentation][gitlab_docs] for more info
+
+* GitHub Actions
+  * See the [GitHub Actions Integration documentation][github_docs] for more info
 
 * None (local use)
   * This is the "fall-through" case used when no other environment is detected
@@ -110,29 +122,32 @@ The current CI platforms/environments supported are:
     * Establishing a successful submission prior to submitting a PR/MR to a CI system
     * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
 
+[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/gitlab_ci.md
+[github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/github_actions.md
+
 ## License
 
-MIT - with complete text available in the [LICENSE](LICENSE) file.
+MIT - with complete text available in the [LICENSE][license] file.
 
 ## Contributing
 
 Suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
-More information is available on the [contributing documentation](CONTRIBUTING.md) page.
+More information is available on the [contributing documentation][contributing] page.
 
 ## Code of Conduct
 
 Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is
 expected to treat other people with respect and more generally to follow the guidelines articulated in the
-[Code of Conduct](./CODE_OF_CONDUCT.md).
+[Code of Conduct][CoC].
 
 ## Security Disclosures
 
-Found a security issue in this repository? See the [security policy](docs/security.md)
+Found a security issue in this repository? See the [security policy][security]
 for details on coordinated disclosure.
 
 ## Change log
 
-All notable changes to this project are documented in the [CHANGELOG](CHANGELOG.md).
+All notable changes to this project are documented in the [CHANGELOG][changelog].
 
 The format of the change log is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
