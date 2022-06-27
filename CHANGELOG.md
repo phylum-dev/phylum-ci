@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.9.0 (2022-06-27)
+### Feature
+* Add support for GitHub Actions CI environment ([#68](https://github.com/phylum-dev/phylum-ci/issues/68)) ([`b59da0a`](https://github.com/phylum-dev/phylum-ci/commit/b59da0a3fb6ba460536ecd25c115ee6e6df8e7a4))
+
 ## v0.8.1 (2022-06-16)
 ### Fix
 * Docker image tags are inconsistent ([#67](https://github.com/phylum-dev/phylum-ci/issues/67)) ([`00a2b53`](https://github.com/phylum-dev/phylum-ci/commit/00a2b53e603b6740f0b185e990ccde5511fb1968))
