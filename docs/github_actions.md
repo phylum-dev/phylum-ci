@@ -28,5 +28,5 @@ for more detail.
 
 There is another way to use the `phylumio/phylum-ci` Docker image, but without it being encapsulated in the Phylum
 Analyze PR action directly. GitHub Actions allows for workflows to run a job within a container, using the `container:`
-statement in the workflow file. These are known as container jobs and more information can be found in GitHub
+statement in the workflow file. These are known as container jobs. More information can be found in GitHub
 documentation: ["Running jobs in a container"](https://docs.github.com/actions/using-jobs/running-jobs-in-a-container).

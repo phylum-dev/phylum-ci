@@ -80,9 +80,9 @@ class CIGitLab(CIBase):
             return False
 
         try:
-            cmd = f"git diff --exit-code --quiet {mr_diff_base_sha} -- {lockfile.resolve()}"
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
+            cmd = f"git diff --exit-code --quiet {mr_diff_base_sha} -- {lockfile.resolve()}"
             subprocess.run(cmd.split(), check=True)
             return False
         except subprocess.CalledProcessError as err:
