@@ -449,10 +449,15 @@ class CIBase(ABC):
         if threshold is None:
             risk_domain: RiskDomain = PROJECT_THRESHOLD_OPTIONS.get(threshold_type, RiskDomain("", "", ""))
             threshold = project_thresholds.get(risk_domain.project_name)
-            req_src = "project setting"
+            req_src = "project per-axis threshold"
             if threshold is None:
                 threshold = 1.0
                 req_src = "N/A (fail safe)"
+
+            total_threshold = project_thresholds.get("total", 0.0)
+            if threshold < total_threshold:
+                threshold = total_threshold
+                req_src = "project total threshold"
         else:
             # The project risk threshold values returned by the analysis are normalized to [0.0, 1.0].
             # They are converted internally like this because it is more natural to ask users for input
