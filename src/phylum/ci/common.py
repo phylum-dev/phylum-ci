@@ -22,10 +22,7 @@ class ProjectThresholdInfo:
     """Class for keeping track of project risk threshold information.
 
     `threshold`: The risk domain threshold value in use.
-    `req_src`: The source of the threshold requirement. Possible values are:
-      * `phylum-ci option`: The threshold in use came from using a command line option
-      * `project setting`: The threshold in use comes from the Phylum project settings
-      * `N/A (fail safe)`: No source was found/determined; used with a default secure value for `threshold`
+    `req_src`: The source of the threshold requirement. For example, `phylum-ci option` for command line options
     """
 
     threshold: float
