@@ -10,6 +10,11 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.9.1 (2022-07-01)
+### Fix
+* Detect lockfile changes in GitHub PRs ([#73](https://github.com/phylum-dev/phylum-ci/issues/73)) ([`c119a4a`](https://github.com/phylum-dev/phylum-ci/commit/c119a4ae9f6446ae518bde6f2acb0a9354031434))
+* Apply total threshold to all risk domains ([#71](https://github.com/phylum-dev/phylum-ci/issues/71)) ([`0b19167`](https://github.com/phylum-dev/phylum-ci/commit/0b191676d63ece1c98b64e322ce0822af34c9bd8))
+
 ## v0.9.0 (2022-06-27)
 ### Feature
 * Add support for GitHub Actions CI environment ([#68](https://github.com/phylum-dev/phylum-ci/issues/68)) ([`b59da0a`](https://github.com/phylum-dev/phylum-ci/commit/b59da0a3fb6ba460536ecd25c115ee6e6df8e7a4))
