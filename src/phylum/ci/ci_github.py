@@ -27,14 +27,15 @@ class CIGitHub(CIBase):
     """Provide methods for a GitHub Actions environment."""
 
     def __init__(self, args: Namespace) -> None:
-        super().__init__(args)
-        self.ci_platform_name = "GitHub Actions"
-
         # This is the recommended workaround for container actions, to avoid the `unsafe repository` error.
+        # It is added before super().__init__(args) so that lockfile change detection will be set properly.
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
         cmd = f"git config --global --add safe.directory {github_workspace}"
         subprocess.run(cmd.split(), check=True)
+
+        super().__init__(args)
+        self.ci_platform_name = "GitHub Actions"
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
