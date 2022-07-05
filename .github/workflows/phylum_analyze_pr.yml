@@ -2,24 +2,20 @@
 # in this repository with Phylum during pull requests.
 ---
 name: Phylum_analyze
-
-on:
-  pull_request:
-
+on: pull_request
 jobs:
   Analyze_PR_with_Phylum:
     name: Analyze PR with phylum
+    permissions:            # Ensure least privilege of actions
+      contents: read        # For actions/checkout
+      pull-requests: write  # For phylum-dev/phylum-analyze-pr-action
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
-
-      - name: Analyze poetry.lock file
-        uses: phylum-dev/phylum-analyze-pr-action@v1
         with:
-          vul_threshold: 0.99
-          mal_threshold: 0.99
-          eng_threshold: 0.99
-          lic_threshold: 0.99
-          aut_threshold: 0.99
+          fetch-depth: 0
+      - name: Analyze poetry.lock file
+        uses: phylum-dev/phylum-analyze-pr-action@v2
+        with:
           phylum_token: ${{ secrets.PHYLUM_TOKEN }}

@@ -65,6 +65,17 @@ If you are proposing a feature, please use the feature request template which sh
 * Provide additional context
 * Add acceptance criteria
 
+## Security Disclosures
+
+Found a security issue in this repository? See the [security policy](docs/security.md)
+for details on coordinated disclosure.
+
+## Code of Conduct
+
+Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is
+expected to treat other people with respect and more generally to follow the guidelines articulated in the
+[Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## Local Development
 
 Ready to contribute with code submissions and pull requests (PRs)?
@@ -165,10 +176,13 @@ interact with `pytest` by passing additional positional arguments:
 ```sh
 # run a specific test module across all test environments
 poetry run tox tests/unit/test_package_metadata.py
+
 # run a specific test module across a specific test environment
 poetry run tox -e py39 tests/unit/test_package_metadata.py
+
 # run a specific test function within a test module, in a specific test environment
 poetry run tox -e py310 tests/unit/test_package_metadata.py::test_python_version
+
 # passing additional options to pytest requires using the double dash escape
 poetry run tox -e py310 -- --help
 ```
@@ -178,6 +192,7 @@ To run a script entry point with the local checkout of the code (in develop mode
 ```sh
 # If not done previously, ensure the project is installed by poetry (only required once)
 poetry install
+
 # Use the `poetry run` command to ensure the installed project is used
 poetry run phylum-init -h
 ```

@@ -10,6 +10,7 @@ from typing import List, Optional, Sequence, Tuple
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_base import CIBase, CIEnvs
+from phylum.ci.ci_github import CIGitHub
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
@@ -26,6 +27,11 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     if os.getenv("GITLAB_CI") == "true":
         print(" [+] CI environment detected: GitLab CI")
         ci_envs.append(CIGitLab(args))
+
+    # Detect GitHub Actions
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        print(" [+] CI environment detected: GitHub Actions")
+        ci_envs.append(CIGitHub(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least
@@ -85,6 +91,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     )
 
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",
