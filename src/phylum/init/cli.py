@@ -375,7 +375,7 @@ def main(args=None):
 
     target_triple = args.target
     if target_triple not in supported_target_triples:
-        raise ValueError(f"The identified target triple `{target_triple}` is not supported for release {tag_name}")
+        raise SystemExit(f" [!] The identified target triple `{target_triple}` is not supported for release {tag_name}")
 
     archive_name = f"phylum-{target_triple}.zip"
     minisig_name = f"{archive_name}.minisig"
