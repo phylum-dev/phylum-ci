@@ -1,20 +1,8 @@
 """Provide constants for use throughout the package."""
 
-# These are the currently supported Rust target triples
-#
-# Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
-# should be produced. A target triple consists of three strings separated by a hyphen, with a possible fourth string
-# at the end preceded by a hyphen. The first is the architecture, the second is the "vendor", the third is the OS
-# type, and the optional fourth is environment type.
-#
-# References:
-#   * https://doc.rust-lang.org/nightly/rustc/platform-support.html
-#   * https://rust-lang.github.io/rfcs/0131-target-specification.html
-SUPPORTED_TARGET_TRIPLES = (
-    "aarch64-apple-darwin",
-    "x86_64-apple-darwin",
-    "x86_64-unknown-linux-musl",
-)
+# The release layout structure changed starting with v2.0.0 and support is only for the new layout
+MIN_SUPPORTED_CLI_VERSION = "v2.0.0"
+
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
 SUPPORTED_ARCHES = {
@@ -23,6 +11,7 @@ SUPPORTED_ARCHES = {
     "x86_64": "x86_64",
     "amd64": "x86_64",
 }
+
 # Keys are lowercase operating system name as returned from `uname -s`.
 # Values are the mapped rustc platform, which is the vendor-os_type[-environment_type].
 SUPPORTED_PLATFORMS = {
