@@ -1,3 +1,8 @@
+---
+title: GitLab CI Integration
+category: 62cdf6722c2c1602a4b69643
+hidden: false
+---
 # GitLab CI Integration
 
 ## Overview
@@ -29,11 +34,11 @@ thresholds.
 The GitLab CI environment is primarily supported through the use of a Docker image.
 The pre-requisites for using this image are:
 
-* Access to the [phylumio/phylum-ci Docker image](https://hub.docker.com/r/phylumio/phylum-ci/tags)
-* A [GitLab token](https://docs.gitlab.com/ee/security/token_overview.html) with API access
-* A [Phylum token](https://docs.phylum.io/docs/api-keys) with API access
-  * [Contact Phylum](https://phylum.io/contact-us/) or create an account and register to gain access
-    * See also [`phylum auth register`](https://docs.phylum.io/docs/phylum_auth_register) command documentation
+* Access to the [phylumio/phylum-ci Docker image][docker_image]
+* A [GitLab token][gitlab_tokens] with API access
+* A [Phylum token][phylum_tokens] with API access
+  * [Contact Phylum][phylum_contact] or create an account and register to gain access
+    * See also [`phylum auth register`][phylum_register] command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
@@ -41,6 +46,12 @@ The pre-requisites for using this image are:
 * A `.phylum_project` file exists at the root of the repository
   * See [`phylum project`](https://docs.phylum.io/docs/phylum_project) and
     [`phylum project create`](https://docs.phylum.io/docs/phylum_project_create) command documentation
+
+[docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
+[gitlab_tokens]: https://docs.gitlab.com/ee/security/token_overview.html
+[phylum_tokens]: https://docs.phylum.io/docs/api-keys
+[phylum_contact]: https://phylum.io/contact-us/
+[phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
 
 ## Configure `.gitlab-ci.yml`
 
@@ -98,7 +109,7 @@ is created for each release of the `phylum-ci` Python package and _should_ not c
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available anymore
 ...use the SHA256 digest of the tag. The digest can be found by looking at the `phylumio/phylum-ci`
-[tags on Docker Hub](https://hub.docker.com/r/phylumio/phylum-ci/tags) or with the command:
+[tags on Docker Hub][docker_image] or with the command:
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
@@ -139,16 +150,16 @@ A GitLab token with API access is required to use the API (e.g., to post notes/c
 This can be a personal, project, or group access token.
 The account used to create the token will be the one that appears to post the notes/comments on the merge request.
 Therefore, it might be worth looking into using a bot account, which is available for project and group access tokens.
-See the [GitLab Token Overview](https://docs.gitlab.com/ee/security/token_overview.html) documentation for more info.
+See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
 
 Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token, by
 using the authorization of the user triggering the job." This is not recommended for anything other than temporary
 personal use in private repositories as there is a chance that depending on it will cause failures when attempting to do
 the same thing in different scenarios.
 
-A [Phylum token](https://docs.phylum.io/docs/api-keys) with API access is required to perform analysis on project
-dependencies. [Contact Phylum](https://phylum.io/contact-us/) or create an account and register to gain access.
-See also [`phylum auth register`](https://docs.phylum.io/docs/phylum_auth_register) command documentation and consider
+A [Phylum token][phylum_tokens] with API access is required to perform analysis on project
+dependencies. [Contact Phylum][phylum_contact] or create an account and register to gain access.
+See also [`phylum auth register`][phylum_register] command documentation and consider
 using a bot or group account for this token.
 
 The values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a
@@ -182,7 +193,7 @@ to protect them appropriately**.
 The script arguments to the Docker image are the way to exert control over the execution of the Phylum analysis. The
 `phylum-ci` script entry point is expected to be called. It has a number of arguments that are all optional and
 defaulted to secure values. To view the arguments, their description, and default values, run the script with `--help`
-output as specified in the [Usage section of the top-level README.md](../README.md#usage) or view the
+output as specified in the [Usage section of the top-level README.md][usage] or view the
 [source code](https://github.com/phylum-dev/phylum-ci/blob/main/src/phylum/ci/cli.py) directly.
 
 ```yaml
@@ -223,8 +234,12 @@ output as specified in the [Usage section of the top-level README.md](../README.
 
 ## Alternatives
 
-It is also possible to make direct use of the [`phylum` Python package](https://pypi.org/project/phylum/) within CI.
-This may be necessary if the Docker image is unavailable or undesirable for some reason. To use the `phylum` package,
-install it and call the desired entry points from a script under your control. See the
-[Installation](../README.md#installation) and [Usage](../README.md#usage) sections of the [README file](../README.md)
-for more detail.
+It is also possible to make direct use of the [`phylum` Python package][pypi] within CI.
+This may be necessary if the Docker image is unavailable or undesirable for some reason.
+To use the `phylum` package, install it and call the desired entry points from a script under your control.
+See the [Installation][installation] and [Usage][usage] sections of the [README file][readme] for more detail.
+
+[pypi]: https://pypi.org/project/phylum/
+[readme]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md
+[installation]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md#installation
+[usage]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md#usage
