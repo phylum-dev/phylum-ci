@@ -174,10 +174,12 @@ def supported_targets(release_tag: str) -> List[str]:
 
     assets = req_json.get("assets", [])
     targets: List[str] = []
+    prefix, suffix = "phylum-", ".zip"
     for asset in assets:
         name = asset.get("name", "")
-        target = name.replace("phylum-", "").replace(".zip.minisig", "").replace(".zip", "")
-        targets.append(target)
+        if name.startswith(prefix) and name.endswith(suffix):
+            target = name.replace(prefix, "").replace(suffix, "")
+            targets.append(target)
 
     return list(set(targets))
 
@@ -193,7 +195,8 @@ def version_check(version):
 
     supported_versions = supported_releases()
     if version not in supported_versions:
-        raise argparse.ArgumentTypeError(f"version must be from a supported release: {', '.join(supported_versions)}")
+        releases = ", ".join(supported_versions)
+        raise argparse.ArgumentTypeError(f"version must be from a supported release: {releases}")
 
     return version
 
@@ -363,14 +366,16 @@ def main(args=None):
 
     if args.list_releases:
         print("Looking up supported releases ...")
-        print(f"Supported releases: {', '.join(supported_releases())}")
+        releases = ", ".join(supported_releases())
+        print(f"Supported releases: {releases}")
         return 0
 
     tag_name = args.version
     supported_target_triples = supported_targets(tag_name)
     if args.list_targets:
         print(f"Looking up supported targets for release {tag_name} ...")
-        print(f"Supported targets for release {tag_name}: {', '.join(supported_target_triples)}")
+        targets = ", ".join(supported_target_triples)
+        print(f"Supported targets for release {tag_name}: {targets}")
         return 0
 
     target_triple = args.target
