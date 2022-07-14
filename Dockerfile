@@ -25,7 +25,11 @@
 #
 # Another build arg is exposed to optionally specify the Phylum CLI version to install:
 #
-# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.5.0 .
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.7.0 .
+#
+# If a CLI_VER < 3.7.0 is selected, it will be necessary to explicitly specify a platform:
+#
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.6.0 --platform=linux/amd64 .
 #
 # To make use of BuildKit's inline layer caching feature, add the `BUILDKIT_INLINE_CACHE`
 # build argument to any instance of building an image. Then, that image can be used
@@ -49,8 +53,7 @@
 # $ docker run --rm --entrypoint entrypoint.sh phylumio/phylum-ci:latest "ls -alh /"
 ##########################################################################################
 
-# Explicitly specify a platform that is supported by `phylum-init`
-FROM --platform=linux/amd64 python:3.10-alpine AS builder
+FROM python:3.10-alpine AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
 # distribution/wheel. Both can optionally be specified in glob form. When not defined,
@@ -91,8 +94,7 @@ RUN find /root/.local -type f -name '*.pyc' -delete
 # Place in a directory included in the final layer and also known to be part of the $PATH
 COPY entrypoint.sh /root/.local/bin/
 
-# Explicitly specify a platform that is supported by `phylum-init`
-FROM --platform=linux/amd64 python:3.10-alpine
+FROM python:3.10-alpine
 
 # CLI_VER specifies the Phylum CLI version to install in the image.
 # Values should be provided in a format acceptable to the `phylum-init` script.
