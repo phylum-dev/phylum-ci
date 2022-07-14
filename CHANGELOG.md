@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.10.0 (2022-07-14)
+### Feature
+* Check for and list valid versions and targets programmatically in `phylum-init` ([#74](https://github.com/phylum-dev/phylum-ci/issues/74)) ([`7066565`](https://github.com/phylum-dev/phylum-ci/commit/7066565956d159b17811a4a6418f06037537629e))
+
+### Documentation
+* Add integration documentation to Phylum docs page ([`5b988b9`](https://github.com/phylum-dev/phylum-ci/commit/5b988b9c408b2b1088f5fde3f53386b36540798c))
+
+### Performance
+* Allow native Docker image creation ([#77](https://github.com/phylum-dev/phylum-ci/issues/77)) ([`9ee4123`](https://github.com/phylum-dev/phylum-ci/commit/9ee4123c2510bf86fc72880adad12828cd95d1b1))
+
 ## v0.9.1 (2022-07-01)
 ### Fix
 * Detect lockfile changes in GitHub PRs ([#73](https://github.com/phylum-dev/phylum-ci/issues/73)) ([`c119a4a`](https://github.com/phylum-dev/phylum-ci/commit/c119a4ae9f6446ae518bde6f2acb0a9354031434))
