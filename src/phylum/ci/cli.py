@@ -15,7 +15,7 @@ from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
-from phylum.constants import SUPPORTED_TARGET_TRIPLES, TOKEN_ENVVAR_NAME
+from phylum.constants import TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_target_triple, version_check
 
 
@@ -188,7 +188,6 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     cli_group.add_argument(
         "-t",
         "--target",
-        choices=SUPPORTED_TARGET_TRIPLES,
         default=get_target_triple(),
         help="The target platform type where the CLI will be installed.",
     )
