@@ -1,0 +1,33 @@
+# This is the configuration file for GitHub's Dependabot, used here for version updates.
+# See the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+---
+version: 2
+updates:
+  # "pip" also covers Poetry
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+    # Only worry about major version updates here. Other updates are accounted for in
+    # a separate workflow in an effort to reduce the number of PRs opened by Dependabot.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "build"
