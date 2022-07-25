@@ -61,7 +61,7 @@ jobs:
         if: ${{ steps.commit.outcome == 'success' }}
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GH_RELEASE_PAT }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           script: |
             github.rest.pulls.create({
               owner: context.repo.owner,
