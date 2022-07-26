@@ -47,16 +47,16 @@ phylum-ci = "phylum.ci.cli:script_main"
 python = "^3.7"
 # TODO: Remove this dependency when Python 3.7 support is removed
 #       https://github.com/phylum-dev/phylum-ci/issues/18
-importlib-metadata = {version = "^4.11.3", python = "<3.8"}
-requests = "^2.27.1"
-cryptography = ">=36.0.2,<38.0.0"
-packaging = "^21.3"
-"ruamel.yaml" = "^0.17.21"
+importlib-metadata = {version = "*", python = "<3.8"}
+requests = "*"
+cryptography = "*"
+packaging = "*"
+"ruamel.yaml" = "*"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.1"
-tomli = "^2.0.1"
-tox = "^3.24.5"
+pytest = "*"
+tomli = "*"
+tox = "*"
 
 # NOTE: The dependencies in this next group are not required for local development. However, it is not currently
 #       possible to specify extras in dev-dependencies; they have to be in the dependencies section to be recognized:
@@ -65,10 +65,10 @@ tox = "^3.24.5"
 #       https://github.com/python-poetry/poetry/issues/1644
 #       https://github.com/phylum-dev/phylum-ci/issues/15
 # ---START---
-tox-gh-actions = "^2.9.1"
-pytest-github-actions-annotate-failures = "^0.1.6"
-python-semantic-release = "^7.28.1"
-types-requests = "^2.27.25"
+tox-gh-actions = "*"
+pytest-github-actions-annotate-failures = "*"
+python-semantic-release = "*"
+types-requests = "*"
 # ---END---
 
 [tool.black]
