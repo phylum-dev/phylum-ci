@@ -124,10 +124,24 @@ Here's how to set up `phylum-ci` for local development.
 
     Now you can make your changes locally.
 
-6. If new dependencies are added, ensure the `poetry.lock` file is updated (and committed):
+6. If new dependencies are added, do so in a way that does not add upper version constraints and ensure
+   the `poetry.lock` file is updated (and committed):
 
     ```sh
-    poetry lock
+    # Unless there is a reason to do so, prefer to add dependencies without constraints
+    poetry add new-dependency-name
+
+    # When a version constraint is not specified, poetry chooses one. For example (in pyproject.toml):
+    #
+    #   new-dependency-name = "^1.2.3"
+    #
+    # Unless the constraint was intentional, change the entry to remove the constraint:
+    #
+    #   new-dependency-name = "*"
+
+    # Update the lockfile and the local environment to get the latest versions of dependencies
+    poetry update
+
     # Dependencies will be checked automatically in CI during a PR, but checking locally is possible:
     phylum analyze poetry.lock
     ```
