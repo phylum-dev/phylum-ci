@@ -129,13 +129,17 @@ Here's how to set up `phylum-ci` for local development.
 
     ```sh
     # Unless there is a reason to do so, prefer to add dependencies without constraints
-    poetry add new-dependency-name
+    poetry add "new-dependency-name==*"
 
-    # When a version constraint is not specified, poetry chooses one. For example (in pyproject.toml):
+    # When a version constraint is not specified, poetry chooses one. For example, the command:
+    #
+    #   $ poetry add new-dependency-name
+    #
+    # results in a caret-style version constraint added to the dependency in pyproject.toml:
     #
     #   new-dependency-name = "^1.2.3"
     #
-    # Unless the constraint was intentional, change the entry to remove the constraint:
+    # Unless the constraint was intentional, change the pyproject.toml entry to remove the constraint:
     #
     #   new-dependency-name = "*"
 
