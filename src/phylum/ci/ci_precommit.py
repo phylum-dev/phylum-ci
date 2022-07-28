@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional
 
-from phylum.ci import SCRIPT_NAME
+from connect.utils.terminal.markdown import render
 from phylum.ci.ci_base import CIBase
 
 
@@ -50,7 +50,7 @@ class CIPreCommit(CIBase):
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
         cmd = f"git hash-object {self.lockfile}".split()
         lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
-        label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
+        label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
         label = label.replace(" ", "-")
 
         return label
@@ -77,6 +77,4 @@ class CIPreCommit(CIBase):
 
     def post_output(self) -> None:
         """Post the output of the analysis in the means appropriate for the CI environment."""
-        # TODO: Change this placeholder when the real Python pre-commit hook is ready.
-        #       https://github.com/phylum-dev/phylum-ci/issues/35
-        print(f" [+] Analysis output:\n{self.analysis_output}")
+        print(f" [+] Analysis output:\n{render(self.analysis_output)}")

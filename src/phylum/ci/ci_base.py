@@ -120,7 +120,7 @@ class CIBase(ABC):
 
     @property
     def analysis_output(self) -> str:
-        """Get the output from the overall analysis."""
+        """Get the output from the overall analysis, in markdown format."""
         return self._analysis_output
 
     @property

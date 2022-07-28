@@ -5,7 +5,7 @@ import textwrap
 from phylum.ci.common import RiskDomain
 
 # The common Phylum header that must exist as the first text in the first line of all analysis output
-PHYLUM_HEADER = "## Phylum OSS Supply Chain Risk Analysis"
+PHYLUM_HEADER = "# Phylum OSS Supply Chain Risk Analysis"
 
 # NOTE: All multi-line strings are indented by two levels on purpose, to ensure they line up correctly when used with
 #       each other in templates and are all fully left justified after applying `textwrap.dedent` for normalization.
