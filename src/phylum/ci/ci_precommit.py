@@ -35,9 +35,26 @@ class CIPreCommit(CIBase):
 
         cmd = "git diff --cached --name-only".split()
         staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
+        extra_arg_paths = (Path(extra_arg).resolve() for extra_arg in self.extra_args)
+
+        print(" [*] Checking extra args for valid pre-commit scenarios ...")
+        # Allow for a pre-commit config set up to send all staged files to the hook
         if sorted(staged_files) == sorted(self.extra_args):
             print(" [+] The extra args provided exactly match the list of staged files")
+        # Allow for a pre-commit config set up to filter the files sent to the hook
+        elif all(extra_arg in staged_files for extra_arg in self.extra_args):
+            print(" [+] All the extra args are staged files")
+        # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
+        elif self.lockfile in extra_arg_paths:
+            print(" [+] The lockfile was included in the extra args")
+        # NOTE: There is still the case where the lockfile is "accidentally" included as an extra argument. For example,
+        #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
+        #       nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not terrible; it
+        #       just might be a slightly confusing corner case. It might be possible to use a library like `psutil` to
+        #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
+        #       heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
+            print(" [+] No valid pre-commit scenario found. Bailing ...")
             raise SystemExit(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
 
     @property
