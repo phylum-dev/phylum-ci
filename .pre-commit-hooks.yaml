@@ -7,6 +7,7 @@
   description: Run `phylum` on a dependency lockfile
   entry: phylum-ci
   language: python
+  require_serial: true
   stages: [commit]
 # TODO: Add a hook for Docker image usage?
 # - id: phylum-docker
