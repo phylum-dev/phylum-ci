@@ -7,6 +7,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
 [![GitHub Workflow Status (branch)][workflow_shield]][workflow_test]
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
 
@@ -15,6 +16,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [workflow_shield]: https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub
 [workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
+[pre-commit]: https://github.com/pre-commit/pre-commit
 [contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
 [changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md
 [security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
