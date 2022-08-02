@@ -118,14 +118,18 @@ The current CI platforms/environments supported are:
 * GitHub Actions
   * See the [GitHub Actions Integration documentation][github_docs] for more info
 
+* Git `pre-commit` Hooks
+  * See the [Git `pre-commit` Integration documentation][precommit_docs] for more info
+
 * None (local use)
   * This is the "fall-through" case used when no other environment is detected
   * Can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI system
     * Establishing a successful submission prior to submitting a PR/MR to a CI system
     * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
 
-[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/gitlab_ci.md
-[github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/github_actions.md
+[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
+[github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/github_actions.md
+[precommit_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/git_precommit.md
 
 ## License
 
