@@ -61,7 +61,7 @@ jobs:
         run: poetry update -vv
 
       - name: Update pre-commit hooks
-        run: pre-commit autoupdate
+        run: pre-commit autoupdate --freeze
 
       - name: Commit changes
         id: commit

@@ -9,5 +9,3 @@
   language: python
   require_serial: true
   stages: [commit]
-# TODO: Add a hook for Docker image usage?
-# - id: phylum-docker
