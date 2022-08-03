@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional
 
-from phylum.ci import SCRIPT_NAME
+from connect.utils.terminal.markdown import render
 from phylum.ci.ci_base import CIBase
 
 
@@ -35,9 +35,26 @@ class CIPreCommit(CIBase):
 
         cmd = "git diff --cached --name-only".split()
         staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
+        extra_arg_paths = (Path(extra_arg).resolve() for extra_arg in self.extra_args)
+
+        print(" [*] Checking extra args for valid pre-commit scenarios ...")
+        # Allow for a pre-commit config set up to send all staged files to the hook
         if sorted(staged_files) == sorted(self.extra_args):
             print(" [+] The extra args provided exactly match the list of staged files")
+        # Allow for a pre-commit config set up to filter the files sent to the hook
+        elif all(extra_arg in staged_files for extra_arg in self.extra_args):
+            print(" [+] All the extra args are staged files")
+        # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
+        elif self.lockfile in extra_arg_paths:
+            print(" [+] The lockfile was included in the extra args")
+        # NOTE: There is still the case where the lockfile is "accidentally" included as an extra argument. For example,
+        #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
+        #       nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not terrible; it
+        #       just might be a slightly confusing corner case. It might be possible to use a library like `psutil` to
+        #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
+        #       heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
+            print(" [+] No valid pre-commit scenario found. Bailing ...")
             raise SystemExit(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
 
     @property
@@ -50,7 +67,7 @@ class CIPreCommit(CIBase):
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
         cmd = f"git hash-object {self.lockfile}".split()
         lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
-        label = f"{SCRIPT_NAME}_{self.ci_platform_name}_{current_branch}_{lockfile_hash_object}"
+        label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
         label = label.replace(" ", "-")
 
         return label
@@ -77,6 +94,4 @@ class CIPreCommit(CIBase):
 
     def post_output(self) -> None:
         """Post the output of the analysis in the means appropriate for the CI environment."""
-        # TODO: Change this placeholder when the real Python pre-commit hook is ready.
-        #       https://github.com/phylum-dev/phylum-ci/issues/35
-        print(f" [+] Analysis output:\n{self.analysis_output}")
+        print(f" [+] Analysis output:\n{render(self.analysis_output)}")

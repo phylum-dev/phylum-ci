@@ -1,0 +1,11 @@
+# This is the config for defining `pre-commit` hooks for use in other repositories.
+#
+# See https://pre-commit.com for more information
+---
+- id: phylum
+  name: analyze lockfile with phylum
+  description: Run `phylum` on a dependency lockfile
+  entry: phylum-ci
+  language: python
+  require_serial: true
+  stages: [commit]

@@ -1,0 +1,37 @@
+# This is the config for using `pre-commit` on this repository.
+#
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+#
+# NOTE: Individual hook revisions are kept up to date automatically with
+#       the `auto_updates` workflow, which bumps hooks to the latest tag.
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0  # frozen: v4.3.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/psf/black
+    rev: f6c139c5215ce04fd3e73a900f1372942d58eca0  # frozen: 22.6.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: a78007c1e9de96e71d5fb3e720c2b9fae8ed8abf  # frozen: v2.37.3
+    hooks:
+      - id: pyupgrade
+        args: [--py37-plus]
+
+  # NOTE: don't use this config for your own repositories. Instead, see
+  #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`
+  - repo: local
+    hooks:
+      - id: phylum-ci
+        name: analyze lockfile with phylum-ci
+        language: system
+        files: ^poetry\.lock$
+        entry: poetry run phylum-ci

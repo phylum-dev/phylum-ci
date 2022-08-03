@@ -64,6 +64,20 @@ class CIBase(ABC):
         self.args = args
         self._phylum_project_file = Path.cwd().joinpath(".phylum_project").resolve()
 
+        # The lockfile specified as a script argument will be used, if provided.
+        # Otherwise, an attempt will be made to automatically detect the lockfile.
+        provided_lockfile: Path = args.lockfile
+        if provided_lockfile and provided_lockfile.exists() and provided_lockfile.stat().st_size:
+            self._lockfile = provided_lockfile.resolve()
+        else:
+            detected_lockfile = detect_lockfile()
+            if detected_lockfile:
+                self._lockfile = detected_lockfile
+            else:
+                raise SystemExit(
+                    " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
+                )
+
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
         print(" [+] All pre-requisites met")
@@ -81,20 +95,6 @@ class CIBase(ABC):
             token = args.token
             os.environ[TOKEN_ENVVAR_NAME] = args.token
         self.args.token = token
-
-        # The lockfile specified as a script argument will be used, if provided.
-        # Otherwise, an attempt will be made to automatically detect the lockfile.
-        provided_lockfile: Path = args.lockfile
-        if provided_lockfile and provided_lockfile.exists() and provided_lockfile.stat().st_size:
-            self._lockfile = provided_lockfile.resolve()
-        else:
-            detected_lockfile = detect_lockfile()
-            if detected_lockfile:
-                self._lockfile = detected_lockfile
-            else:
-                raise SystemExit(
-                    " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
-                )
 
         self._lockfile_changed = self._is_lockfile_changed(self.lockfile)
 
@@ -120,7 +120,7 @@ class CIBase(ABC):
 
     @property
     def analysis_output(self) -> str:
-        """Get the output from the overall analysis."""
+        """Get the output from the overall analysis, in markdown format."""
         return self._analysis_output
 
     @property

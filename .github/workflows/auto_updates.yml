@@ -1,5 +1,6 @@
 # This is a workflow for updating Python dependencies with Poetry.
 # Major version updates are handled separately, by Dependabot.
+# It will also update the pre-commit hooks to use latest tags.
 ---
 name: Update Deps
 
@@ -10,8 +11,8 @@ on:
     - cron: '35 14 * * 1'
 
 jobs:
-  poetry-update:
-    name: Update Python dependencies
+  workflow-auto-updates:
+    name: Update dependencies and hooks
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,8 +25,19 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3
 
-      - name: Install poetry
-        run: pipx install poetry
+      # This GPG key is for the `phylum-bot` account and used in order to ensure commits are signed/verified
+      - name: Import GPG key for bot account
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.PHYLUM_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PHYLUM_BOT_GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Install poetry and pre-commit
+        run: |
+          pipx install poetry
+          pipx install pre-commit
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -45,17 +57,20 @@ jobs:
           poetry env use python${{ matrix.python-version }}
           poetry install --verbose --no-root
 
-      - name: Poetry update
+      - name: Update Python dependencies
         run: poetry update -vv
+
+      - name: Update pre-commit hooks
+        run: pre-commit autoupdate --freeze
 
       - name: Commit changes
         id: commit
         continue-on-error: true
+        # NOTE: The git user name and email used for commits is already configured,
+        #       by the crazy-max/ghaction-import-gpg action.
         run: |
-          git config user.name 'Phylum Bot'
-          git config user.email 'phylum-bot@users.noreply.github.com'
-          git commit -a -m "build: Bump poetry.lock dependencies"
-          git push --force origin HEAD:auto-poetry-update
+          git commit -a -m "build: Bump poetry.lock dependencies and pre-commit hooks"
+          git push --force origin HEAD:workflow-auto-updates
 
       - name: Create Pull Request
         if: ${{ steps.commit.outcome == 'success' }}
@@ -66,8 +81,8 @@ jobs:
             github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "auto-poetry-update",
+              head: "workflow-auto-updates",
               base: context.ref,
-              title: "build: Bump poetry.lock dependencies",
-              body: "Bump dependencies in poetry.lock for all SemVer-compatible updates.",
+              title: "build: Bump poetry.lock dependencies and pre-commit hooks",
+              body: "Bump dependencies in `poetry.lock` and hooks in `.pre-commit-config.yaml`.",
             });

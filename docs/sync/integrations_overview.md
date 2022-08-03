@@ -24,6 +24,12 @@ See the [GitLab CI Integration documentation][gitlab_docs] for more info.
 
 [gitlab_docs]: https://docs.phylum.io/docs/gitlab_ci
 
+### Git `pre-commit` Hooks
+
+See the [Git `pre-commit` documentation][precommit_docs] for more info.
+
+[precommit_docs]: https://docs.phylum.io/docs/git_precommit
+
 ## Future Integrations
 
 If there is an unsupported use case for managing the security of your dependencies, we want to know about it.

@@ -7,6 +7,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/phylum-dev/phylum-ci)
 [![GitHub Workflow Status (branch)][workflow_shield]][workflow_test]
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
 
@@ -15,6 +16,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [workflow_shield]: https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub
 [workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
+[pre-commit]: https://github.com/pre-commit/pre-commit
 [contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
 [changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md
 [security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
@@ -116,14 +118,18 @@ The current CI platforms/environments supported are:
 * GitHub Actions
   * See the [GitHub Actions Integration documentation][github_docs] for more info
 
+* Git `pre-commit` Hooks
+  * See the [Git `pre-commit` Integration documentation][precommit_docs] for more info
+
 * None (local use)
   * This is the "fall-through" case used when no other environment is detected
   * Can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI system
     * Establishing a successful submission prior to submitting a PR/MR to a CI system
     * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
 
-[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/gitlab_ci.md
-[github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/github_actions.md
+[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
+[github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/github_actions.md
+[precommit_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/git_precommit.md
 
 ## License
 

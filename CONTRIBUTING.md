@@ -87,7 +87,20 @@ Here's how to set up `phylum-ci` for local development.
     git clone git@github.com:phylum-dev/phylum-ci.git
     ```
 
-2. Ensure all supported Python versions are installed locally
+2. Optional: Install [pre-commit](https://pre-commit.com/) and the local hooks
+
+    ```sh
+    # If the `pre-commit` tool is not already installed, the recommended method is to use pipx
+    pipx install pre-commit
+
+    # Installing with homebrew is another good option
+    brew install pre-commit
+
+    # Use the `pre-commit` tool to install the git hooks used by the repository
+    pre-commit install
+    ```
+
+3. Ensure all supported Python versions are installed locally
    1. The strategy is to support all released minor versions of Python that are not end-of-life yet
    2. The current list
       1. at the time of this writing is 3.7, 3.8, 3.9, and 3.10
@@ -108,15 +121,15 @@ Here's how to set up `phylum-ci` for local development.
     pyenv global 3.10.x 3.9.x 3.8.x 3.7.x
     ```
 
-3. Ensure [poetry](https://python-poetry.org/docs/) is installed
-4. Install dependencies with `poetry`, which will automatically create a virtual environment:
+4. Ensure [poetry](https://python-poetry.org/docs/) is installed
+5. Install dependencies with `poetry`, which will automatically create a virtual environment:
 
     ```sh
     cd phylum-ci
     poetry install
     ```
 
-5. Create a branch for local development:
+6. Create a branch for local development:
 
     ```sh
     git checkout -b <name-of-your-branch>
@@ -124,35 +137,40 @@ Here's how to set up `phylum-ci` for local development.
 
     Now you can make your changes locally.
 
-6. If new dependencies are added, do so in a way that does not add upper version constraints and ensure
+7. If new dependencies are added, do so in a way that does not add upper version constraints and ensure
    the `poetry.lock` file is updated (and committed):
 
     ```sh
     # Unless there is a reason to do so, prefer to add dependencies without constraints
-    poetry add new-dependency-name
+    poetry add "new-dependency-name==*"
 
-    # When a version constraint is not specified, poetry chooses one. For example (in pyproject.toml):
+    # When a version constraint is not specified, poetry chooses one. For example, the command:
+    #
+    #   $ poetry add new-dependency-name
+    #
+    # results in a caret-style version constraint added to the dependency in pyproject.toml:
     #
     #   new-dependency-name = "^1.2.3"
     #
-    # Unless the constraint was intentional, change the entry to remove the constraint:
+    # Unless the constraint was intentional, change the pyproject.toml entry to remove the constraint:
     #
     #   new-dependency-name = "*"
 
     # Update the lockfile and the local environment to get the latest versions of dependencies
     poetry update
 
-    # Dependencies will be checked automatically in CI during a PR, but checking locally is possible:
+    # Dependencies will be checked automatically in CI during a PR. They will also be checked
+    # with the local pre-commit hook, if enabled. Manually checking locally is also possible:
     phylum analyze poetry.lock
     ```
 
-7. When you're done making changes, check that your changes pass the tests:
+8. When you're done making changes, check that your changes pass the tests:
 
     ```sh
     poetry run tox
     ```
 
-8. Commit your changes and push your branch to GitHub:
+9. Commit your changes and push your branch to GitHub:
 
     ```sh
     git add .
@@ -160,7 +178,7 @@ Here's how to set up `phylum-ci` for local development.
     git push --set-upstream origin <name-of-your-branch>
     ```
 
-9. Submit a pull request (PR) through the GitHub website
+10. Submit a pull request (PR) through the GitHub website
 
 ## Pull Request Guidelines
 
