@@ -10,6 +10,17 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.11.0 (2022-08-04)
+### Feature
+* Add git pre-commit hook integration ([#91](https://github.com/phylum-dev/phylum-ci/issues/91)) ([`99c5726`](https://github.com/phylum-dev/phylum-ci/commit/99c57265bec7f583dc76da01ac4bfcc7e655516a))
+
+### Fix
+* Incorrect vulnerability risk domain package key name ([#94](https://github.com/phylum-dev/phylum-ci/issues/94)) ([`247b4a4`](https://github.com/phylum-dev/phylum-ci/commit/247b4a4f75417ae663e21de183ba0d32c3bf4256))
+
+### Documentation
+* Update CONTRIBUTING.md to show how to add dependencies without constraints ([`d25dd1f`](https://github.com/phylum-dev/phylum-ci/commit/d25dd1ff786dc79dd083268877290c9171e465aa))
+* Create exclusive directory for Integrations docs to sync properly ([#80](https://github.com/phylum-dev/phylum-ci/issues/80)) ([`d8b608b`](https://github.com/phylum-dev/phylum-ci/commit/d8b608b3c426e81619936a6273a3e82a21e08f0e))
+
 ## v0.10.0 (2022-07-14)
 ### Feature
 * Check for and list valid versions and targets programmatically in `phylum-init` ([#74](https://github.com/phylum-dev/phylum-ci/issues/74)) ([`7066565`](https://github.com/phylum-dev/phylum-ci/commit/7066565956d159b17811a4a6418f06037537629e))
