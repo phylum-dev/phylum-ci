@@ -79,7 +79,7 @@ INCOMPLETE_COMMENT_TEMPLATE = string.Template(
 #   * key name returned from a Phylum analysis as known by the overall project threshold mapping
 #   * key name returned from a Phylum analysis as known by an individual package riskVectors mapping
 PROJECT_THRESHOLD_OPTIONS = {
-    "vul_threshold": RiskDomain("Software Vulnerability", "vulnerability", "vulnerability"),
+    "vul_threshold": RiskDomain("Software Vulnerability", "vulnerability", "vulnerabilities"),
     "mal_threshold": RiskDomain("Malicious Code", "malicious", "malicious_code"),
     "eng_threshold": RiskDomain("Engineering", "engineering", "engineering"),
     "lic_threshold": RiskDomain("License", "license", "license"),
