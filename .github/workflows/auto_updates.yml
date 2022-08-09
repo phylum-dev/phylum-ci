@@ -83,6 +83,6 @@ jobs:
               repo: context.repo.repo,
               head: "workflow-auto-updates",
               base: context.ref,
-              title: "build: Bump poetry.lock dependencies and pre-commit hooks",
+              title: "build: bump poetry.lock dependencies and pre-commit hooks",
               body: "Bump dependencies in `poetry.lock` and hooks in `.pre-commit-config.yaml`.",
             });
