@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.12.0 (2022-08-11)
+### Feature
+* Host `phylum-ci` Docker image on GitHub Container Registry ([#97](https://github.com/phylum-dev/phylum-ci/issues/97)) ([`ebc882e`](https://github.com/phylum-dev/phylum-ci/commit/ebc882ec202f351ca2522dc0cd1d34d32f63465c))
+
 ## v0.11.0 (2022-08-04)
 ### Feature
 * Add git pre-commit hook integration ([#91](https://github.com/phylum-dev/phylum-ci/issues/91)) ([`99c5726`](https://github.com/phylum-dev/phylum-ci/commit/99c57265bec7f583dc76da01ac4bfcc7e655516a))
