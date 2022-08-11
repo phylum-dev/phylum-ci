@@ -103,9 +103,10 @@ documentation for more detail.
 
 ### Docker image selection
 
-Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that will
-point to the image created for the latest released `phylum-ci` Python package. A particular version tag (e.g., `0.4.0`)
-is created for each release of the `phylum-ci` Python package and _should_ not change once published.
+Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
+will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
+(e.g., `0.11.0-CLIv3.7.3`) is created for each release of the `phylum-ci` Python package and _should_ not change
+once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available anymore
 ...use the SHA256 digest of the tag. The digest can be found by looking at the `phylumio/phylum-ci`
@@ -113,8 +114,8 @@ However, to be certain that the image does not change...or be warned when it doe
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.4.0 | jq .Descriptor.digest
-"sha256:8d29ac57dfe4d0fca5c3b8c8b37b1188d13faa5e5c61e53aace7026804eac2c5"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.11.0-CLIv3.7.3 | jq .Descriptor.digest
+"sha256:4e01c6f6a8eed994b385d5908d463f28b57bb31f902a10561bad5e4d7aa81459"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -129,10 +130,10 @@ For instance, at the time of this writing, all of these tag references pointed t
   image: phylumio/phylum-ci:latest
 
   # use a specific release version of the `phylum-ci` package
-  image: phylumio/phylum-ci:0.4.0
+  image: phylumio/phylum-ci:0.11.0-CLIv3.7.3
 
   # use a specific image with it's SHA256 digest
-  image: phylumio/phylum-ci@sha256:8d29ac57dfe4d0fca5c3b8c8b37b1188d13faa5e5c61e53aace7026804eac2c5
+  image: phylumio/phylum-ci@sha256:4e01c6f6a8eed994b385d5908d463f28b57bb31f902a10561bad5e4d7aa81459
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
