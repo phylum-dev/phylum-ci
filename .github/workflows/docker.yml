@@ -94,11 +94,16 @@ jobs:
       - name: Login to Docker Hub
         run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        run: docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
       - name: Tag and push unique docker image
         run: |
           export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
           docker tag phylum-ci phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
+          docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
           docker push phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
+          docker push ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
 
       - name: Tag and push latest docker image
         # Only tag and push `latest` when it's not a CLI pre-release
@@ -107,8 +112,14 @@ jobs:
         if: ${{ !contains(github.event.client_payload.CLI_version, 'rc') }}
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
+          docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:latest
           docker push phylumio/phylum-ci:latest
+          docker push ghcr.io/phylum-dev/phylum-ci:latest
 
       - name: Logout of Docker Hub
         if: always()
         run: docker logout
+
+      - name: Logout of GitHub Container Registry
+        if: always()
+        run: docker logout ghcr.io
