@@ -102,6 +102,7 @@ FROM python:3.10-alpine
 ARG CLI_VER
 
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
+LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
 # Copy only Python packages to limit the image size
 COPY --from=builder /root/.local /root/.local
