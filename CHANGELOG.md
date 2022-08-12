@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.12.1 (2022-08-12)
+### Fix
+* `Issue Summary` data missing for vulnerability domain ([#99](https://github.com/phylum-dev/phylum-ci/issues/99)) ([`3a833cf`](https://github.com/phylum-dev/phylum-ci/commit/3a833cfa5954fb0133af8080717690680d81b7f9))
+
 ## v0.12.0 (2022-08-11)
 ### Feature
 * Host `phylum-ci` Docker image on GitHub Container Registry ([#97](https://github.com/phylum-dev/phylum-ci/issues/97)) ([`ebc882e`](https://github.com/phylum-dev/phylum-ci/commit/ebc882ec202f351ca2522dc0cd1d34d32f63465c))
