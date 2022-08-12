@@ -415,10 +415,18 @@ class CIBase(ABC):
 
         for threshold_option, risk_domain in PROJECT_THRESHOLD_OPTIONS.items():
             pti = self._get_project_threshold_info(project_thresholds, threshold_option)
-            vul = risk_vectors.get(risk_domain.package_name, 1.0)
+            # The `RiskDomain` dataclass and this logic can be simplified once the API standardizes the use of names
+            # so that risk domains are referenced with the same name everywhere (e.g., vulnerability/vulnerabilities
+            # and malicious_code/malicious)
+            potential_names = [risk_domain.package_name, risk_domain.project_name]
+            for potential_name in potential_names:
+                vul = risk_vectors.get(potential_name)
+                if vul is not None:
+                    break
+            vul = vul if vul is not None else 1.0
             if vul < pti.threshold:
                 failed_flag = True
-                issue_flags.append(risk_domain.package_name)
+                issue_flags.extend(potential_names)
                 fail_string += f"|{risk_domain.output_name}|{vul*100:.0f}|{pti.threshold*100:.0f}|{pti.req_src}|\n"
 
         fail_string += "\n"
