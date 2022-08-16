@@ -69,6 +69,7 @@ tox = "*"
 tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
 python-semantic-release = "*"
+rich-codex = "*"
 types-requests = "*"
 # ---END---
 
