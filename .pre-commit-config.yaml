@@ -11,6 +11,7 @@ repos:
     rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0  # frozen: v4.3.0
     hooks:
       - id: trailing-whitespace
+        exclude_types: [svg]
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
