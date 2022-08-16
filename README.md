@@ -105,6 +105,10 @@ It will accept a Phylum token from an environment variable or specified as an op
 that no token is provided. This can be because there is already a token set that should continue to be used or because
 no token exists and one will need to be manually created or set, after the CLI is installed.
 
+The options for `phylum-init`, automatically updated to be current for the latest release:
+
+![phylum-init options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-init_options.svg)
+
 #### `phylum-ci` Script Entry Point
 
 The `phylum-ci` script is for analyzing lockfile changes.
@@ -126,6 +130,10 @@ The current CI platforms/environments supported are:
   * Can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI system
     * Establishing a successful submission prior to submitting a PR/MR to a CI system
     * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
+
+The options for `phylum-ci`, automatically updated to be current for the latest release:
+
+![phylum-ci options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-ci_options.svg)
 
 [gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
 [github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/github_actions.md
