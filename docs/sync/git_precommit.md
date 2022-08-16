@@ -119,10 +119,10 @@ The `args` key is the way to exert control over the execution of the Phylum anal
 The `phylum-ci` script entry point is called by the hook. It has a number of arguments that are all optional
 and defaulted to secure values. To view the arguments, their description, and default values, run the script
 with `--help` output as specified in the [Usage section of the top-level README.md][usage] or view the
-[source code][src] directly.
+[script options output][script_options] for the latest release.
 
 [usage]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md#usage
-[src]: https://github.com/phylum-dev/phylum-ci/blob/main/src/phylum/ci/cli.py
+[script_options]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/script_options.md
 
 ```yaml
         # NOTE: These are examples. Only one `args` key for the hook is expected

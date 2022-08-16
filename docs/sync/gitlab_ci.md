@@ -108,8 +108,8 @@ will point to the image created for the latest released `phylum-ci` Python packa
 (e.g., `0.11.0-CLIv3.7.3`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
-However, to be certain that the image does not change...or be warned when it does because it won't be available anymore
-...use the SHA256 digest of the tag. The digest can be found by looking at the `phylumio/phylum-ci`
+However, to be certain that the image does not change...or be warned when it does because it won't be available
+anymore...use the SHA256 digest of the tag. The digest can be found by looking at the `phylumio/phylum-ci`
 [tags on Docker Hub][docker_image] or with the command:
 
 ```sh
@@ -153,20 +153,21 @@ The account used to create the token will be the one that appears to post the no
 Therefore, it might be worth looking into using a bot account, which is available for project and group access tokens.
 See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
 
-Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token, by
-using the authorization of the user triggering the job." This is not recommended for anything other than temporary
-personal use in private repositories as there is a chance that depending on it will cause failures when attempting to do
-the same thing in different scenarios.
+Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token,
+by using the authorization of the user triggering the job." This is not recommended for anything other than temporary
+personal use in private repositories as there is a chance that depending on it will cause failures when attempting to
+do the same thing in different scenarios.
 
 A [Phylum token][phylum_tokens] with API access is required to perform analysis on project
 dependencies. [Contact Phylum][phylum_contact] or create an account and register to gain access.
 See also [`phylum auth register`][phylum_register] command documentation and consider
 using a bot or group account for this token.
 
-The values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a
-[CI/CD Variable](https://docs.gitlab.com/ee/ci/variables/index.html) or an
-[External Secret](https://docs.gitlab.com/ee/ci/secrets/index.html). Since they are sensitive, **care should be taken
-to protect them appropriately**.
+Values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a [CI/CD Variable] or an [External Secret].
+Since they are sensitive, **care should be taken to protect them appropriately**.
+
+[CI/CD Variable]: https://docs.gitlab.com/ee/ci/variables/index.html
+[External Secret]: https://docs.gitlab.com/ee/ci/secrets/index.html
 
 ```yaml
   variables:
@@ -191,11 +192,13 @@ to protect them appropriately**.
 
 ### Script arguments
 
-The script arguments to the Docker image are the way to exert control over the execution of the Phylum analysis. The
-`phylum-ci` script entry point is expected to be called. It has a number of arguments that are all optional and
-defaulted to secure values. To view the arguments, their description, and default values, run the script with `--help`
-output as specified in the [Usage section of the top-level README.md][usage] or view the
-[source code](https://github.com/phylum-dev/phylum-ci/blob/main/src/phylum/ci/cli.py) directly.
+The script arguments to the Docker image are the way to exert control over the execution of the Phylum analysis.
+The `phylum-ci` script entry point is expected to be called. It has a number of arguments that are all optional
+and defaulted to secure values. To view the arguments, their description, and default values,
+run the script with `--help` output as specified in the [Usage section of the top-level README.md][usage] or
+view the [script options output][script_options] for the latest release.
+
+[script_options]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/script_options.md
 
 ```yaml
   # NOTE: These are examples. Only one script entry line for `phylum-ci` is expected.
