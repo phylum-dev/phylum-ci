@@ -91,5 +91,8 @@ upload_to_release = true
 remove_dist = false
 # Setting build_command to false here b/c `poetry build -vvv` will be used prior to a PSR publish command
 build_command = false
+# Update the script options documentation automatically for each release
+pre_commit_command = "rich-codex --verbose --skip-git-checks --no-confirm"
+include_additional_files = "docs/img/phylum-ci_options.svg,docs/img/phylum-init_options.svg"
 commit_subject = "chore: bump to v{version}"
 commit_author = "phylum-bot <69485888+phylum-bot@users.noreply.github.com>"
