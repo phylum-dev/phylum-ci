@@ -109,7 +109,7 @@ jobs:
           poetry install --verbose --no-root
 
       - name: Build docker image from source
-        run: docker build --tag phylum-ci:from-src --cache-from phylumio/phylum-ci:latest .
+        run: docker build --tag phylum-ci:from-src --cache-from phylumio/phylum-ci:latest --build-arg CLI_VER=3.8.0-rc2 .
 
       - name: Test docker image built from source
         run: |
