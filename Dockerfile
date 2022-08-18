@@ -25,11 +25,7 @@
 #
 # Another build arg is exposed to optionally specify the Phylum CLI version to install:
 #
-# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.7.0 .
-#
-# If a CLI_VER < 3.7.0 is selected, it will be necessary to explicitly specify a platform:
-#
-# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.6.0 --platform=linux/amd64 .
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.8.0 .
 #
 # To make use of BuildKit's inline layer caching feature, add the `BUILDKIT_INLINE_CACHE`
 # build argument to any instance of building an image. Then, that image can be used
@@ -53,7 +49,7 @@
 # $ docker run --rm --entrypoint entrypoint.sh phylumio/phylum-ci:latest "ls -alh /"
 ##########################################################################################
 
-FROM python:3.10-alpine AS builder
+FROM python:3.10-slim-bullseye AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
 # distribution/wheel. Both can optionally be specified in glob form. When not defined,
@@ -61,14 +57,19 @@ FROM python:3.10-alpine AS builder
 ARG PKG_SRC
 ARG PKG_NAME
 
-WORKDIR /app
+ENV APP_PATH="/app"
+ENV POETRY_VENV="${APP_PATH}/.venv"
+ENV POETRY_PATH="${POETRY_VENV}/bin/poetry"
+ENV PIP_NO_COMPILE=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-ENV PIP_NO_COMPILE=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR ${APP_PATH}
 
-# Install build tools to compile dependencies that don't have prebuilt wheels
-RUN apk add --update --no-cache build-base git poetry libffi-dev
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --upgrade pip setuptools
+RUN set -eux; \
+    python -m venv ${POETRY_VENV}; \
+    ${POETRY_VENV}/bin/pip install --no-cache-dir --upgrade pip setuptools; \
+    ${POETRY_VENV}/bin/pip install --no-cache-dir poetry
 
 # Copy the bare minimum needed for specifying dependencies.
 # This will enable better layer caching and faster builds when iterating locally.
@@ -78,7 +79,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 #   * https://pythonspeed.com/articles/pipenv-docker/
 #   * https://hub.docker.com/r/docker/dockerfile
 COPY pyproject.toml poetry.lock ./
-RUN poetry export --without-hashes --format requirements.txt --output requirements.txt
+RUN ${POETRY_PATH} export --without-hashes --format requirements.txt --output requirements.txt
 
 # Cache the pip installed dependencies
 # NOTE: This `--mount` feature requires BUILDKIT to be used
@@ -94,7 +95,7 @@ RUN find /root/.local -type f -name '*.pyc' -delete
 # Place in a directory included in the final layer and also known to be part of the $PATH
 COPY entrypoint.sh /root/.local/bin/
 
-FROM python:3.10-alpine
+FROM python:3.10-slim-bullseye
 
 # CLI_VER specifies the Phylum CLI version to install in the image.
 # Values should be provided in a format acceptable to the `phylum-init` script.
@@ -112,9 +113,13 @@ ENV PATH=/root/.local/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1
 
 RUN set -eux; \
-    apk add --update --no-cache git; \
+    apt-get update; \
+    apt-get upgrade --yes; \
+    apt-get install --yes --no-install-recommends git; \
     chmod +x /root/.local/bin/entrypoint.sh; \
     phylum-init --phylum-release ${CLI_VER:-latest}; \
+    apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+    rm -rf /var/lib/apt/lists/*; \
     find / -type f -name '*.pyc' -delete
 
 CMD ["phylum-ci"]
