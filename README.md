@@ -91,8 +91,8 @@ version of the Phylum CLI, in the form of `<phylum-ci version>-CLIv<Phylum CLI v
 # Get the most current release of *both* `phylum-ci` and the Phylum CLI
 docker pull phylumio/phylum-ci:latest
 
-# Get the image with `phylum-ci` version 0.8.0 and Phylum CLI version 3.5.0
-docker pull phylumio/phylum-ci:0.8.0-CLIv3.5.0
+# Get the image with `phylum-ci` version 0.13.0 and Phylum CLI version 3.8.0
+docker pull phylumio/phylum-ci:0.13.0-CLIv3.8.0
 ```
 
 #### `phylum-init` Script Entry Point

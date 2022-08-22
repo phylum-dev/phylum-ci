@@ -15,7 +15,7 @@
 #   --fail-with-body \
 #   -H "Accept: application/vnd.github.v3+json" \
 #   -H "Authorization: token <PAT>" \
-#   -d '{"event_type":"build-push-docker-images","client_payload":{"CLI_version":"v3.5.0"}}' \
+#   -d '{"event_type":"build-push-docker-images","client_payload":{"CLI_version":"v3.8.0"}}' \
 #   https://api.github.com/repos/phylum-dev/phylum-ci/dispatches
 #
 # References:

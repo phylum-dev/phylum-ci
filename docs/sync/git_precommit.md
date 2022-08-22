@@ -155,7 +155,7 @@ with `--help` output as specified in the [Usage section of the top-level README.
         args: [--force-install]
 
         # Install a specific version of the Phylum CLI.
-        args: [--phylum-release=3.3.0, --force-install]
+        args: [--phylum-release=3.8.0, --force-install]
 
         # Mix and match for your specific use case.
         args: [-u=60, -m=60, -e=70, -c=90, -o=80, --lockfile=requirements-prod.txt, --all-deps]

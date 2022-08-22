@@ -230,7 +230,7 @@ view the [script options output][script_options] for the latest release.
     - phylum-ci --force-install
 
     # Install a specific version of the Phylum CLI.
-    - phylum-ci --phylum-release 3.3.0 --force-install
+    - phylum-ci --phylum-release 3.8.0 --force-install
 
     # Mix and match for your specific use case.
     - phylum-ci -u 60 -m 60 -e 70 -c 90 -o 80 --lockfile requirements-prod.txt --all-deps
