@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.13.0 (2022-08-22)
+### Feature
+* Provide a Docker image with glibc instead of musl libc ([#104](https://github.com/phylum-dev/phylum-ci/issues/104)) ([`c5fadb4`](https://github.com/phylum-dev/phylum-ci/commit/c5fadb4eced4029afaf61d833212e63f7082ed2b))
+
+### Breaking
+* Versions of the CLI older than v3.8.0-rc2 are no longer possible to install on Linux systems with the `phylum-init` script. ([`c5fadb4`](https://github.com/phylum-dev/phylum-ci/commit/c5fadb4eced4029afaf61d833212e63f7082ed2b))
+
+### Documentation
+* Add script options docs with auto updates ([#102](https://github.com/phylum-dev/phylum-ci/issues/102)) ([`6ba8e96`](https://github.com/phylum-dev/phylum-ci/commit/6ba8e96381184039afa1ef3bf67f9a5be275dd8a))
+
 ## v0.12.1 (2022-08-12)
 ### Fix
 * `Issue Summary` data missing for vulnerability domain ([#99](https://github.com/phylum-dev/phylum-ci/issues/99)) ([`3a833cf`](https://github.com/phylum-dev/phylum-ci/commit/3a833cfa5954fb0133af8080717690680d81b7f9))

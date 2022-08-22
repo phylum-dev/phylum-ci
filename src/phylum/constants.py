@@ -1,7 +1,8 @@
 """Provide constants for use throughout the package."""
 
-# The release layout structure changed starting with v2.0.0 and support is only for the new layout
-MIN_SUPPORTED_CLI_VERSION = "v2.0.0"
+# Linux platform support in the CLI was changed from `unknown-linux-musl` to `unknown-linux-gnu` starting with
+# v3.8.0-rc2, changing the artifact names available to download and install in a non-backwards compatible manner.
+MIN_SUPPORTED_CLI_VERSION = "v3.8.0-rc2"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -15,7 +16,7 @@ SUPPORTED_ARCHES = {
 # Keys are lowercase operating system name as returned from `uname -s`.
 # Values are the mapped rustc platform, which is the vendor-os_type[-environment_type].
 SUPPORTED_PLATFORMS = {
-    "linux": "unknown-linux-musl",
+    "linux": "unknown-linux-gnu",
     "darwin": "apple-darwin",
 }
 
