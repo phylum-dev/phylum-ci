@@ -134,6 +134,9 @@ jobs:
       - name: Revert to original version
         run: poetry version ${{ env.PHYLUM_ORIGINAL_VER }}
 
+      - name: Update script options documentation
+        run: poetry run rich-codex --verbose --skip-git-checks --no-confirm
+
       - name: Use Python Semantic Release to publish release
         id: psr_release
         env:
