@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.13.1 (2022-08-23)
+### Fix
+* Script options auto update can't find package ([#107](https://github.com/phylum-dev/phylum-ci/issues/107)) ([`9fb7164`](https://github.com/phylum-dev/phylum-ci/commit/9fb71642f95315df8fad441fe39be22b3e13277b))
+
+### Documentation
+* Revert bad script options SVG files ([`9d7d6fc`](https://github.com/phylum-dev/phylum-ci/commit/9d7d6fc7980059878032a0f928af87cf4b83c488))
+
 ## v0.13.0 (2022-08-22)
 ### Feature
 * Provide a Docker image with glibc instead of musl libc ([#104](https://github.com/phylum-dev/phylum-ci/issues/104)) ([`c5fadb4`](https://github.com/phylum-dev/phylum-ci/commit/c5fadb4eced4029afaf61d833212e63f7082ed2b))
