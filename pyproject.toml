@@ -83,7 +83,7 @@ version_toml = "pyproject.toml:tool.poetry.version"
 prerelease_tag = "rc"
 # If set to true, this will create a new patch release even if there are no commits
 # since the last release that would trigger a release.
-patch_without_tag = false
+patch_without_tag = true
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
 upload_to_repository = true
