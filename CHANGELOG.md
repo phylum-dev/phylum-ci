@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.13.3 (2022-08-24)
+### Documentation
+* Revert bad script options SVG files ([`907e8f2`](https://github.com/phylum-dev/phylum-ci/commit/907e8f2d3acb19a33e7e4cb83a69398db62a5221))
+
 ## v0.13.2 (2022-08-24)
 ### Fix
 * Script options auto update still can't find package ([#108](https://github.com/phylum-dev/phylum-ci/issues/108)) ([`967c1c0`](https://github.com/phylum-dev/phylum-ci/commit/967c1c06a2815b5698972279af3f355ad1e80134))

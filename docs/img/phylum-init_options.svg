@@ -19,159 +19,159 @@
         font-weight: 700;
     }
 
-    .terminal-1090844768-matrix {
+    .terminal-562297286-matrix {
         font-family: Fira Code, monospace;
         font-size: 20px;
         line-height: 24.4px;
         font-variant-east-asian: full-width;
     }
 
-    .terminal-1090844768-title {
+    .terminal-562297286-title {
         font-size: 18px;
         font-weight: bold;
         font-family: arial;
     }
 
-    .terminal-1090844768-r1 { fill: #c5c8c6 }
+    .terminal-562297286-r1 { fill: #c5c8c6 }
     </style>
 
     <defs>
-    <clipPath id="terminal-1090844768-clip-terminal">
+    <clipPath id="terminal-562297286-clip-terminal">
       <rect x="0" y="0" width="975.0" height="755.4" />
     </clipPath>
-    <clipPath id="terminal-1090844768-line-0">
+    <clipPath id="terminal-562297286-line-0">
     <rect x="0" y="1.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-1">
+<clipPath id="terminal-562297286-line-1">
     <rect x="0" y="25.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-2">
+<clipPath id="terminal-562297286-line-2">
     <rect x="0" y="50.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-3">
+<clipPath id="terminal-562297286-line-3">
     <rect x="0" y="74.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-4">
+<clipPath id="terminal-562297286-line-4">
     <rect x="0" y="99.1" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-5">
+<clipPath id="terminal-562297286-line-5">
     <rect x="0" y="123.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-6">
+<clipPath id="terminal-562297286-line-6">
     <rect x="0" y="147.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-7">
+<clipPath id="terminal-562297286-line-7">
     <rect x="0" y="172.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-8">
+<clipPath id="terminal-562297286-line-8">
     <rect x="0" y="196.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-9">
+<clipPath id="terminal-562297286-line-9">
     <rect x="0" y="221.1" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-10">
+<clipPath id="terminal-562297286-line-10">
     <rect x="0" y="245.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-11">
+<clipPath id="terminal-562297286-line-11">
     <rect x="0" y="269.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-12">
+<clipPath id="terminal-562297286-line-12">
     <rect x="0" y="294.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-13">
+<clipPath id="terminal-562297286-line-13">
     <rect x="0" y="318.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-14">
+<clipPath id="terminal-562297286-line-14">
     <rect x="0" y="343.1" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-15">
+<clipPath id="terminal-562297286-line-15">
     <rect x="0" y="367.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-16">
+<clipPath id="terminal-562297286-line-16">
     <rect x="0" y="391.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-17">
+<clipPath id="terminal-562297286-line-17">
     <rect x="0" y="416.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-18">
+<clipPath id="terminal-562297286-line-18">
     <rect x="0" y="440.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-19">
+<clipPath id="terminal-562297286-line-19">
     <rect x="0" y="465.1" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-20">
+<clipPath id="terminal-562297286-line-20">
     <rect x="0" y="489.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-21">
+<clipPath id="terminal-562297286-line-21">
     <rect x="0" y="513.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-22">
+<clipPath id="terminal-562297286-line-22">
     <rect x="0" y="538.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-23">
+<clipPath id="terminal-562297286-line-23">
     <rect x="0" y="562.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-24">
+<clipPath id="terminal-562297286-line-24">
     <rect x="0" y="587.1" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-25">
+<clipPath id="terminal-562297286-line-25">
     <rect x="0" y="611.5" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-26">
+<clipPath id="terminal-562297286-line-26">
     <rect x="0" y="635.9" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-27">
+<clipPath id="terminal-562297286-line-27">
     <rect x="0" y="660.3" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-28">
+<clipPath id="terminal-562297286-line-28">
     <rect x="0" y="684.7" width="976" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1090844768-line-29">
+<clipPath id="terminal-562297286-line-29">
     <rect x="0" y="709.1" width="976" height="24.65"/>
             </clipPath>
     </defs>
 
-    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="992" height="804.4" rx="8"/><text class="terminal-1090844768-title" fill="#c5c8c6" text-anchor="middle" x="496" y="27">phylum-init&#160;options</text>
+    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="992" height="804.4" rx="8"/><text class="terminal-562297286-title" fill="#c5c8c6" text-anchor="middle" x="496" y="27">phylum-init&#160;options</text>
             <g transform="translate(26,22)">
             <circle cx="0" cy="0" r="7" fill="#ff5f57"/>
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
         
-    <g transform="translate(9, 41)" clip-path="url(#terminal-1090844768-clip-terminal)">
+    <g transform="translate(9, 41)" clip-path="url(#terminal-562297286-clip-terminal)">
     
-    <g class="terminal-1090844768-matrix">
-    <text class="terminal-1090844768-r1" x="0" y="20" textLength="244" clip-path="url(#terminal-1090844768-line-0)">$&#160;phylum-init&#160;--help</text><text class="terminal-1090844768-r1" x="976" y="20" textLength="12.2" clip-path="url(#terminal-1090844768-line-0)">
-</text><text class="terminal-1090844768-r1" x="0" y="44.4" textLength="780.8" clip-path="url(#terminal-1090844768-line-1)">usage:&#160;phylum-init&#160;[-h]&#160;[-V]&#160;[-r&#160;VERSION]&#160;[-t&#160;TARGET]&#160;[-k&#160;TOKEN]</text><text class="terminal-1090844768-r1" x="976" y="44.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-1)">
-</text><text class="terminal-1090844768-r1" x="0" y="68.8" textLength="646.6" clip-path="url(#terminal-1090844768-line-2)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;[--list-releases&#160;|&#160;--list-targets]</text><text class="terminal-1090844768-r1" x="976" y="68.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-2)">
-</text><text class="terminal-1090844768-r1" x="976" y="93.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-3)">
-</text><text class="terminal-1090844768-r1" x="0" y="117.6" textLength="390.4" clip-path="url(#terminal-1090844768-line-4)">Fetch&#160;and&#160;install&#160;the&#160;Phylum&#160;CLI</text><text class="terminal-1090844768-r1" x="976" y="117.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-4)">
-</text><text class="terminal-1090844768-r1" x="976" y="142" textLength="12.2" clip-path="url(#terminal-1090844768-line-5)">
-</text><text class="terminal-1090844768-r1" x="0" y="166.4" textLength="97.6" clip-path="url(#terminal-1090844768-line-6)">options:</text><text class="terminal-1090844768-r1" x="976" y="166.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-6)">
-</text><text class="terminal-1090844768-r1" x="0" y="190.8" textLength="671" clip-path="url(#terminal-1090844768-line-7)">&#160;&#160;-h,&#160;--help&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;show&#160;this&#160;help&#160;message&#160;and&#160;exit</text><text class="terminal-1090844768-r1" x="976" y="190.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-7)">
-</text><text class="terminal-1090844768-r1" x="0" y="215.2" textLength="756.4" clip-path="url(#terminal-1090844768-line-8)">&#160;&#160;-V,&#160;--version&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;show&#160;program&#x27;s&#160;version&#160;number&#160;and&#160;exit</text><text class="terminal-1090844768-r1" x="976" y="215.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-8)">
-</text><text class="terminal-1090844768-r1" x="0" y="239.6" textLength="463.6" clip-path="url(#terminal-1090844768-line-9)">&#160;&#160;-r&#160;VERSION,&#160;--phylum-release&#160;VERSION</text><text class="terminal-1090844768-r1" x="976" y="239.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-9)">
-</text><text class="terminal-1090844768-r1" x="0" y="264" textLength="878.4" clip-path="url(#terminal-1090844768-line-10)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;The&#160;version&#160;of&#160;the&#160;Phylum&#160;CLI&#160;to&#160;install.&#160;Can&#160;be</text><text class="terminal-1090844768-r1" x="976" y="264" textLength="12.2" clip-path="url(#terminal-1090844768-line-10)">
-</text><text class="terminal-1090844768-r1" x="0" y="288.4" textLength="915" clip-path="url(#terminal-1090844768-line-11)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;specified&#160;as&#160;`latest`&#160;or&#160;a&#160;specific&#160;tagged&#160;release,</text><text class="terminal-1090844768-r1" x="976" y="288.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-11)">
-</text><text class="terminal-1090844768-r1" x="0" y="312.8" textLength="902.8" clip-path="url(#terminal-1090844768-line-12)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;with&#160;or&#160;without&#160;the&#160;leading&#160;`v`.&#160;(default:&#160;latest)</text><text class="terminal-1090844768-r1" x="976" y="312.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-12)">
-</text><text class="terminal-1090844768-r1" x="0" y="337.2" textLength="341.6" clip-path="url(#terminal-1090844768-line-13)">&#160;&#160;-t&#160;TARGET,&#160;--target&#160;TARGET</text><text class="terminal-1090844768-r1" x="976" y="337.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-13)">
-</text><text class="terminal-1090844768-r1" x="0" y="361.6" textLength="854" clip-path="url(#terminal-1090844768-line-14)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;The&#160;target&#160;platform&#160;type&#160;where&#160;the&#160;CLI&#160;will&#160;be</text><text class="terminal-1090844768-r1" x="976" y="361.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-14)">
-</text><text class="terminal-1090844768-r1" x="0" y="386" textLength="805.2" clip-path="url(#terminal-1090844768-line-15)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;installed.&#160;(default:&#160;aarch64-apple-darwin)</text><text class="terminal-1090844768-r1" x="976" y="386" textLength="12.2" clip-path="url(#terminal-1090844768-line-15)">
-</text><text class="terminal-1090844768-r1" x="0" y="410.4" textLength="390.4" clip-path="url(#terminal-1090844768-line-16)">&#160;&#160;-k&#160;TOKEN,&#160;--phylum-token&#160;TOKEN</text><text class="terminal-1090844768-r1" x="976" y="410.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-16)">
-</text><text class="terminal-1090844768-r1" x="0" y="434.8" textLength="890.6" clip-path="url(#terminal-1090844768-line-17)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Phylum&#160;user&#160;token.&#160;Can&#160;also&#160;specify&#160;this&#160;option&#x27;s</text><text class="terminal-1090844768-r1" x="976" y="434.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-17)">
-</text><text class="terminal-1090844768-r1" x="0" y="459.2" textLength="890.6" clip-path="url(#terminal-1090844768-line-18)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;value&#160;by&#160;setting&#160;the&#160;`PHYLUM_API_KEY`&#160;environment</text><text class="terminal-1090844768-r1" x="976" y="459.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-18)">
-</text><text class="terminal-1090844768-r1" x="0" y="483.6" textLength="927.2" clip-path="url(#terminal-1090844768-line-19)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;variable.&#160;The&#160;value&#160;specified&#160;with&#160;this&#160;option&#160;takes</text><text class="terminal-1090844768-r1" x="976" y="483.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-19)">
-</text><text class="terminal-1090844768-r1" x="0" y="508" textLength="927.2" clip-path="url(#terminal-1090844768-line-20)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;precedence&#160;when&#160;both&#160;are&#160;provided.&#160;Leave&#160;this&#160;option</text><text class="terminal-1090844768-r1" x="976" y="508" textLength="12.2" clip-path="url(#terminal-1090844768-line-20)">
-</text><text class="terminal-1090844768-r1" x="0" y="532.4" textLength="927.2" clip-path="url(#terminal-1090844768-line-21)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;and&#160;it&#x27;s&#160;related&#160;environment&#160;variable&#160;unspecified&#160;to</text><text class="terminal-1090844768-r1" x="976" y="532.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-21)">
-</text><text class="terminal-1090844768-r1" x="0" y="556.8" textLength="915" clip-path="url(#terminal-1090844768-line-22)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;either&#160;(1)&#160;use&#160;an&#160;existing&#160;token&#160;already&#160;set&#160;in&#160;the</text><text class="terminal-1090844768-r1" x="976" y="556.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-22)">
-</text><text class="terminal-1090844768-r1" x="0" y="581.2" textLength="902.8" clip-path="url(#terminal-1090844768-line-23)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Phylum&#160;config&#160;file&#160;or&#160;(2)&#160;to&#160;manually&#160;populate&#160;the</text><text class="terminal-1090844768-r1" x="976" y="581.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-23)">
-</text><text class="terminal-1090844768-r1" x="0" y="605.6" textLength="878.4" clip-path="url(#terminal-1090844768-line-24)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;token&#160;with&#160;a&#160;`phylum&#160;auth&#160;login`&#160;or&#160;`phylum&#160;auth</text><text class="terminal-1090844768-r1" x="976" y="605.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-24)">
-</text><text class="terminal-1090844768-r1" x="0" y="630" textLength="878.4" clip-path="url(#terminal-1090844768-line-25)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;register`&#160;command&#160;after&#160;install.&#160;(default:&#160;None)</text><text class="terminal-1090844768-r1" x="976" y="630" textLength="12.2" clip-path="url(#terminal-1090844768-line-25)">
-</text><text class="terminal-1090844768-r1" x="0" y="654.4" textLength="902.8" clip-path="url(#terminal-1090844768-line-26)">&#160;&#160;--list-releases&#160;&#160;&#160;&#160;&#160;&#160;&#160;List&#160;the&#160;Phylum&#160;CLI&#160;releases&#160;available&#160;to&#160;install.</text><text class="terminal-1090844768-r1" x="976" y="654.4" textLength="12.2" clip-path="url(#terminal-1090844768-line-26)">
-</text><text class="terminal-1090844768-r1" x="0" y="678.8" textLength="488" clip-path="url(#terminal-1090844768-line-27)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;(default:&#160;False)</text><text class="terminal-1090844768-r1" x="976" y="678.8" textLength="12.2" clip-path="url(#terminal-1090844768-line-27)">
-</text><text class="terminal-1090844768-r1" x="0" y="703.2" textLength="829.6" clip-path="url(#terminal-1090844768-line-28)">&#160;&#160;--list-targets&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List&#160;the&#160;target&#160;platform&#160;types&#160;available&#160;for</text><text class="terminal-1090844768-r1" x="976" y="703.2" textLength="12.2" clip-path="url(#terminal-1090844768-line-28)">
-</text><text class="terminal-1090844768-r1" x="0" y="727.6" textLength="878.4" clip-path="url(#terminal-1090844768-line-29)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;installing&#160;a&#160;given&#160;Phylum&#160;CLI&#160;release.&#160;(default:</text><text class="terminal-1090844768-r1" x="976" y="727.6" textLength="12.2" clip-path="url(#terminal-1090844768-line-29)">
-</text><text class="terminal-1090844768-r1" x="0" y="752" textLength="366" clip-path="url(#terminal-1090844768-line-30)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;False)</text><text class="terminal-1090844768-r1" x="976" y="752" textLength="12.2" clip-path="url(#terminal-1090844768-line-30)">
+    <g class="terminal-562297286-matrix">
+    <text class="terminal-562297286-r1" x="0" y="20" textLength="244" clip-path="url(#terminal-562297286-line-0)">$&#160;phylum-init&#160;--help</text><text class="terminal-562297286-r1" x="976" y="20" textLength="12.2" clip-path="url(#terminal-562297286-line-0)">
+</text><text class="terminal-562297286-r1" x="0" y="44.4" textLength="780.8" clip-path="url(#terminal-562297286-line-1)">usage:&#160;phylum-init&#160;[-h]&#160;[-V]&#160;[-r&#160;VERSION]&#160;[-t&#160;TARGET]&#160;[-k&#160;TOKEN]</text><text class="terminal-562297286-r1" x="976" y="44.4" textLength="12.2" clip-path="url(#terminal-562297286-line-1)">
+</text><text class="terminal-562297286-r1" x="0" y="68.8" textLength="646.6" clip-path="url(#terminal-562297286-line-2)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;[--list-releases&#160;|&#160;--list-targets]</text><text class="terminal-562297286-r1" x="976" y="68.8" textLength="12.2" clip-path="url(#terminal-562297286-line-2)">
+</text><text class="terminal-562297286-r1" x="976" y="93.2" textLength="12.2" clip-path="url(#terminal-562297286-line-3)">
+</text><text class="terminal-562297286-r1" x="0" y="117.6" textLength="390.4" clip-path="url(#terminal-562297286-line-4)">Fetch&#160;and&#160;install&#160;the&#160;Phylum&#160;CLI</text><text class="terminal-562297286-r1" x="976" y="117.6" textLength="12.2" clip-path="url(#terminal-562297286-line-4)">
+</text><text class="terminal-562297286-r1" x="976" y="142" textLength="12.2" clip-path="url(#terminal-562297286-line-5)">
+</text><text class="terminal-562297286-r1" x="0" y="166.4" textLength="97.6" clip-path="url(#terminal-562297286-line-6)">options:</text><text class="terminal-562297286-r1" x="976" y="166.4" textLength="12.2" clip-path="url(#terminal-562297286-line-6)">
+</text><text class="terminal-562297286-r1" x="0" y="190.8" textLength="671" clip-path="url(#terminal-562297286-line-7)">&#160;&#160;-h,&#160;--help&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;show&#160;this&#160;help&#160;message&#160;and&#160;exit</text><text class="terminal-562297286-r1" x="976" y="190.8" textLength="12.2" clip-path="url(#terminal-562297286-line-7)">
+</text><text class="terminal-562297286-r1" x="0" y="215.2" textLength="756.4" clip-path="url(#terminal-562297286-line-8)">&#160;&#160;-V,&#160;--version&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;show&#160;program&#x27;s&#160;version&#160;number&#160;and&#160;exit</text><text class="terminal-562297286-r1" x="976" y="215.2" textLength="12.2" clip-path="url(#terminal-562297286-line-8)">
+</text><text class="terminal-562297286-r1" x="0" y="239.6" textLength="463.6" clip-path="url(#terminal-562297286-line-9)">&#160;&#160;-r&#160;VERSION,&#160;--phylum-release&#160;VERSION</text><text class="terminal-562297286-r1" x="976" y="239.6" textLength="12.2" clip-path="url(#terminal-562297286-line-9)">
+</text><text class="terminal-562297286-r1" x="0" y="264" textLength="878.4" clip-path="url(#terminal-562297286-line-10)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;The&#160;version&#160;of&#160;the&#160;Phylum&#160;CLI&#160;to&#160;install.&#160;Can&#160;be</text><text class="terminal-562297286-r1" x="976" y="264" textLength="12.2" clip-path="url(#terminal-562297286-line-10)">
+</text><text class="terminal-562297286-r1" x="0" y="288.4" textLength="915" clip-path="url(#terminal-562297286-line-11)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;specified&#160;as&#160;`latest`&#160;or&#160;a&#160;specific&#160;tagged&#160;release,</text><text class="terminal-562297286-r1" x="976" y="288.4" textLength="12.2" clip-path="url(#terminal-562297286-line-11)">
+</text><text class="terminal-562297286-r1" x="0" y="312.8" textLength="902.8" clip-path="url(#terminal-562297286-line-12)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;with&#160;or&#160;without&#160;the&#160;leading&#160;`v`.&#160;(default:&#160;latest)</text><text class="terminal-562297286-r1" x="976" y="312.8" textLength="12.2" clip-path="url(#terminal-562297286-line-12)">
+</text><text class="terminal-562297286-r1" x="0" y="337.2" textLength="341.6" clip-path="url(#terminal-562297286-line-13)">&#160;&#160;-t&#160;TARGET,&#160;--target&#160;TARGET</text><text class="terminal-562297286-r1" x="976" y="337.2" textLength="12.2" clip-path="url(#terminal-562297286-line-13)">
+</text><text class="terminal-562297286-r1" x="0" y="361.6" textLength="854" clip-path="url(#terminal-562297286-line-14)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;The&#160;target&#160;platform&#160;type&#160;where&#160;the&#160;CLI&#160;will&#160;be</text><text class="terminal-562297286-r1" x="976" y="361.6" textLength="12.2" clip-path="url(#terminal-562297286-line-14)">
+</text><text class="terminal-562297286-r1" x="0" y="386" textLength="854" clip-path="url(#terminal-562297286-line-15)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;installed.&#160;(default:&#160;x86_64-unknown-linux-gnu)</text><text class="terminal-562297286-r1" x="976" y="386" textLength="12.2" clip-path="url(#terminal-562297286-line-15)">
+</text><text class="terminal-562297286-r1" x="0" y="410.4" textLength="390.4" clip-path="url(#terminal-562297286-line-16)">&#160;&#160;-k&#160;TOKEN,&#160;--phylum-token&#160;TOKEN</text><text class="terminal-562297286-r1" x="976" y="410.4" textLength="12.2" clip-path="url(#terminal-562297286-line-16)">
+</text><text class="terminal-562297286-r1" x="0" y="434.8" textLength="890.6" clip-path="url(#terminal-562297286-line-17)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Phylum&#160;user&#160;token.&#160;Can&#160;also&#160;specify&#160;this&#160;option&#x27;s</text><text class="terminal-562297286-r1" x="976" y="434.8" textLength="12.2" clip-path="url(#terminal-562297286-line-17)">
+</text><text class="terminal-562297286-r1" x="0" y="459.2" textLength="890.6" clip-path="url(#terminal-562297286-line-18)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;value&#160;by&#160;setting&#160;the&#160;`PHYLUM_API_KEY`&#160;environment</text><text class="terminal-562297286-r1" x="976" y="459.2" textLength="12.2" clip-path="url(#terminal-562297286-line-18)">
+</text><text class="terminal-562297286-r1" x="0" y="483.6" textLength="927.2" clip-path="url(#terminal-562297286-line-19)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;variable.&#160;The&#160;value&#160;specified&#160;with&#160;this&#160;option&#160;takes</text><text class="terminal-562297286-r1" x="976" y="483.6" textLength="12.2" clip-path="url(#terminal-562297286-line-19)">
+</text><text class="terminal-562297286-r1" x="0" y="508" textLength="927.2" clip-path="url(#terminal-562297286-line-20)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;precedence&#160;when&#160;both&#160;are&#160;provided.&#160;Leave&#160;this&#160;option</text><text class="terminal-562297286-r1" x="976" y="508" textLength="12.2" clip-path="url(#terminal-562297286-line-20)">
+</text><text class="terminal-562297286-r1" x="0" y="532.4" textLength="927.2" clip-path="url(#terminal-562297286-line-21)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;and&#160;it&#x27;s&#160;related&#160;environment&#160;variable&#160;unspecified&#160;to</text><text class="terminal-562297286-r1" x="976" y="532.4" textLength="12.2" clip-path="url(#terminal-562297286-line-21)">
+</text><text class="terminal-562297286-r1" x="0" y="556.8" textLength="915" clip-path="url(#terminal-562297286-line-22)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;either&#160;(1)&#160;use&#160;an&#160;existing&#160;token&#160;already&#160;set&#160;in&#160;the</text><text class="terminal-562297286-r1" x="976" y="556.8" textLength="12.2" clip-path="url(#terminal-562297286-line-22)">
+</text><text class="terminal-562297286-r1" x="0" y="581.2" textLength="902.8" clip-path="url(#terminal-562297286-line-23)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Phylum&#160;config&#160;file&#160;or&#160;(2)&#160;to&#160;manually&#160;populate&#160;the</text><text class="terminal-562297286-r1" x="976" y="581.2" textLength="12.2" clip-path="url(#terminal-562297286-line-23)">
+</text><text class="terminal-562297286-r1" x="0" y="605.6" textLength="878.4" clip-path="url(#terminal-562297286-line-24)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;token&#160;with&#160;a&#160;`phylum&#160;auth&#160;login`&#160;or&#160;`phylum&#160;auth</text><text class="terminal-562297286-r1" x="976" y="605.6" textLength="12.2" clip-path="url(#terminal-562297286-line-24)">
+</text><text class="terminal-562297286-r1" x="0" y="630" textLength="878.4" clip-path="url(#terminal-562297286-line-25)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;register`&#160;command&#160;after&#160;install.&#160;(default:&#160;None)</text><text class="terminal-562297286-r1" x="976" y="630" textLength="12.2" clip-path="url(#terminal-562297286-line-25)">
+</text><text class="terminal-562297286-r1" x="0" y="654.4" textLength="902.8" clip-path="url(#terminal-562297286-line-26)">&#160;&#160;--list-releases&#160;&#160;&#160;&#160;&#160;&#160;&#160;List&#160;the&#160;Phylum&#160;CLI&#160;releases&#160;available&#160;to&#160;install.</text><text class="terminal-562297286-r1" x="976" y="654.4" textLength="12.2" clip-path="url(#terminal-562297286-line-26)">
+</text><text class="terminal-562297286-r1" x="0" y="678.8" textLength="488" clip-path="url(#terminal-562297286-line-27)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;(default:&#160;False)</text><text class="terminal-562297286-r1" x="976" y="678.8" textLength="12.2" clip-path="url(#terminal-562297286-line-27)">
+</text><text class="terminal-562297286-r1" x="0" y="703.2" textLength="829.6" clip-path="url(#terminal-562297286-line-28)">&#160;&#160;--list-targets&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List&#160;the&#160;target&#160;platform&#160;types&#160;available&#160;for</text><text class="terminal-562297286-r1" x="976" y="703.2" textLength="12.2" clip-path="url(#terminal-562297286-line-28)">
+</text><text class="terminal-562297286-r1" x="0" y="727.6" textLength="878.4" clip-path="url(#terminal-562297286-line-29)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;installing&#160;a&#160;given&#160;Phylum&#160;CLI&#160;release.&#160;(default:</text><text class="terminal-562297286-r1" x="976" y="727.6" textLength="12.2" clip-path="url(#terminal-562297286-line-29)">
+</text><text class="terminal-562297286-r1" x="0" y="752" textLength="366" clip-path="url(#terminal-562297286-line-30)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;False)</text><text class="terminal-562297286-r1" x="976" y="752" textLength="12.2" clip-path="url(#terminal-562297286-line-30)">
 </text>
     </g>
     </g>
