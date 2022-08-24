@@ -85,7 +85,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry install --verbose --no-root
+          poetry install --verbose
 
       - name: Set PHYLUM_ORIGINAL_VER value
         run: echo "PHYLUM_ORIGINAL_VER=$(poetry version --short)" >> $GITHUB_ENV
