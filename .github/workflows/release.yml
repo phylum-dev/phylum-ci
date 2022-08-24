@@ -110,6 +110,9 @@ jobs:
 
       - name: Publish to TestPyPI
         id: publish_test_pypi
+        # Allow for re-running the workflow, with the same release package version, for situations where that package is
+        # already published to TestPyPI (e.g., failures due to TestPyPI being slow to recognize a published package).
+        continue-on-error: true
         run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
 
       # This step is currently only verifying that the package uploaded to TestPyPI can be installed and run from there.
@@ -118,9 +121,6 @@ jobs:
       # "reviewers" for that environment would be notified of the release and could check that the package verification
       # step(s) worked as intended before approving the release to proceed.
       - name: Verify the package
-        # Allow for re-running the workflow, with the same release package version, for situations where that package is
-        # already published to TestPyPI (e.g., failures due to TestPyPI being slow to recognize a published package).
-        if: ${{ success() || steps.publish_test_pypi.conclusion == 'failure' }}
         run: |
           pipx run \
             --index-url https://test.pypi.org/simple/ \
