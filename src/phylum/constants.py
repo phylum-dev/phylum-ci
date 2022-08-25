@@ -42,7 +42,7 @@ SUPPORTED_LOCKFILES = {
     # C#
     "*.csproj": "nuget",
     # Java
-    "pom.xml": "mvn",
+    "effective-pom.xml": "mvn",
     "gradle.lockfile": "gradle",
 }
 
