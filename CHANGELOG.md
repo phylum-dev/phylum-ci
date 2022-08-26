@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.14.0 (2022-08-26)
+### Feature
+* Change supported maven lockfile to `effective-pom.xml` ([#112](https://github.com/phylum-dev/phylum-ci/issues/112)) ([`c98fa8e`](https://github.com/phylum-dev/phylum-ci/commit/c98fa8efa4b8f2b1877b95843bae079838cae565))
+
 ## v0.13.3 (2022-08-24)
 ### Documentation
 * Revert bad script options SVG files ([`907e8f2`](https://github.com/phylum-dev/phylum-ci/commit/907e8f2d3acb19a33e7e4cb83a69398db62a5221))
