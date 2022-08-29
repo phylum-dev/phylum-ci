@@ -141,7 +141,7 @@ test = ["hypothesis (>=1.11.4,!=3.79.2)", "iso8601", "pretend", "pytest (>=6.2.0
 
 [[package]]
 name = "distlib"
-version = "0.3.5"
+version = "0.3.6"
 description = "Distribution utilities"
 category = "dev"
 optional = false
@@ -491,7 +491,7 @@ pytest = ">=4.0.0"
 
 [[package]]
 name = "python-gitlab"
-version = "3.8.1"
+version = "3.9.0"
 description = "Interact with GitLab API"
 category = "dev"
 optional = false
@@ -507,7 +507,7 @@ yaml = ["PyYaml (>=5.2)"]
 
 [[package]]
 name = "python-semantic-release"
-version = "7.31.3"
+version = "7.31.4"
 description = "Automatic Semantic Versioning for Python projects"
 category = "dev"
 optional = false
@@ -523,7 +523,7 @@ packaging = "*"
 python-gitlab = ">=2,<4"
 requests = ">=2.25,<3"
 semver = ">=2.10,<3"
-tomlkit = ">=0.10.0,<0.11.0"
+tomlkit = ">=0.10,<1.0"
 twine = ">=3,<4"
 
 [package.extras]
@@ -668,7 +668,7 @@ typer = ["typer (>=0.4,<0.6)"]
 
 [[package]]
 name = "rich-codex"
-version = "1.2.4"
+version = "1.2.5"
 description = "Generate rich images for the GitHub Action 'rich-codex'"
 category = "dev"
 optional = false
@@ -788,7 +788,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "tomlkit"
-version = "0.10.2"
+version = "0.11.4"
 description = "Style preserving TOML library"
 category = "dev"
 optional = false
@@ -1083,8 +1083,8 @@ cryptography = [
     {file = "cryptography-37.0.4.tar.gz", hash = "sha256:63f9c17c0e2474ccbebc9302ce2f07b55b3b3fcb211ded18a42d5764f5c10a82"},
 ]
 distlib = [
-    {file = "distlib-0.3.5-py2.py3-none-any.whl", hash = "sha256:b710088c59f06338ca514800ad795a132da19fda270e3ce4affc74abf955a26c"},
-    {file = "distlib-0.3.5.tar.gz", hash = "sha256:a7f75737c70be3b25e2bee06288cec4e4c221de18455b2dd037fe2a795cab2fe"},
+    {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
+    {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 docutils = [
     {file = "docutils-0.19-py3-none-any.whl", hash = "sha256:5e1de4d849fee02c63b040a4a3fd567f4ab104defd8a5511fbbc24a8a017efbc"},
@@ -1398,12 +1398,12 @@ pytest-github-actions-annotate-failures = [
     {file = "pytest_github_actions_annotate_failures-0.1.7-py2.py3-none-any.whl", hash = "sha256:c4a7346d1d95f731a6b53e9a45f10ca56593978149266dd7526876cce403ea38"},
 ]
 python-gitlab = [
-    {file = "python-gitlab-3.8.1.tar.gz", hash = "sha256:e1db25076520e118c7c26becb0d074a7a68127439870d43b8636342206b1e091"},
-    {file = "python_gitlab-3.8.1-py3-none-any.whl", hash = "sha256:6d10de90f4fcb95ea92e301528d2442ac5094da9b7137fa1294614369679e791"},
+    {file = "python-gitlab-3.9.0.tar.gz", hash = "sha256:5fc5e88f81f366e11851cb8b4b9a5b827491ce20ba7585446b74c9b097726ba3"},
+    {file = "python_gitlab-3.9.0-py3-none-any.whl", hash = "sha256:ce941f99bf88b6918eea82500ca6206806117f4afe26d4705f4ded2284b35c69"},
 ]
 python-semantic-release = [
-    {file = "python-semantic-release-7.31.3.tar.gz", hash = "sha256:a21f0a6907b639ff2018ca0a090be1083de81de5a488b253a6ccf01ee036ab94"},
-    {file = "python_semantic_release-7.31.3-py3-none-any.whl", hash = "sha256:c133f0f6c019cdb9c4873e7778fbe5f1280ca4f714e579f05e87592c5be1097c"},
+    {file = "python-semantic-release-7.31.4.tar.gz", hash = "sha256:ee00c396b6d394b87b5ba3cf6be0f759f2f23783c2215e3ac4c22dc4bc676d60"},
+    {file = "python_semantic_release-7.31.4-py3-none-any.whl", hash = "sha256:05d37cb3e3b6e84770128debede8421b24fceaecfbaa9eb62ffcfc1ea2c857f2"},
 ]
 pywin32-ctypes = [
     {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
@@ -1574,8 +1574,8 @@ rich-click = [
     {file = "rich_click-1.5.2-py3-none-any.whl", hash = "sha256:131a94bed597eab9f1eda7eb41fb7275b6b60ae9e6defc3769277b70b104285d"},
 ]
 rich-codex = [
-    {file = "rich-codex-1.2.4.tar.gz", hash = "sha256:a2b7b5b177a385b121f0555444d49fda2a8972d45eef38906be100dc2f073fca"},
-    {file = "rich_codex-1.2.4-py3-none-any.whl", hash = "sha256:c064cea6e35de6f0fc9b6a37a5ca7e694ce72d0ebab0a003651017128ea35d59"},
+    {file = "rich-codex-1.2.5.tar.gz", hash = "sha256:6f2c3cf9c97fa4b36216b7cf8a5d319721098b6f5bad37dd3277f3035e1c04e7"},
+    {file = "rich_codex-1.2.5-py3-none-any.whl", hash = "sha256:9708831098cf6900c4c5c871cda362245c266213e293cac18da16cc12de3a20a"},
 ]
 rich-rst = [
     {file = "rich-rst-1.1.7.tar.gz", hash = "sha256:898bd5defd6bde9fba819614575dc5bff18047af38ae1981de0c1e78f17bbfd5"},
@@ -1646,8 +1646,8 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 tomlkit = [
-    {file = "tomlkit-0.10.2-py3-none-any.whl", hash = "sha256:905cf92c2111ef80d355708f47ac24ad1b6fc2adc5107455940088c9bbecaedb"},
-    {file = "tomlkit-0.10.2.tar.gz", hash = "sha256:30d54c0b914e595f3d10a87888599eab5321a2a69abc773bbefff51599b72db6"},
+    {file = "tomlkit-0.11.4-py3-none-any.whl", hash = "sha256:25d4e2e446c453be6360c67ddfb88838cfc42026322770ba13d1fbd403a93a5c"},
+    {file = "tomlkit-0.11.4.tar.gz", hash = "sha256:3235a9010fae54323e727c3ac06fb720752fe6635b3426e379daec60fbd44a83"},
 ]
 tox = [
     {file = "tox-3.25.1-py2.py3-none-any.whl", hash = "sha256:c38e15f4733683a9cc0129fba078633e07eb0961f550a010ada879e95fb32632"},
