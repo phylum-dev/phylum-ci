@@ -44,16 +44,18 @@ class CIPreCommit(CIBase):
         if sorted(staged_files) == sorted(self.extra_args):
             print(" [+] The extra args provided exactly match the list of staged files")
             if self.lockfile in extra_arg_paths:
+                print(" [+] Valid pre-commit scenario found: lockfile found in extra arguments")
                 return
-            print(" [+] The lockfile is not included in extra args...nothing to do")
+            print(" [+] The lockfile is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for a pre-commit config set up to filter the files sent to the hook
         if all(extra_arg in staged_files for extra_arg in self.extra_args):
             print(" [+] All the extra args are staged files")
             if self.lockfile in extra_arg_paths:
+                print(" [+] Valid pre-commit scenario found: lockfile found in extra arguments")
                 return
-            print(" [+] The lockfile is not included in extra args...nothing to do")
+            print(" [+] The lockfile is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
