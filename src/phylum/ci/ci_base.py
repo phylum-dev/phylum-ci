@@ -69,10 +69,12 @@ class CIBase(ABC):
         provided_lockfile: Path = args.lockfile
         if provided_lockfile and provided_lockfile.exists() and provided_lockfile.stat().st_size:
             self._lockfile = provided_lockfile.resolve()
+            print(f" [-] Provided lockfile: {self._lockfile}")
         else:
             detected_lockfile = detect_lockfile()
             if detected_lockfile:
                 self._lockfile = detected_lockfile
+                print(f" [-] Detected lockfile: {self._lockfile}")
             else:
                 raise SystemExit(
                     " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
