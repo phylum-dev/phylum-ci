@@ -76,7 +76,8 @@ jobs:
         if: ${{ steps.commit.outcome == 'success' }}
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
+          github-token: ${{ secrets.GH_RELEASE_PAT }}
           script: |
             github.rest.pulls.create({
               owner: context.repo.owner,
