@@ -10,6 +10,7 @@ References:
 """
 import argparse
 import subprocess
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -38,14 +39,27 @@ class CIPreCommit(CIBase):
         extra_arg_paths = (Path(extra_arg).resolve() for extra_arg in self.extra_args)
 
         print(" [*] Checking extra args for valid pre-commit scenarios ...")
+
         # Allow for a pre-commit config set up to send all staged files to the hook
         if sorted(staged_files) == sorted(self.extra_args):
             print(" [+] The extra args provided exactly match the list of staged files")
+            if self.lockfile in extra_arg_paths:
+                print(" [+] Valid pre-commit scenario found: lockfile found in extra arguments")
+                return
+            print(" [+] The lockfile is not included in extra args. Nothing to do. Exiting ...")
+            sys.exit(0)
+
         # Allow for a pre-commit config set up to filter the files sent to the hook
-        elif all(extra_arg in staged_files for extra_arg in self.extra_args):
+        if all(extra_arg in staged_files for extra_arg in self.extra_args):
             print(" [+] All the extra args are staged files")
+            if self.lockfile in extra_arg_paths:
+                print(" [+] Valid pre-commit scenario found: lockfile found in extra arguments")
+                return
+            print(" [+] The lockfile is not included in extra args. Nothing to do. Exiting ...")
+            sys.exit(0)
+
         # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
-        elif self.lockfile in extra_arg_paths:
+        if self.lockfile in extra_arg_paths:
             print(" [+] The lockfile was included in the extra args")
         # NOTE: There is still the case where the lockfile is "accidentally" included as an extra argument. For example,
         #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
@@ -54,8 +68,9 @@ class CIPreCommit(CIBase):
         #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
         #       heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
-            print(" [+] No valid pre-commit scenario found. Bailing ...")
-            raise SystemExit(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
+            print(" [+] The lockfile was not included in the extra args...possible invalid pre-commit scenario")
+            print(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
+            sys.exit(0)
 
     @property
     def phylum_label(self) -> str:

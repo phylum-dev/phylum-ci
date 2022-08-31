@@ -7,5 +7,4 @@
   description: Run `phylum` on a dependency lockfile
   entry: phylum-ci
   language: python
-  require_serial: true
   stages: [commit]
