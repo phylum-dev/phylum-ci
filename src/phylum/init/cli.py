@@ -314,6 +314,14 @@ def get_args(args=None):
         help="The target platform type where the CLI will be installed.",
     )
     parser.add_argument(
+        "-g",
+        "--global-install",
+        action="store_true",
+        # Specify this flag to install the Phylum CLI to a globally accessible directory.
+        # NOTE: This option is hidden from help output b/c it is meant to be used internally, for Docker image creation.
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "-k",
         "--phylum-token",
         dest="token",
@@ -365,7 +373,6 @@ def main(args=None):
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(tag_name, archive_name)
     minisig_url = f"{archive_url}.minisig"
-    phylum_bin_path = get_expected_phylum_bin_path()
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
@@ -383,12 +390,22 @@ def main(args=None):
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 
-        cmd = "sh install.sh".split()
+        # This may look wrong, but a decision was made to manually handle global installs
+        # in the places it is required instead of updating the CLI's install script.
+        # Reference: https://github.com/phylum-dev/cli/pull/671
+        if args.global_install:
+            # Current assumptions for this method:
+            #   * the /usr/local/bin directory exists, has proper permissions, is on the PATH for all users
+            #   * the install is on a system with glibc
+            cmd = "install -m 0755 phylum /usr/local/bin/phylum".split()
+        else:
+            cmd = "sh install.sh".split()
         subprocess.run(cmd, check=True, cwd=extracted_dir)
 
     process_token_option(args)
 
     # Check to ensure everything is working
+    phylum_bin_path, _ = get_phylum_bin_path()
     cmd = f"{phylum_bin_path} --help".split()
     subprocess.run(cmd, check=True)
 
