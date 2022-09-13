@@ -17,7 +17,7 @@ from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
 from phylum import __version__
 from phylum.constants import (
-    MIN_SUPPORTED_CLI_VERSION,
+    MIN_CLI_VER_FOR_INSTALL,
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
     SUPPORTED_PLATFORMS,
@@ -121,7 +121,7 @@ def is_supported_version(version: str) -> bool:
     """Predicate for determining if a given version is supported."""
     try:
         provided_version = Version(canonicalize_version(version))
-        min_supported_version = Version(MIN_SUPPORTED_CLI_VERSION)
+        min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
     except InvalidVersion as err:
         raise ValueError("An invalid version was provided") from err
 

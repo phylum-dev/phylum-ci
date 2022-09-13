@@ -24,7 +24,7 @@ from phylum.ci.constants import (
     PROJECT_THRESHOLD_OPTIONS,
     SUCCESS_COMMENT,
 )
-from phylum.constants import SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
+from phylum.constants import MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
 from ruamel.yaml import YAML
@@ -155,7 +155,7 @@ class CIBase(ABC):
 
         The current pre-requisites for *all* CI environments/platforms are:
           * A `.phylum_project` file exists at the working directory
-          * Phylum CLI v3.3.0+, to make use of the `parse` command
+          * A Phylum CLI version with the `parse` command
           * Have `git` installed and available for use on the PATH
         """
         print(" [+] Confirming pre-requisites ...")
@@ -165,10 +165,8 @@ class CIBase(ABC):
         else:
             raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
 
-        # The `parse` command was available in the pre-releases, but it makes the
-        # error message cleaner to only mention the release version.
-        if Version(self.args.version) < Version("v3.3.0-rc1"):
-            raise SystemExit(" [!] The CLI version must be at least v3.3.0")
+        if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
+            raise SystemExit(f" [!] The CLI version must be at least {MIN_CLI_VER_INSTALLED}")
 
         if shutil.which("git"):
             print(" [+] `git` binary found on the PATH")
@@ -296,8 +294,8 @@ class CIBase(ABC):
                     phylum_init(install_args)
                 else:
                     print(" [+] Attempting to use existing version ...")
-                    if Version(str(cli_version)) < Version("v3.2.0"):
-                        raise SystemExit(" [!] The existing CLI version must be greater than v3.2.0")
+                    if Version(str(cli_version)) < Version(MIN_CLI_VER_INSTALLED):
+                        raise SystemExit(f" [!] The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}")
                     print(" [+] Version checks succeeded. Using existing version.")
 
         cli_path, cli_version = get_phylum_bin_path()
