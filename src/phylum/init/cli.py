@@ -28,39 +28,22 @@ from phylum.init.sig import verify_minisig
 from ruamel.yaml import YAML
 
 
-def use_legacy_paths(version):
-    """Predicate to specify whether legacy paths should be used for a given version.
-
-    The Phylum config and binary paths changed following the v2.2.0 release, to adhere to the XDG Base Directory Spec.
-    Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    """
-    return Version(canonicalize_version(version)) <= Version("v2.2.0")
-
-
-def get_phylum_settings_path(version):
-    """Get the Phylum settings path based on a provided version."""
+def get_phylum_settings_path():
+    """Get the Phylum settings path and return it."""
     home_dir = pathlib.Path.home()
-    version = version_check(version)
 
     config_home_path = os.getenv("XDG_CONFIG_HOME")
     if not config_home_path:
         config_home_path = home_dir / ".config"
 
     phylum_config_path = pathlib.Path(config_home_path) / "phylum" / "settings.yaml"
-    if use_legacy_paths(version):
-        phylum_config_path = home_dir / ".phylum" / "settings.yaml"
 
     return phylum_config_path
 
 
-def get_expected_phylum_bin_path(version):
-    """Get the expected path to the Phylum CLI binary based on a provided version."""
-    home_dir = pathlib.Path.home()
-    version = version_check(version)
-
-    phylum_bin_path = home_dir / ".local" / "bin" / "phylum"
-    if use_legacy_paths(version):
-        phylum_bin_path = home_dir / ".phylum" / "phylum"
+def get_expected_phylum_bin_path():
+    """Get the expected path to the Phylum CLI binary and return it."""
+    phylum_bin_path = pathlib.Path.home() / ".local" / "bin" / "phylum"
 
     return phylum_bin_path
 
@@ -79,19 +62,15 @@ def get_phylum_cli_version(cli_path: Path) -> str:
     return version
 
 
-def get_phylum_bin_path(version: str = None) -> Tuple[Optional[Path], Optional[str]]:
-    """Get the current path and corresponding version to the Phylum CLI binary and return them.
-
-    Provide a CLI version as a fallback method for looking on an explicit path,
-    based on the expected path for that version.
-    """
+def get_phylum_bin_path() -> Tuple[Optional[Path], Optional[str]]:
+    """Get the current path and corresponding version to the Phylum CLI binary and return them."""
     # Look for `phylum` on the PATH first
     which_cli_path = shutil.which("phylum")
 
-    if which_cli_path is None and version is not None:
+    if which_cli_path is None:
         # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
-        # context. Look in the specific location expected by the provided version.
-        expected_cli_path = get_expected_phylum_bin_path(version)
+        # context. Look in the specific expected location.
+        expected_cli_path = get_expected_phylum_bin_path()
         which_cli_path = shutil.which("phylum", path=expected_cli_path)
 
     if which_cli_path is None:
@@ -254,7 +233,7 @@ def is_token_set(phylum_settings_path, token=None):
 
 def process_token_option(args):
     """Process the token option as parsed from the arguments."""
-    phylum_settings_path = get_phylum_settings_path(args.version)
+    phylum_settings_path = get_phylum_settings_path()
 
     # The token option takes precedence over the Phylum API key environment variable.
     token = os.getenv(TOKEN_ENVVAR_NAME)
@@ -279,13 +258,13 @@ def process_token_option(args):
             print(" [!] Existing token not found. Use `phylum auth login` or `phylum auth register` command to set it.")
 
     if token and not is_token_set(phylum_settings_path, token=token):
-        setup_token(token, args)
+        setup_token(token)
 
 
-def setup_token(token, args):
-    """Setup the CLI credentials with a provided token and path to phylum binary."""
-    phylum_bin_path = get_expected_phylum_bin_path(args.version)
-    phylum_settings_path = get_phylum_settings_path(args.version)
+def setup_token(token):
+    """Setup the CLI credentials with a provided token."""
+    phylum_bin_path = get_expected_phylum_bin_path()
+    phylum_settings_path = get_phylum_settings_path()
 
     # The phylum CLI settings.yaml file won't exist upon initial install
     # but running a command will trigger the CLI to generate it
@@ -306,7 +285,7 @@ def setup_token(token, args):
 
 
 def get_args(args=None):
-    """Get the arguments from the command line and return them."""
+    """Get the arguments from the command line or input parameter, parse and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
         description="Fetch and install the Phylum CLI",
@@ -386,7 +365,7 @@ def main(args=None):
     minisig_name = f"{archive_name}.minisig"
     archive_url = get_archive_url(tag_name, archive_name)
     minisig_url = f"{archive_url}.minisig"
-    phylum_bin_path = get_expected_phylum_bin_path(tag_name)
+    phylum_bin_path = get_expected_phylum_bin_path()
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
