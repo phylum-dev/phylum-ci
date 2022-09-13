@@ -60,12 +60,16 @@ ARG PKG_NAME
 ENV APP_PATH="/app"
 ENV POETRY_VENV="${APP_PATH}/.venv"
 ENV POETRY_PATH="${POETRY_VENV}/bin/poetry"
+ENV PHYLUM_VENV="/opt/venv"
+ENV PHYLUM_VENV_PIP="${PHYLUM_VENV}/bin/pip"
 ENV PIP_NO_COMPILE=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR ${APP_PATH}
 
-RUN pip install --no-cache-dir --upgrade pip setuptools
+RUN set -eux; \
+    python -m venv ${PHYLUM_VENV}; \
+    ${PHYLUM_VENV_PIP} install --no-cache-dir --upgrade pip setuptools
 RUN set -eux; \
     python -m venv ${POETRY_VENV}; \
     ${POETRY_VENV}/bin/pip install --no-cache-dir --upgrade pip setuptools; \
@@ -81,19 +85,19 @@ RUN set -eux; \
 COPY pyproject.toml poetry.lock ./
 RUN ${POETRY_PATH} export --without-hashes --format requirements.txt --output requirements.txt
 
-# Cache the pip installed dependencies
+# Cache the pip installed dependencies for faster builds when iterating locally.
 # NOTE: This `--mount` feature requires BUILDKIT to be used
 RUN --mount=type=cache,id=pip,target=/root/.cache/pip \
     set -eux; \
-    pip cache info; \
-    pip cache list; \
-    pip install --user -r requirements.txt
+    ${PHYLUM_VENV_PIP} cache info; \
+    ${PHYLUM_VENV_PIP} cache list; \
+    ${PHYLUM_VENV_PIP} install -r requirements.txt
 COPY "${PKG_SRC:-.}" .
-RUN pip install --user --no-cache-dir ${PKG_NAME:-.}
-RUN find /root/.local -type f -name '*.pyc' -delete
+RUN ${PHYLUM_VENV_PIP} install --no-cache-dir ${PKG_NAME:-.}
+RUN find ${PHYLUM_VENV} -type f -name '*.pyc' -delete
 
 # Place in a directory included in the final layer and also known to be part of the $PATH
-COPY entrypoint.sh /root/.local/bin/
+COPY entrypoint.sh ${PHYLUM_VENV}/bin/
 
 FROM python:3.10-slim-bullseye
 
@@ -105,19 +109,19 @@ ARG CLI_VER
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
-# Copy only Python packages to limit the image size
-COPY --from=builder /root/.local /root/.local
+ENV PHYLUM_VENV="/opt/venv"
+ENV PATH=${PHYLUM_VENV}/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1
 
-ENV PATH=/root/.local/bin:$PATH \
-    PYTHONPATH=/root/.local/lib/python3.10/site-packages \
-    PYTHONDONTWRITEBYTECODE=1
+# Copy only Python packages to limit the image size
+COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 
 RUN set -eux; \
     apt-get update; \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends git; \
-    chmod +x /root/.local/bin/entrypoint.sh; \
-    phylum-init --phylum-release ${CLI_VER:-latest}; \
+    chmod +x ${PHYLUM_VENV}/bin/entrypoint.sh; \
+    phylum-init --phylum-release ${CLI_VER:-latest} --global-install; \
     apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*; \
     find / -type f -name '*.pyc' -delete
