@@ -283,7 +283,7 @@ class CIBase(ABC):
             "--phylum-token", self.args.token,
         ]
         # fmt: on
-        cli_path, cli_version = get_phylum_bin_path(version=specified_version)
+        cli_path, cli_version = get_phylum_bin_path()
         if cli_path is None:
             print(f" [+] Existing Phylum CLI instance not found. Installing version `{specified_version}` ...")
             phylum_init(install_args)
@@ -300,7 +300,7 @@ class CIBase(ABC):
                         raise SystemExit(" [!] The existing CLI version must be greater than v3.2.0")
                     print(" [+] Version checks succeeded. Using existing version.")
 
-        cli_path, cli_version = get_phylum_bin_path(version=specified_version)
+        cli_path, cli_version = get_phylum_bin_path()
         print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
 
         self._cli_path = cli_path
