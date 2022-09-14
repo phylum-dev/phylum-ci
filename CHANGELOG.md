@@ -10,6 +10,14 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.15.0 (2022-09-14)
+### Feature
+* Allow docker image use for non-root users ([`3e87aa9`](https://github.com/phylum-dev/phylum-ci/commit/3e87aa99608807dd8f7469cc72580dd7b10b56f3))
+* Don't require serial processing of pre-commit hook ([#115](https://github.com/phylum-dev/phylum-ci/issues/115)) ([`b0fb110`](https://github.com/phylum-dev/phylum-ci/commit/b0fb1109ddd3ab19361611102f41efd2bded565d))
+
+### Breaking
+* CLI installs prior to v2.2.0 are no longer supported.  ([`e5c0fca`](https://github.com/phylum-dev/phylum-ci/commit/e5c0fcac7d15adc40fef6002cf054fe28b903c5f))
+
 ## v0.14.0 (2022-08-26)
 ### Feature
 * Change supported maven lockfile to `effective-pom.xml` ([#112](https://github.com/phylum-dev/phylum-ci/issues/112)) ([`c98fa8e`](https://github.com/phylum-dev/phylum-ci/commit/c98fa8efa4b8f2b1877b95843bae079838cae565))
