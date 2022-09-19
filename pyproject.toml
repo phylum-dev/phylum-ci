@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "phylum"
 version = "0.15.0"
 description = "Utilities for integrating Phylum into CI pipelines (and beyond)"
-license = "MIT"
+license = "GPL-3.0-or-later"
 authors = ["Phylum, Inc. <engineering@phylum.io>"]
 homepage = "https://phylum.io/"
 repository = "https://github.com/phylum-dev/phylum-ci"
@@ -18,7 +18,7 @@ keywords = ["dependency", "security", "CI", "integration"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Natural Language :: English",
     "Environment :: Console",
     "Topic :: Security",
