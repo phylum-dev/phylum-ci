@@ -22,7 +22,7 @@ repos:
       - id: black
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: a78007c1e9de96e71d5fb3e720c2b9fae8ed8abf  # frozen: v2.37.3
+    rev: 4a3186f01db8afc0d36416f52a418ad8c7e2ef86  # frozen: v2.38.0
     hooks:
       - id: pyupgrade
         args: [--py37-plus]
