@@ -122,6 +122,9 @@ The current CI platforms/environments supported are:
 * GitHub Actions
   * See the [GitHub Actions Integration documentation][github_docs] for more info
 
+* Azure Pipelines
+  * See the [Azure Pipelines Integration documentation][azure_docs] for more info
+
 * Git `pre-commit` Hooks
   * See the [Git `pre-commit` Integration documentation][precommit_docs] for more info
 
@@ -137,6 +140,7 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 
 [gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
 [github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/github_actions.md
+[azure_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/azure_pipelines.md
 [precommit_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/git_precommit.md
 
 ## License
