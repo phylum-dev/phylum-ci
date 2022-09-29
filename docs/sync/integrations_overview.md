@@ -24,6 +24,12 @@ See the [GitLab CI Integration documentation][gitlab_docs] for more info.
 
 [gitlab_docs]: https://docs.phylum.io/docs/gitlab_ci
 
+### Azure Pipelines
+
+See the [Azure Pipelines Integration documentation][azure_docs] for more info.
+
+[azure_docs]: https://docs.phylum.io/docs/azure_pipelines
+
 ### Git `pre-commit` Hooks
 
 See the [Git `pre-commit` documentation][precommit_docs] for more info.

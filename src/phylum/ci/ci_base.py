@@ -30,6 +30,22 @@ from phylum.init.cli import main as phylum_init
 from ruamel.yaml import YAML
 
 
+def git_remote() -> str:
+    """Get the git remote and return it.
+
+    This function is limited in that it will only work when there is a single remote defined.
+    A RuntimeError exception will be raised when there is not exactly one remote.
+    """
+    cmd = "git remote"
+    remotes = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout.splitlines()
+    if not remotes:
+        raise RuntimeError("No git remotes configured")
+    if len(remotes) > 1:
+        raise RuntimeError("Only one git remote is supported at this time")
+    remote = remotes[0]
+    return remote
+
+
 def detect_lockfile() -> Optional[Path]:
     """Detect the lockfile in use and return it.
 

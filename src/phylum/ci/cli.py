@@ -9,6 +9,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
+from phylum.ci.ci_azure import CIAzure
 from phylum.ci.ci_base import CIBase, CIEnvs
 from phylum.ci.ci_github import CIGitHub
 from phylum.ci.ci_gitlab import CIGitLab
@@ -20,7 +21,10 @@ from phylum.init.cli import get_target_triple, version_check
 
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
-    """Detect CI platform via known CI-based environment variables."""
+    """Detect CI platform via known CI-based environment variables.
+
+    Reference: https://github.com/watson/ci-info/blob/master/vendors.json
+    """
     ci_envs: CIEnvs = []
 
     # Detect GitLab CI
@@ -32,6 +36,11 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     if os.getenv("GITHUB_ACTIONS") == "true":
         print(" [+] CI environment detected: GitHub Actions")
         ci_envs.append(CIGitHub(args))
+
+    # Detect Azure Pipelines
+    if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"):
+        print(" [+] CI environment detected: Azure Pipelines")
+        ci_envs.append(CIAzure(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,

@@ -37,7 +37,7 @@ The pre-requisites for using this image are:
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
 * A [Phylum token][phylum_tokens] with API access
-  * [Contact Phylum][phylum_contact] or create an account and register to gain access
+  * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
@@ -51,6 +51,7 @@ The pre-requisites for using this image are:
 [gitlab_tokens]: https://docs.gitlab.com/ee/security/token_overview.html
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
+[app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
 
 ## Configure `.gitlab-ci.yml`
@@ -159,7 +160,7 @@ personal use in private repositories as there is a chance that depending on it w
 do the same thing in different scenarios.
 
 A [Phylum token][phylum_tokens] with API access is required to perform analysis on project
-dependencies. [Contact Phylum][phylum_contact] or create an account and register to gain access.
+dependencies. [Contact Phylum][phylum_contact] or [register][app_register] to gain access.
 See also [`phylum auth register`][phylum_register] command documentation and consider
 using a bot or group account for this token.
 
@@ -184,9 +185,9 @@ Since they are sensitive, **care should be taken to protect them appropriately**
     # Group - https://docs.gitlab.com/ee/user/group/settings/group_access_tokens.html
     GITLAB_TOKEN: $GITLAB_TOKEN_VARIABLE_OR_SECRET_HERE
 
-    # Contact Phylum (https://phylum.io/contact-us/) or create an account and register to gain access.
-    # See also `phylum auth register` (https://docs.phylum.io/docs/phylum_auth_register) command documentation.
-    # Consider using a bot or group account for this token.
+    # Contact Phylum (phylum.io/contact-us) or register (app.phylum.io/register) to gain
+    # access. See also `phylum auth register` (docs.phylum.io/docs/phylum_auth_register)
+    # command documentation. Consider using a bot or group account for this token.
     PHYLUM_API_KEY: $PHYLUM_TOKEN_VARIABLE_OR_SECRET_HERE
 ```
 

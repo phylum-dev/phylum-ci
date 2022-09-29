@@ -40,7 +40,7 @@ The pre-requisites for using the git `pre-commit` hook are:
 
 * The [pre-commit] package manager installed
 * A [Phylum token][phylum_tokens] with API access
-  * [Contact Phylum][phylum_contact] or create an account and register to gain access
+  * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
@@ -52,6 +52,7 @@ The pre-requisites for using the git `pre-commit` hook are:
 
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
+[app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
 
 **NOTE: If the `phylum` CLI binary is installed locally, it will be used. Otherwise, the hook will install it.**
