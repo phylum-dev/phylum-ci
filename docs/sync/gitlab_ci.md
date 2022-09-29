@@ -223,9 +223,14 @@ view the [script options output][script_options] for the latest release.
 
     # Thresholds for the five risk domains may be set at the Phylum project level.
     # They can be set differently for CI environments to "fail the build."
-    # NOTE: The shortened form is used here for brevity, but the long form might be more
-    #       descriptive for future readers. For instance `--vul-threshold` instead of `-u`.
-    - phylum-ci -u 60 -m 60 -e 70 -c 90 -o 80
+    # Long commands: https://docs.gitlab.com/ee/ci/yaml/script.html#split-long-commands
+    - |
+      phylum-ci \
+        --vul-threshold 60 \
+        --mal-threshold 60 \
+        --eng-threshold 70 \
+        --lic-threshold 90 \
+        --aut-threshold 80
 
     # Ensure the latest Phylum CLI is installed.
     - phylum-ci --force-install
@@ -234,7 +239,15 @@ view the [script options output][script_options] for the latest release.
     - phylum-ci --phylum-release 3.8.0 --force-install
 
     # Mix and match for your specific use case.
-    - phylum-ci -u 60 -m 60 -e 70 -c 90 -o 80 --lockfile requirements-prod.txt --all-deps
+    - |
+      phylum-ci \
+        --vul-threshold 60 \
+        --mal-threshold 60 \
+        --eng-threshold 70 \
+        --lic-threshold 90 \
+        --aut-threshold 80 \
+        --lockfile requirements-prod.txt \
+        --all-deps
 ```
 
 ## Alternatives
