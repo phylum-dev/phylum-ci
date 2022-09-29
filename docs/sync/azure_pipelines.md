@@ -46,7 +46,7 @@ The pre-requisites for using this image are:
     * Needs at least the `Pull Request Threads` scope (read & write)
     * Consider using a service account for this token
 * A [Phylum token][phylum_tokens] with API access
-  * [Contact Phylum][phylum_contact] or create an account and register to gain access
+  * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
@@ -65,6 +65,7 @@ The pre-requisites for using this image are:
 [PAT]: https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
+[app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
 [phylum_project]: https://docs.phylum.io/docs/phylum_project
 [phylum_project_create]: https://docs.phylum.io/docs/phylum_project_create
@@ -128,10 +129,10 @@ jobs:
 
 ### Pool selection
 
-The pool is specified at the job level here because this is a [container job][container_job] and currently only
-`windows-2019` and `ubuntu-*` images support running containers. Keeping that restriction in mind, the pool can
-be specified at the pipeline or stage level instead. See the [YAML schema pool definition][yaml_pool] documentation
-for more detail.
+The pool is specified at the job level here because this is a [container job][container_job]. While Azure Pipelines
+allows container jobs for `windows-2019` and `ubuntu-*` base `vmImage`s, only `ubuntu-*` is supported by Phylum at this
+time. Keeping that restriction in mind, the pool can be specified at the pipeline or stage level instead.
+See the [YAML schema pool definition][yaml_pool] documentation for more detail.
 
 [container_job]: https://learn.microsoft.com/azure/devops/pipelines/process/container-phases
 [yaml_pool]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/pool
@@ -170,16 +171,13 @@ For instance, at the time of this writing, all of these tag references pointed t
 ```yaml
     # NOTE: These are examples. Only one container line for `phylum-ci` is expected.
 
-    # not specifying a tag results in an error
-    container: phylumio/phylum-ci  # this will not run
-
-    # be more explicit about wanting the `latest` tag
+    # Be explicit about wanting the `latest` tag
     container: phylumio/phylum-ci:latest
 
-    # use a specific release version of the `phylum-ci` package
+    # Use a specific release version of the `phylum-ci` package
     container: phylumio/phylum-ci:0.15.0-CLIv3.10.0
 
-    # use a specific image with it's SHA256 digest
+    # Use a specific image with it's SHA256 digest
     container: phylumio/phylum-ci@sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e
 ```
 
@@ -246,7 +244,7 @@ view the [script options output][script_options] for the latest release.
 The script step environment variables are used to ensure the `phylum-ci` tool is able to perform it's job.
 
 A [Phylum token][phylum_tokens] with API access is required to perform analysis on project dependencies.
-[Contact Phylum][phylum_contact] or create an account and register to gain access.
+[Contact Phylum][phylum_contact] or [register][app_register] to gain access.
 See also [`phylum auth register`][phylum_register] command documentation and consider using a bot or group account
 for this token.
 
@@ -283,8 +281,8 @@ Since these tokens are sensitive, **care should be taken to protect them appropr
 
 ```yaml
         env:
-          # Contact Phylum (https://phylum.io/contact-us/) or create an
-          # account and register to gain access. See also `phylum auth register`
+          # Contact Phylum (phylum.io/contact-us) or register (app.phylum.io/register)
+          # to gain access. See also `phylum auth register`
           # (https://docs.phylum.io/docs/phylum_auth_register) command documentation.
           # Consider using a bot or group account for this token.
           # This value (`PHYLUM_TOKEN`) will need to be set as a secret variable:

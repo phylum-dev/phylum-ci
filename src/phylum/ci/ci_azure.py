@@ -70,7 +70,7 @@ class CIAzure(CIBase):
 
     @property
     def azure_token(self) -> str:
-        """Get the default `AZURE_TOKEN` or custom Personal Access Token (PAT) in use."""
+        """Get the default `System.AccessToken` or custom Personal Access Token (PAT) in use."""
         return self._azure_token
 
     @property
