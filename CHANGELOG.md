@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.16.0 (2022-09-29)
+### Feature
+* Add support for Azure Pipelines CI environment ([#127](https://github.com/phylum-dev/phylum-ci/issues/127)) ([`a22de2c`](https://github.com/phylum-dev/phylum-ci/commit/a22de2c0dde2f99127602c156ef5f397cb8220e6))
+
+### Documentation
+* Use long form options in documentation examples ([#129](https://github.com/phylum-dev/phylum-ci/issues/129)) ([`bbca9d3`](https://github.com/phylum-dev/phylum-ci/commit/bbca9d3a23697b99a42976bb01b474c39c62ac12))
+
 ## v0.15.0 (2022-09-14)
 ### Feature
 * Allow docker image use for non-root users ([`3e87aa9`](https://github.com/phylum-dev/phylum-ci/commit/3e87aa99608807dd8f7469cc72580dd7b10b56f3))
