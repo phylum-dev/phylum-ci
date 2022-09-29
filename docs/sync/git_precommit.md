@@ -148,9 +148,12 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
         # Thresholds for the five risk domains may be set at the Phylum project level.
         # They can be set differently for the hook.
-        # NOTE: The shortened form is used here for brevity, but the long form might be more
-        #       descriptive for future readers. For instance `--vul-threshold` instead of `-u`.
-        args: [-u=60, -m=60, -e=70, -c=90, -o=80]
+        args:
+          - --vul-threshold=60
+          - --mal-threshold=60
+          - --eng-threshold=70
+          - --lic-threshold=90
+          - --aut-threshold=80
 
         # Ensure the latest Phylum CLI is installed.
         args: [--force-install]
@@ -159,5 +162,12 @@ with `--help` output as specified in the [Usage section of the top-level README.
         args: [--phylum-release=3.8.0, --force-install]
 
         # Mix and match for your specific use case.
-        args: [-u=60, -m=60, -e=70, -c=90, -o=80, --lockfile=requirements-prod.txt, --all-deps]
+        args:
+          - --vul-threshold=60
+          - --mal-threshold=60
+          - --eng-threshold=70
+          - --lic-threshold=90
+          - --aut-threshold=80
+          - --lockfile=requirements-prod.txt
+          - --all-deps
 ```
