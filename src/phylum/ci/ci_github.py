@@ -12,6 +12,7 @@ GitHub References:
 """
 import json
 import os
+import shlex
 import subprocess
 from argparse import Namespace
 from pathlib import Path
@@ -31,7 +32,7 @@ class CIGitHub(CIBase):
         # It is added before super().__init__(args) so that lockfile change detection will be set properly.
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
-        cmd = f"git config --global --add safe.directory {github_workspace}"
+        cmd = f"git config --global --add safe.directory {shlex.quote(github_workspace)}"
         subprocess.run(cmd.split(), check=True)
 
         super().__init__(args)
@@ -115,7 +116,7 @@ class CIGitHub(CIBase):
         try:
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
-            cmd = f"git diff --exit-code --quiet {pr_base_sha} -- {lockfile.resolve()}"
+            cmd = f"git diff --exit-code --quiet {shlex.quote(pr_base_sha)} -- {shlex.quote(lockfile.resolve())}"
             subprocess.run(cmd.split(), check=True)
             return False
         except subprocess.CalledProcessError as err:

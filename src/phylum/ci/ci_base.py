@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import subprocess
+import shlex
 import tempfile
 import urllib.parse
 from abc import ABC, abstractmethod
@@ -209,7 +210,7 @@ class CIBase(ABC):
         if not self.cli_path:
             raise SystemExit(" [!] Phylum CLI path is unknown. Try using the `init_cli` method first.")
         try:
-            cmd = f"{self.cli_path} parse {self.lockfile}".split()
+            cmd = f"{self.cli_path} parse {shlex.quote(self.lockfile)}".split()
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
@@ -245,7 +246,7 @@ class CIBase(ABC):
 
         with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
             try:
-                cmd = f"git cat-file blob {prev_lockfile_object}"
+                cmd = f"git cat-file blob {shlex.quote(prev_lockfile_object)}"
                 prev_lockfile_contents = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
                 prev_lockfile_fd.write(prev_lockfile_contents)
                 prev_lockfile_fd.flush()
@@ -256,7 +257,7 @@ class CIBase(ABC):
                 print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
                 return []
             try:
-                cmd = f"{self.cli_path} parse {prev_lockfile_fd.name}"
+                cmd = f"{self.cli_path} parse {shlex.quote(prev_lockfile_fd.name)}"
                 parse_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip()
             except subprocess.CalledProcessError as err:
                 print(f" [!] There was an error running the command: {' '.join(err.cmd)}")

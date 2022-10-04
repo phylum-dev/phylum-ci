@@ -6,6 +6,7 @@ This is also the fallback implementation to use when no known CI platform is det
 """
 import argparse
 import subprocess
+import shlex
 from pathlib import Path
 from typing import Optional
 
@@ -42,7 +43,7 @@ class CINone(CIBase):
 
         # This is the unique key that git uses to refer to the blob type data object for the lockfile.
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-        cmd = f"git hash-object {self.lockfile}".split()
+        cmd = f"git hash-object {shlex.quote(self.lockfile)}".split()
         lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
         label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
         label = label.replace(" ", "-")
@@ -75,7 +76,7 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        cmd = f"git diff --exit-code --quiet refs/remotes/{remote}/HEAD... -- {lockfile.resolve()}".split()
+        cmd = f"git diff --exit-code --quiet refs/remotes/{remote}/HEAD... -- {shlex.quote(lockfile.resolve())}".split()
         try:
             # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.

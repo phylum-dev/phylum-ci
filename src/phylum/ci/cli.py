@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import subprocess
+import shlex
 import sys
 from typing import List, Optional, Sequence, Tuple
 
@@ -64,7 +65,7 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
 def get_phylum_analysis(ci_env: CIBase) -> dict:
     """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
     print(" [*] Performing analysis ...")
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}".split()
+    cmd = f"{ci_env.cli_path} analyze -l {shlex.quote(ci_env.phylum_label)} --verbose --json {shlex.quote(ci_env.lockfile)}".split()
     try:
         analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
