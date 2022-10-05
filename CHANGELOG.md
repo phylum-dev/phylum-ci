@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.16.1 (2022-10-05)
+### Fix
+* Account for shallow fetch in Azure Pipelines integration ([#135](https://github.com/phylum-dev/phylum-ci/issues/135)) ([`36e2413`](https://github.com/phylum-dev/phylum-ci/commit/36e2413c5336b05801886452c402ccd2537aed19))
+
 ## v0.16.0 (2022-09-29)
 ### Feature
 * Add support for Azure Pipelines CI environment ([#127](https://github.com/phylum-dev/phylum-ci/issues/127)) ([`a22de2c`](https://github.com/phylum-dev/phylum-ci/commit/a22de2c0dde2f99127602c156ef5f397cb8220e6))
