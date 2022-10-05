@@ -26,6 +26,19 @@ from phylum.ci.ci_base import CIBase, git_remote
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
 
+PAT_ERR_MSG = """
+An Azure DevOps token with API access is required to use the API (e.g., to post comments).
+This can be the default `System.AccessToken` provided automatically at the start
+of each build for the scoped build identity or a personal access token (PAT).
+A PAT needs at least the `Pull Request Threads` scope (read & write).
+See the Azure DevOps documentation for using personal access tokens:
+  * https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
+The `System.AccessToken` scoped build identity needs at least the `Contribute to pull requests` permission.
+See the Azure DevOps documentation for using the `System.AccessToken`:
+  * https://learn.microsoft.com/azure/devops/pipelines/build/variables#systemaccesstoken
+  * https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#job-authorization-scope
+"""
+
 
 class CIAzure(CIBase):
     """Provide methods for an Azure Pipelines CI environment."""
@@ -53,19 +66,9 @@ class CIAzure(CIBase):
             print(" [+] Not in a Pull Request pipeline. Nothing to do. Exiting ...")
             sys.exit(0)
 
-        # An Azure DevOps token with API access is required to use the API (e.g., to post notes/comments).
-        # This can be the default `System.AccessToken` provided automatically at the start
-        # of each build for the scoped build identity or a personal access token (PAT).
-        # A PAT needs at least the `Pull Request Threads` scope (read & write).
-        # See the Azure DevOps documentation for using personal access tokens:
-        #   * https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
-        # The `System.AccessToken` scoped build identity needs at least the `Contribute to pull requests` permission.
-        # See the Azure DevOps documentation for using the `System.AccessToken`:
-        #   * https://learn.microsoft.com/azure/devops/pipelines/build/variables#systemaccesstoken
-        #   * https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#job-authorization-scope
         azure_token = os.getenv("AZURE_TOKEN")
         if not azure_token:
-            raise SystemExit(" [!] An Azure DevOps token with API access must be set at `AZURE_TOKEN`")
+            raise SystemExit(f" [!] An Azure DevOps token with API access must be set at `AZURE_TOKEN`: {PAT_ERR_MSG}")
         self._azure_token = azure_token
 
     @property
@@ -114,7 +117,9 @@ class CIAzure(CIBase):
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             print(f" [+] Common lockfile ancestor commit: {common_ancestor_commit}")
         except subprocess.CalledProcessError as err:
+            ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
             print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] Ensure shallow fetch is disabled for repo checkouts: {ref_url}")
             common_ancestor_commit = None
 
         return common_ancestor_commit
@@ -182,6 +187,8 @@ class CIAzure(CIBase):
         print(f" [-] The team project ID {team_project_id} maps to name: {team_project_name}")
         resp = requests.get(pr_threads_url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
         resp.raise_for_status()
+        if resp.status_code != requests.codes.OK:
+            raise SystemExit(f" [!] Are the permissions on the Azure DevOps token `AZURE_TOKEN` correct? {PAT_ERR_MSG}")
         pr_threads = resp.json()
 
         print(" [*] Checking pull request threads for existing comment content to avoid duplication ...")
