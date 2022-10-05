@@ -84,6 +84,8 @@ jobs:
       vmImage: ubuntu-latest
     container: phylumio/phylum-ci:latest
     steps:
+      - checkout: self
+        fetchDepth: 0
       - script: phylum-ci
         displayName: Analyze dependencies with Phylum
         env:
@@ -130,8 +132,8 @@ jobs:
 ### Pool selection
 
 The pool is specified at the job level here because this is a [container job][container_job]. While Azure Pipelines
-allows container jobs for `windows-2019` and `ubuntu-*` base `vmImage`s, only `ubuntu-*` is supported by Phylum at this
-time. Keeping that restriction in mind, the pool can be specified at the pipeline or stage level instead.
+allows container jobs for `windows-2019` and `ubuntu-*` base `vmImage` images, only `ubuntu-*` is supported by Phylum
+at this time. Keeping that restriction in mind, the pool can be specified at the pipeline or stage level instead.
 See the [YAML schema pool definition][yaml_pool] documentation for more detail.
 
 [container_job]: https://learn.microsoft.com/azure/devops/pipelines/process/container-phases
@@ -187,6 +189,23 @@ Only the last tag reference, by SHA256 digest, is guaranteed to not have the und
 [step_target]: https://learn.microsoft.com/azure/devops/pipelines/process/tasks#step-target
 [yaml_job_container]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/jobs-job-container
 [yaml_resources]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/resources
+
+### Repository checkout
+
+The `phylum-ci` logic for determining changes in lockfiles requires git history beyond what is available in a shallow
+clone/checkout/fetch. To ensure the shallow fetch option is disabled for the pipeline, an explicit checkout step is
+specified here, with `fetchDepth` set to `0`. It is also possible to disable the shallow fetch option in the
+[pipeline settings UI][pipeline_settings]. See the [YAML schema steps.checkout definition][yaml_checkout] documentation
+for more detail.
+
+[pipeline_settings]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git#shallow-fetch
+[yaml_checkout]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
+
+```yaml
+      # Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
+      - checkout: self
+        fetchDepth: 0
+```
 
 ### Script arguments
 

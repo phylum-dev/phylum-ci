@@ -114,7 +114,9 @@ class CIAzure(CIBase):
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             print(f" [+] Common lockfile ancestor commit: {common_ancestor_commit}")
         except subprocess.CalledProcessError as err:
+            ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
             print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] Ensure shallow fetch is disabled for repo checkouts: {ref_url}")
             common_ancestor_commit = None
 
         return common_ancestor_commit
