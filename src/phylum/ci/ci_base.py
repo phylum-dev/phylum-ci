@@ -194,7 +194,7 @@ class CIBase(ABC):
         """Post the output of the analysis in the means appropriate for the CI environment.
 
         Output in the form of comments on a pull/merge request should be unique and not added multiple times as
-        the review changes but the lock file doesn't.
+        the review changes but the lockfile doesn't.
         """
         raise NotImplementedError()
 

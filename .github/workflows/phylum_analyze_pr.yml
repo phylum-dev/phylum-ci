@@ -1,4 +1,4 @@
-# This is a workflow for analyzing dependency lock files
+# This is a workflow for analyzing dependency lockfiles
 # in this repository with Phylum during pull requests.
 ---
 name: Phylum_analyze
