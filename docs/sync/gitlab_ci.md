@@ -8,9 +8,10 @@ hidden: false
 ## Overview
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from a
-lockfile during a Merge Request (MR) and output the results as a note (comment) on the MR.
-The CI job will return an error (i.e., fail the build) if any of the newly added/modified dependencies from the MR fail
-to meet the project risk thresholds for any of the five Phylum risk domains:
+lockfile. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR) pipeline. The
+results will be provided in the pipeline logs and provided as a note (comment) on the MR.
+The CI job will return an error (i.e., fail the build) if any of the newly added/modified dependencies from the MR
+fail to meet the project risk thresholds for any of the five Phylum risk domains:
 
 * Vulnerability (aka `vul`)
 * Malicious Code (aka `mal`)
@@ -18,16 +19,18 @@ to meet the project risk thresholds for any of the five Phylum risk domains:
 * License (aka `lic`)
 * Author (aka `aut`)
 
-See [Phylum Risk Domains documentation](https://docs.phylum.io/docs/phylum-package-score#risk-domains) for more detail.
+See [Phylum Risk Domains documentation][risk_domains] for more detail.
 
-**NOTE**: It is not enough to have the total project threshold set. Individual risk domain threshold values must be set,
-either in the UI or with `phylum-ci` options, in order to enable analysis results for CI. Otherwise, the risk domain is
-considered disabled and the threshold value used will be zero (0).
+**NOTE**: It is not enough to have the total project threshold set. Individual risk domain threshold values must be
+set, either in the UI or with `phylum-ci` options, in order to enable analysis results for CI. Otherwise, the risk
+domain is considered disabled and the threshold value used will be zero (0).
 
 There will be no note if no dependencies were added or modified for a given MR.
-If one or more dependencies are still processing (no results available), then the note will make that clear and the CI
-job will only fail if dependencies that have _completed analysis results_ do not meet the specified project risk
-thresholds.
+If one or more dependencies are still processing (no results available), then the note will make that clear and
+the CI job will only fail if dependencies that have _completed analysis results_ do not meet the specified project
+risk thresholds.
+
+[risk_domains]: https://docs.phylum.io/docs/phylum-package-score#risk-domains
 
 ## Prerequisites
 
@@ -36,6 +39,7 @@ The pre-requisites for using this image are:
 
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
+  * This is only required when using the integration in merge request pipelines
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
@@ -44,8 +48,7 @@ The pre-requisites for using this image are:
   * That usually means a connection to the internet, optionally via a proxy
   * Support for on-premises installs are not available at this time
 * A `.phylum_project` file exists at the root of the repository
-  * See [`phylum project`](https://docs.phylum.io/docs/phylum_project) and
-    [`phylum project create`](https://docs.phylum.io/docs/phylum_project_create) command documentation
+  * See [`phylum project`][phylum_project] and [`phylum project create`][phylum_project_create] command documentation
 
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
 [gitlab_tokens]: https://docs.gitlab.com/ee/security/token_overview.html
@@ -53,6 +56,8 @@ The pre-requisites for using this image are:
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
+[phylum_project]: https://docs.phylum.io/docs/phylum_project
+[phylum_project_create]: https://docs.phylum.io/docs/phylum_project_create
 
 ## Configure `.gitlab-ci.yml`
 
@@ -93,20 +98,47 @@ analyze_MR_with_Phylum:  # Name this what you like
 
 ### Job control
 
-Choose when to run the job. See the [GitLab CI/CD Job Control](https://docs.gitlab.com/ee/ci/jobs/job_control.html)
-documentation for more detail.
+Choose when to run the job. The Phylum integration can run in the context of branch pipelines or merge request
+pipelines but [merge request pipelines][mr_pipelines] are given preferential treatment so care should be taken to
+[avoid duplicate pipelines][duplicate_pipelines].
+
+There are several ways to accomplish this goal. The first is to create a rule at the job level to specify that
+the job should only run for merge request pipelines. Branch pipelines are the default type and will run when new
+commits are pushed to a branch. If the desire is to only run the job for branch pipelines, then no rule limiting
+the pipeline source should be specified.
 
 ```yaml
+  # This optional rule specifies to run the job for merge request pipelines only.
+  # Remove these lines entirely to run the job for branch pipelines instead.
   rules:
-    # This rule specifies to run the job for merge request pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 ```
+
+It is also possible to allow for both pipeline types while ensuring only one runs at a time by using workflow
+rules to automatically [switch between branch pipelines and merge request pipelines][switch]. To do so, remove
+any job level rules related to pipeline sources and add the following workflow level rules to the configuration:
+
+```yaml
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+```
+
+See the [GitLab CI/CD Job Control][job_control] documentation for more detail.
+
+[mr_pipelines]: https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html
+[duplicate_pipelines]: https://docs.gitlab.com/ee/ci/jobs/job_control.html#avoid-duplicate-pipelines
+[switch]: https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
+[job_control]: https://docs.gitlab.com/ee/ci/jobs/job_control.html
 
 ### Docker image selection
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.11.0-CLIv3.7.3`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.15.0-CLIv3.10.0`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -115,8 +147,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.11.0-CLIv3.7.3 | jq .Descriptor.digest
-"sha256:4e01c6f6a8eed994b385d5908d463f28b57bb31f902a10561bad5e4d7aa81459"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.15.0-CLIv3.10.0 | jq .Descriptor.digest
+"sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -124,17 +156,17 @@ For instance, at the time of this writing, all of these tag references pointed t
 ```yaml
   # NOTE: These are examples. Only one image line for `phylum-ci` is expected.
 
-  # not specifying a tag means a default of `latest`
+  # Not specifying a tag means a default of `latest`
   image: phylumio/phylum-ci
 
-  # be more explicit about wanting the `latest` tag
+  # Be more explicit about wanting the `latest` tag
   image: phylumio/phylum-ci:latest
 
-  # use a specific release version of the `phylum-ci` package
-  image: phylumio/phylum-ci:0.11.0-CLIv3.7.3
+  # Use a specific release version of the `phylum-ci` package
+  image: phylumio/phylum-ci:0.15.0-CLIv3.10.0
 
-  # use a specific image with it's SHA256 digest
-  image: phylumio/phylum-ci@sha256:4e01c6f6a8eed994b385d5908d463f28b57bb31f902a10561bad5e4d7aa81459
+  # Use a specific image with it's SHA256 digest
+  image: phylumio/phylum-ci@sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -148,27 +180,29 @@ and, when specified, report on new dependencies only. Therefore, a clone of the 
 the local working copy is always pristine and history is available to pull the requested information.
 It _may_ also be necessary to specify the depth of cloning if/when there is not enough info.
 
-A GitLab token with API access is required to use the API (e.g., to post notes/comments).
-This can be a personal, project, or group access token.
-The account used to create the token will be the one that appears to post the notes/comments on the merge request.
-Therefore, it might be worth looking into using a bot account, which is available for project and group access tokens.
-See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
+A GitLab token with API access is required to use the API (e.g., to post notes/comments). This can be a personal,
+project, or group access token. The account used to create the token will be the one that appears to post the
+notes/comments on the MR. Therefore, it might be worth looking into using a bot account, which is available for
+project and group access tokens. See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
+
+Note, the GitLab token is only required when this Phylum integration is used in [merge request pipelines][mr_pipelines].
+It is not required when used in branch pipelines.
 
 Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token,
 by using the authorization of the user triggering the job." This is not recommended for anything other than temporary
 personal use in private repositories as there is a chance that depending on it will cause failures when attempting to
 do the same thing in different scenarios.
 
-A [Phylum token][phylum_tokens] with API access is required to perform analysis on project
-dependencies. [Contact Phylum][phylum_contact] or [register][app_register] to gain access.
-See also [`phylum auth register`][phylum_register] command documentation and consider
-using a bot or group account for this token.
+A [Phylum token][phylum_tokens] with API access is required to perform analysis on project dependencies.
+[Contact Phylum][phylum_contact] or [register][app_register] to gain access.
+See also [`phylum auth register`][phylum_register] command documentation and consider using a bot or group account
+for this token.
 
-Values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a [CI/CD Variable] or an [External Secret].
-Since they are sensitive, **care should be taken to protect them appropriately**.
+Values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a [CI/CD Variable][ci_cd_variable] or an
+[External Secret][external_secret]. Since they are sensitive, **care should be taken to protect them appropriately**.
 
-[CI/CD Variable]: https://docs.gitlab.com/ee/ci/variables/index.html
-[External Secret]: https://docs.gitlab.com/ee/ci/secrets/index.html
+[ci_cd_variable]: https://docs.gitlab.com/ee/ci/variables/index.html
+[external_secret]: https://docs.gitlab.com/ee/ci/secrets/index.html
 
 ```yaml
   variables:
