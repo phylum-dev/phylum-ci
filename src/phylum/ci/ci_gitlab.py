@@ -15,7 +15,7 @@ from typing import Optional
 
 import requests
 from connect.utils.terminal.markdown import render
-from phylum.ci.ci_base import CIBase
+from phylum.ci.ci_base import CIBase, git_remote
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
 
@@ -104,11 +104,31 @@ class CIGitLab(CIBase):
         if self.is_in_mr:
             common_ancestor_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
         else:
-            # CI_COMMIT_BEFORE_SHA contains the previous latest commit present on the branch. It will be
-            # all zeroes in merge request pipelines and for the first commit in pipelines for branches.
+            # CI_COMMIT_BEFORE_SHA contains the previous latest commit present on the branch *pipeline*.
+            # It will always be all zeroes in merge request pipelines.
+            # It will be all zeroes for the first pipeline run in branch pipelines,
+            # whether or not the commit the pipeline runs on is the first commit in the branch.
+            # If there are multiple commits between pipeline runs (e.g., push a collection of commits), the value
+            # points to the commit of the previous pipeline run, skipping over all the intermediate commits.
+            # Think of this as a pointer to the previous commit **that ran in the same branch pipeline**.
             common_ancestor_commit = os.getenv("CI_COMMIT_BEFORE_SHA")
-            if common_ancestor_commit == SHA1_ALL_ZEROES:
-                print(" [-] Detected first commit in branch")
+
+        # There is not an environment variable provided by GitLab CI to show or determine the common ancestor commit
+        # when running in a branch pipeline, on the initial run of that pipeline. Fallback to computing it manually.
+        if common_ancestor_commit == SHA1_ALL_ZEROES:
+            print(" [-] Detected initial branch pipeline run")
+            remote = git_remote()
+            # The default branch is found this way because there is a GitLab runner bug where HEAD is not available:
+            # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4078
+            default_branch = os.getenv("CI_DEFAULT_BRANCH", "HEAD")
+            # This is a best effort attempt since it is finding the merge base between the current commit
+            # and the default branch instead of finding the exact commit from which the branch was created.
+            cmd = f"git merge-base HEAD refs/remotes/{remote}/{default_branch}".split()
+            try:
+                common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            except subprocess.CalledProcessError as err:
+                print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+                common_ancestor_commit = None
 
         return common_ancestor_commit
 
@@ -120,10 +140,6 @@ class CIGitLab(CIBase):
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
-
-        # When the lockfile is part of the first commit in a branch, it should be considered changed since it is new
-        if diff_base_sha == SHA1_ALL_ZEROES:
-            return True
 
         try:
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
