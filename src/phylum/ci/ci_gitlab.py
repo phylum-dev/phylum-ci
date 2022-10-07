@@ -10,6 +10,7 @@ GitLab References:
 import os
 import subprocess
 from argparse import Namespace
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -22,13 +23,32 @@ from phylum.constants import REQ_TIMEOUT
 SHA1_ALL_ZEROES = "0000000000000000000000000000000000000000"
 
 
+@lru_cache(maxsize=1)
+def is_in_mr() -> bool:
+    """Indicate if the integration is operating in the context of a merge request pipeline.
+
+    GitLab CI allows for the possibility of running pipelines in different contexts:
+        * On every push, for the last commit in the push (e.g., branch pipelines)
+        * For merge requests (e.g., merge request pipelines)
+
+    Knowing when the context is within a merge request helps to ensure the logic used
+    to determine the lockfile changes is correct. It also helps to ensure output is not
+    attempted to be posted when NOT in the context of a review.
+    """
+    # References:
+    # https://github.com/watson/ci-info/blob/master/vendors.json
+    # https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html
+    # docs.gitlab.com/ee/ci/variables/predefined_variables.html#predefined-variables-for-merge-request-pipelines
+    return bool(os.getenv("CI_MERGE_REQUEST_ID"))
+
+
 class CIGitLab(CIBase):
     """Provide methods for a GitLab CI environment."""
 
     def __init__(self, args: Namespace) -> None:
         super().__init__(args)
         self.ci_platform_name = "GitLab CI"
-        if self.is_in_mr:
+        if is_in_mr():
             print(" [-] Pipeline context: merge request pipeline")
         else:
             print(" [-] Pipeline context: branch pipeline")
@@ -52,27 +72,9 @@ class CIGitLab(CIBase):
         # This can be a personal, project, or group access token...and possibly some other types as well.
         # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
         gitlab_token = os.getenv("GITLAB_TOKEN", "")
-        if not gitlab_token and self.is_in_mr:
+        if not gitlab_token and is_in_mr():
             raise SystemExit(" [!] A GitLab token with API access must be set at `GITLAB_TOKEN`")
         self._gitlab_token = gitlab_token
-
-    @property
-    def is_in_mr(self) -> bool:
-        """Indicate if the integration is operating in the context of a merge request pipeline.
-
-        GitLab CI allows for the possibility of running pipelines in different contexts:
-          * On every commit (e.g., branch pipelines)
-          * For merge requests (e.g., merge request pipelines)
-
-        Knowing when the context is within a merge request helps to ensure the logic used
-        to determine the lockfile changes is correct. It also helps to ensure output is not
-        attempted to be posted when NOT in the context of a review.
-        """
-        # References:
-        # https://github.com/watson/ci-info/blob/master/vendors.json
-        # https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html
-        # docs.gitlab.com/ee/ci/variables/predefined_variables.html#predefined-variables-for-merge-request-pipelines
-        return bool(os.getenv("CI_MERGE_REQUEST_ID"))
 
     @property
     def gitlab_token(self) -> str:
@@ -82,7 +84,7 @@ class CIGitLab(CIBase):
     @property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
-        if self.is_in_mr:
+        if is_in_mr():
             mr_iid = os.getenv("CI_MERGE_REQUEST_IID", "unknown-IID")
             mr_title = os.getenv("CI_MERGE_REQUEST_TITLE", "unknown-title")
             label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_title}"
@@ -101,7 +103,7 @@ class CIGitLab(CIBase):
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         # Reference: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-        if self.is_in_mr:
+        if is_in_mr():
             common_ancestor_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
         else:
             # CI_COMMIT_BEFORE_SHA contains the previous latest commit present on the branch *pipeline*.
@@ -160,39 +162,43 @@ class CIGitLab(CIBase):
         Post output as a note (comment) on the GitLab CI Merge Request (MR) when operating in a merge request pipeline.
         """
         print(f" [+] Analysis output:\n{render(self.analysis_output)}")
-        if self.is_in_mr:
-            # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
-            gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
-            mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
-            mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
-            # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
-            base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
-            url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
-            headers = {"PRIVATE-TOKEN": self.gitlab_token}
 
-            print(f" [*] Getting all current merge request notes with GET URL: {url} ...")
-            req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)
-            req.raise_for_status()
-            mr_notes = req.json()
+        if not is_in_mr():
+            # Can't post the output to the MR when there is no MR
+            return
 
-            print(" [*] Checking existing merge request notes for existing content to avoid duplication ...")
-            if not mr_notes:
-                print(" [+] No existing merge request notes found.")
-            # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
-            #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
-            #       We only care about the most recent Phylum note.
-            for mr_note in mr_notes:
-                if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                    print(" [+] The most recently posted Phylum merge request note was found.")
-                    if mr_note.get("body", "") == self.analysis_output:
-                        print(" [+] It contains the same content as the current analysis. Nothing to do.")
-                        return
-                    print(" [+] It does not contain the same content as the current analysis.")
-                    break
+        # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
+        gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
+        mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
+        mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
+        # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
+        base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
+        url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
+        headers = {"PRIVATE-TOKEN": self.gitlab_token}
 
-            # If we got here, then the most recent Phylum MR note does not match the current analysis output or
-            # there were no Phylum MR notes. Either way, create a new MR note.
-            data = {"body": self.analysis_output}
-            print(f" [*] Creating new merge request note with POST URL: {url} ...")
-            response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
-            response.raise_for_status()
+        print(f" [*] Getting all current merge request notes with GET URL: {url} ...")
+        req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)
+        req.raise_for_status()
+        mr_notes = req.json()
+
+        print(" [*] Checking existing merge request notes for existing content to avoid duplication ...")
+        if not mr_notes:
+            print(" [+] No existing merge request notes found.")
+        # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
+        #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
+        #       We only care about the most recent Phylum note.
+        for mr_note in mr_notes:
+            if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
+                print(" [+] The most recently posted Phylum merge request note was found.")
+                if mr_note.get("body", "") == self.analysis_output:
+                    print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                    return
+                print(" [+] It does not contain the same content as the current analysis.")
+                break
+
+        # If we got here, then the most recent Phylum MR note does not match the current analysis output or
+        # there were no Phylum MR notes. Either way, create a new MR note.
+        data = {"body": self.analysis_output}
+        print(f" [*] Creating new merge request note with POST URL: {url} ...")
+        response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
+        response.raise_for_status()
