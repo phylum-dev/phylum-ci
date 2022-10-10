@@ -136,9 +136,24 @@ class CIBase(ABC):
         return self._phylum_project
 
     @property
-    def phylum_group(self) -> str:
-        """Get the Phylum group."""
-        return self._phylum_group
+    def phylum_group(self) -> Optional[str]:
+        """Get the Phylum group in use.
+
+        The Phylum group name can be specified as an option or contained in the `.phylum_project` file.
+        A group name provided as an input option will be preferred over an entry in the `.phylum_project` file.
+
+        Return `None` when the group name is not available.
+        """
+        group_name = None
+        if self._phylum_group:
+            group_name = self._phylum_group
+        # The `.phylum_project` file may not exist in the case where it didn't exist initially and then it
+        # was not created because the project (with optional group) provided as input options already existed.
+        elif self.phylum_project_file.exists():
+            yaml = YAML()
+            settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+            group_name = settings_dict.get("group_name")
+        return group_name
 
     @property
     def phylum_project_file(self) -> Path:
@@ -184,7 +199,7 @@ class CIBase(ABC):
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
-          * A `.phylum_project` file exists at the working directory
+          * A `.phylum_project` file exists at the working directory or project name is specified as an option
           * A Phylum CLI version with the `parse` command
           * Have `git` installed and available for use on the PATH
         """
@@ -353,11 +368,8 @@ class CIBase(ABC):
         The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
         """
         query = {"label": self.phylum_label}
-        yaml = YAML()
-        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
-        group_name = settings_dict.get("group_name")
-        if group_name is not None:
-            query.setdefault("group", group_name)
+        if self.phylum_group is not None:
+            query.setdefault("group", self.phylum_group)
         query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
         project_url = f"https://app.phylum.io/projects/{project_id}?{query_params}"
         print(f" [+] Project URL: {project_url}")

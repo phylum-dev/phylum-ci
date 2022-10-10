@@ -75,7 +75,7 @@ def ensure_project(ci_env: CIBase) -> None:
 
     cmd = f"{ci_env.cli_path} project create {ci_env.phylum_project}"
     if ci_env.phylum_group:
-        print(f" [-] Using provided Phylum group: {ci_env.phylum_group}")
+        print(f" [-] Using Phylum group: {ci_env.phylum_group}")
         cmd = f"{ci_env.cli_path} project create --group {ci_env.phylum_group} {ci_env.phylum_project}"
 
     print(f" [*] Creating a Phylum project with the name: {ci_env.phylum_project} ...")
@@ -97,10 +97,18 @@ def ensure_project(ci_env: CIBase) -> None:
 
 def get_phylum_analysis(ci_env: CIBase) -> dict:
     """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
-    print(" [*] Performing analysis ...")
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label} --verbose --json {ci_env.lockfile}".split()
+    # Build up the analyze command based on the provided inputs
+    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label}"
+    if ci_env.phylum_project:
+        cmd = f"{cmd} --project {ci_env.phylum_project}"
+        # A group can not be specified without a project
+        if ci_env.phylum_group:
+            cmd = f"{cmd} --group {ci_env.phylum_group}"
+    cmd = f"{cmd} --verbose --json {ci_env.lockfile}"
+
+    print(f" [*] Performing analysis with command: {cmd} ...")
     try:
-        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+        analysis_result = subprocess.run(shlex.split(cmd), check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
         # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
         # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
