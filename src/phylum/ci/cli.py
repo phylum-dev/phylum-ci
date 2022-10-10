@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 from typing import List, Optional, Sequence, Tuple
@@ -59,6 +60,63 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
         ci_env = CINone(args)
 
     return ci_env
+
+
+def ensure_project(ci_env: CIBase) -> None:
+    """Ensure a Phylum project is created and in place.
+
+    When a project is specified through arguments, attempt to create that project,
+    overwriting any `.phylum_project` file that already exists.
+    Continue on without error when a specified project already exists.
+    When a group is specified through arguments, attempt to use that group.
+    """
+    if not ci_env.phylum_project:
+        return
+
+    cmd = f"{ci_env.cli_path} project create {ci_env.phylum_project}"
+    if ci_env.phylum_group:
+        ensure_group(ci_env)
+        print(f" [-] Using provided Phylum group: {ci_env.phylum_group}")
+        cmd = f"{ci_env.cli_path} project create --group {ci_env.phylum_group} {ci_env.phylum_project}"
+
+    print(f" [*] Creating a Phylum project with the name: {ci_env.phylum_project} ...")
+    if ci_env.phylum_project_file.exists():
+        print(f" [+] Overwriting existing `.phylum_project` file found at: {ci_env.phylum_project_file}")
+    try:
+        # The Phylum CLI will return a unique error code of 14 when a project that already exists is attempted to be
+        # created. This situation is recognized and allowed to happen since it means the project exists as expected.
+        # Any other exit code is an error and a reason to re-raise.
+        subprocess.run(shlex.split(cmd), check=True)
+    except subprocess.CalledProcessError as err:
+        if err.returncode == 14:
+            print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
+            return
+        print(f" [!] There was a problem creating the project with command: {cmd}")
+        raise
+
+
+def ensure_group(ci_env: CIBase) -> None:
+    """Ensure a Phylum group is created and in place.
+
+    When a group is specified through arguments, attempt to create that group.
+    Continue on without error when a specified group already exists.
+    """
+    if not ci_env.phylum_group:
+        return
+
+    print(f" [*] Creating a Phylum group with the name: {ci_env.phylum_group} ...")
+    cmd = f"{ci_env.cli_path} group create {ci_env.phylum_group}"
+    try:
+        # The Phylum CLI will return a unique error code of 14 when a group that already exists is attempted to be
+        # created. This situation is recognized and allowed to happen since it means the group exists as expected.
+        # Any other exit code is an error and a reason to re-raise.
+        subprocess.run(shlex.split(cmd), check=True)
+    except subprocess.CalledProcessError as err:
+        if err.returncode == 14:
+            print(f" [-] Group {ci_env.phylum_group} already exists. Continuing with it ...")
+            return
+        print(f" [!] There was a problem creating the group with command: {cmd}")
+        raise
 
 
 def get_phylum_analysis(ci_env: CIBase) -> dict:
@@ -137,6 +195,20 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             Leave this option and it's related environment variable unspecified to either (1) use an existing token
             already set in the Phylum config file or (2) to manually populate the token with a `phylum auth login` or
             `phylum auth register` command after install.""",
+    )
+    analysis_group.add_argument(
+        "-p",
+        "--project",
+        # NOTE: The method of using the shlex module is known to be compatible with UNIX shells.
+        #       It may not function as desired for other operating systems and/or shell types.
+        type=shlex.quote,
+        help="Name of a Phylum project to create and use to perform the analysis.",
+    )
+    analysis_group.add_argument(
+        "-g",
+        "--group",
+        type=shlex.quote,
+        help="Optional group name, which will be the owner of the project. Only used when a project is also specified.",
     )
 
     threshold_group = parser.add_argument_group(
@@ -234,6 +306,9 @@ def main(args: Optional[Sequence[str]] = None) -> int:
 
     # Check for the existence of the CLI and install it if needed
     ci_env.init_cli()
+
+    # Ensure a Phylum project is created and in place
+    ensure_project(ci_env)
 
     # Analyze current project lockfile with phylum CLI
     analysis = get_phylum_analysis(ci_env)

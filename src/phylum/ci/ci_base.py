@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import textwrap
 import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
@@ -96,6 +97,9 @@ class CIBase(ABC):
                     " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
                 )
 
+        self._phylum_project = args.project
+        self._phylum_group = args.group
+
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
         print(" [+] All pre-requisites met")
@@ -125,6 +129,16 @@ class CIBase(ABC):
     def is_lockfile_changed(self) -> bool:
         """Get the lockfile's modification status."""
         return self._lockfile_changed
+
+    @property
+    def phylum_project(self) -> str:
+        """Get the Phylum project."""
+        return self._phylum_project
+
+    @property
+    def phylum_group(self) -> str:
+        """Get the Phylum group."""
+        return self._phylum_group
 
     @property
     def phylum_project_file(self) -> Path:
@@ -179,7 +193,14 @@ class CIBase(ABC):
         if self.phylum_project_file.exists():
             print(f" [+] Existing `.phylum_project` file found at: {self.phylum_project_file}")
         else:
-            raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
+            if self.phylum_project:
+                print(f" [+] No existing `.phylum_project` file found at: {self.phylum_project_file}")
+                print(f" [+] A Phylum project will be created with the provided name: {self.phylum_project}")
+            else:
+                msg = """\
+                    [!] A `.phylum_project` file was not found at the current working directory.
+                    [!] Consider creating one by specifying `--project` and optionally with the `--group` option."""
+                raise SystemExit(textwrap.dedent(msg))
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
             raise SystemExit(f" [!] The CLI version must be at least {MIN_CLI_VER_INSTALLED}")
