@@ -132,28 +132,39 @@ class CIBase(ABC):
 
     @property
     def phylum_project(self) -> str:
-        """Get the Phylum project."""
-        return self._phylum_project
+        """Get the effective Phylum project name in use.
+
+        The Phylum project name can be specified as an option or contained in the `.phylum_project` file.
+        A project name provided as an input option will be preferred over an entry in the `.phylum_project` file.
+
+        Return `None` when the project name is not available.
+        """
+        # Project supplied as an option
+        if self._phylum_project:
+            return self._phylum_project
+
+        # Project supplied in `.phylum_project`
+        yaml = YAML()
+        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+        return settings_dict.get("name")
 
     @property
     def phylum_group(self) -> Optional[str]:
-        """Get the Phylum group in use.
+        """Get the effective Phylum group in use.
 
         The Phylum group name can be specified as an option or contained in the `.phylum_project` file.
         A group name provided as an input option will be preferred over an entry in the `.phylum_project` file.
 
         Return `None` when the group name is not available.
         """
-        group_name = None
-        if self._phylum_group:
-            group_name = self._phylum_group
-        # The `.phylum_project` file may not exist in the case where it didn't exist initially and then it
-        # was not created because the project (with optional group) provided as input options already existed.
-        elif self.phylum_project_file.exists():
-            yaml = YAML()
-            settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
-            group_name = settings_dict.get("group_name")
-        return group_name
+        # Group supplied on command-line
+        if self._phylum_project:
+            return self._phylum_group
+
+        # Group supplied in `.phylum_project`
+        yaml = YAML()
+        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+        return settings_dict.get("group_name")
 
     @property
     def phylum_project_file(self) -> Path:
@@ -369,7 +380,7 @@ class CIBase(ABC):
         """
         query = {"label": self.phylum_label}
         if self.phylum_group is not None:
-            query.setdefault("group", self.phylum_group)
+            query["group"] = self.phylum_group
         query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
         project_url = f"https://app.phylum.io/projects/{project_id}?{query_params}"
         print(f" [+] Project URL: {project_url}")
