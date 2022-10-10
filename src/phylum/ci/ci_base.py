@@ -193,13 +193,13 @@ class CIBase(ABC):
         if self.phylum_project_file.exists():
             print(f" [+] Existing `.phylum_project` file found at: {self.phylum_project_file}")
         else:
+            print(f" [+] No existing `.phylum_project` file found at: {self.phylum_project_file}")
             if self.phylum_project:
-                print(f" [+] No existing `.phylum_project` file found at: {self.phylum_project_file}")
-                print(f" [+] A Phylum project will be created with the provided name: {self.phylum_project}")
+                print(f" [+] A Phylum project will be used (or created) with the provided name: {self.phylum_project}")
             else:
                 msg = """\
-                    [!] A `.phylum_project` file was not found at the current working directory.
-                    [!] Consider creating one by specifying `--project` and optionally with the `--group` option."""
+                    [!] No Phylum project could be determined!
+                    [!] Consider specifying one with `--project` and optionally with the `--group` option."""
                 raise SystemExit(textwrap.dedent(msg))
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):

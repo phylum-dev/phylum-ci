@@ -75,48 +75,24 @@ def ensure_project(ci_env: CIBase) -> None:
 
     cmd = f"{ci_env.cli_path} project create {ci_env.phylum_project}"
     if ci_env.phylum_group:
-        ensure_group(ci_env)
         print(f" [-] Using provided Phylum group: {ci_env.phylum_group}")
         cmd = f"{ci_env.cli_path} project create --group {ci_env.phylum_group} {ci_env.phylum_project}"
 
     print(f" [*] Creating a Phylum project with the name: {ci_env.phylum_project} ...")
     if ci_env.phylum_project_file.exists():
         print(f" [+] Overwriting existing `.phylum_project` file found at: {ci_env.phylum_project_file}")
-    try:
-        # The Phylum CLI will return a unique error code of 14 when a project that already exists is attempted to be
-        # created. This situation is recognized and allowed to happen since it means the project exists as expected.
-        # Any other exit code is an error and a reason to re-raise.
-        subprocess.run(shlex.split(cmd), check=True)
-    except subprocess.CalledProcessError as err:
-        if err.returncode == 14:
-            print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
-            return
+
+    ret = subprocess.run(shlex.split(cmd), check=False)
+    # The Phylum CLI will return a unique error code of 14 when a project that already
+    # exists is attempted to be created. This situation is recognized and allowed to happen
+    # since it means the project exists as expected. Any other exit code is an error.
+    if ret.returncode == 0:
+        print(f" [-] Project {ci_env.phylum_project} created successfully.")
+    elif ret.returncode == 14:
+        print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
+    else:
         print(f" [!] There was a problem creating the project with command: {cmd}")
-        raise
-
-
-def ensure_group(ci_env: CIBase) -> None:
-    """Ensure a Phylum group is created and in place.
-
-    When a group is specified through arguments, attempt to create that group.
-    Continue on without error when a specified group already exists.
-    """
-    if not ci_env.phylum_group:
-        return
-
-    print(f" [*] Creating a Phylum group with the name: {ci_env.phylum_group} ...")
-    cmd = f"{ci_env.cli_path} group create {ci_env.phylum_group}"
-    try:
-        # The Phylum CLI will return a unique error code of 14 when a group that already exists is attempted to be
-        # created. This situation is recognized and allowed to happen since it means the group exists as expected.
-        # Any other exit code is an error and a reason to re-raise.
-        subprocess.run(shlex.split(cmd), check=True)
-    except subprocess.CalledProcessError as err:
-        if err.returncode == 14:
-            print(f" [-] Group {ci_env.phylum_group} already exists. Continuing with it ...")
-            return
-        print(f" [!] There was a problem creating the group with command: {cmd}")
-        raise
+        ret.check_returncode()
 
 
 def get_phylum_analysis(ci_env: CIBase) -> dict:
