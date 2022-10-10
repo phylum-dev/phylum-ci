@@ -10,6 +10,11 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.17.0 (2022-10-10)
+### Feature
+* Allow for creating projects ([#139](https://github.com/phylum-dev/phylum-ci/issues/139)) ([`e47abec`](https://github.com/phylum-dev/phylum-ci/commit/e47abec72455f2e6f4adb60331dfed15f4bed9e0))
+* Support GitLab branch pipelines ([#137](https://github.com/phylum-dev/phylum-ci/issues/137)) ([`1dee2ac`](https://github.com/phylum-dev/phylum-ci/commit/1dee2acfaea1233c45bd65c84034bd04df0ea757))
+
 ## v0.16.1 (2022-10-05)
 ### Fix
 * Account for shallow fetch in Azure Pipelines integration ([#135](https://github.com/phylum-dev/phylum-ci/issues/135)) ([`36e2413`](https://github.com/phylum-dev/phylum-ci/commit/36e2413c5336b05801886452c402ccd2537aed19))
