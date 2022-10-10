@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import textwrap
 import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
@@ -96,6 +97,9 @@ class CIBase(ABC):
                     " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
                 )
 
+        self._phylum_project = args.project
+        self._phylum_group = args.group
+
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
         print(" [+] All pre-requisites met")
@@ -125,6 +129,42 @@ class CIBase(ABC):
     def is_lockfile_changed(self) -> bool:
         """Get the lockfile's modification status."""
         return self._lockfile_changed
+
+    @property
+    def phylum_project(self) -> str:
+        """Get the effective Phylum project name in use.
+
+        The Phylum project name can be specified as an option or contained in the `.phylum_project` file.
+        A project name provided as an input option will be preferred over an entry in the `.phylum_project` file.
+
+        Return `None` when the project name is not available.
+        """
+        # Project supplied as an option
+        if self._phylum_project:
+            return self._phylum_project
+
+        # Project supplied in `.phylum_project`
+        yaml = YAML()
+        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+        return settings_dict.get("name")
+
+    @property
+    def phylum_group(self) -> Optional[str]:
+        """Get the effective Phylum group in use.
+
+        The Phylum group name can be specified as an option or contained in the `.phylum_project` file.
+        A group name provided as an input option will be preferred over an entry in the `.phylum_project` file.
+
+        Return `None` when the group name is not available.
+        """
+        # Group supplied on command-line
+        if self._phylum_project:
+            return self._phylum_group
+
+        # Group supplied in `.phylum_project`
+        yaml = YAML()
+        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
+        return settings_dict.get("group_name")
 
     @property
     def phylum_project_file(self) -> Path:
@@ -170,7 +210,7 @@ class CIBase(ABC):
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
-          * A `.phylum_project` file exists at the working directory
+          * A `.phylum_project` file exists at the working directory or project name is specified as an option
           * A Phylum CLI version with the `parse` command
           * Have `git` installed and available for use on the PATH
         """
@@ -179,7 +219,14 @@ class CIBase(ABC):
         if self.phylum_project_file.exists():
             print(f" [+] Existing `.phylum_project` file found at: {self.phylum_project_file}")
         else:
-            raise SystemExit(" [!] The `.phylum_project` file was not found at the current working directory")
+            print(f" [+] No existing `.phylum_project` file found at: {self.phylum_project_file}")
+            if self.phylum_project:
+                print(f" [+] A Phylum project will be used (or created) with the provided name: {self.phylum_project}")
+            else:
+                msg = """\
+                    [!] No Phylum project could be determined!
+                    [!] Consider specifying one with `--project` and optionally with the `--group` option."""
+                raise SystemExit(textwrap.dedent(msg))
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
             raise SystemExit(f" [!] The CLI version must be at least {MIN_CLI_VER_INSTALLED}")
@@ -332,11 +379,8 @@ class CIBase(ABC):
         The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
         """
         query = {"label": self.phylum_label}
-        yaml = YAML()
-        settings_dict = yaml.load(self.phylum_project_file.read_text(encoding="utf-8"))
-        group_name = settings_dict.get("group_name")
-        if group_name is not None:
-            query.setdefault("group", group_name)
+        if self.phylum_group is not None:
+            query["group"] = self.phylum_group
         query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
         project_url = f"https://app.phylum.io/projects/{project_id}?{query_params}"
         print(f" [+] Project URL: {project_url}")
