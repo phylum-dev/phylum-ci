@@ -12,6 +12,7 @@ import subprocess
 from argparse import Namespace
 from functools import lru_cache
 from pathlib import Path
+from shlex import quote, split
 from typing import Optional
 
 import requests
@@ -125,7 +126,7 @@ class CIGitLab(CIBase):
             default_branch = os.getenv("CI_DEFAULT_BRANCH", "HEAD")
             # This is a best effort attempt since it is finding the merge base between the current commit
             # and the default branch instead of finding the exact commit from which the branch was created.
-            cmd = f"git merge-base HEAD refs/remotes/{remote}/{default_branch}".split()
+            cmd = split(f"git merge-base HEAD refs/remotes/{quote(remote)}/{quote(default_branch)}")
             try:
                 common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             except subprocess.CalledProcessError as err:
@@ -146,8 +147,8 @@ class CIGitLab(CIBase):
         try:
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
-            cmd = f"git diff --exit-code --quiet {diff_base_sha} -- {lockfile.resolve()}"
-            subprocess.run(cmd.split(), check=True)
+            cmd = f"git diff --exit-code --quiet {quote(diff_base_sha)} -- {lockfile.resolve()}"
+            subprocess.run(split(cmd), check=True)
             return False
         except subprocess.CalledProcessError as err:
             if err.returncode == 1:

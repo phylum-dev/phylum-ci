@@ -7,6 +7,7 @@ This is also the fallback implementation to use when no known CI platform is det
 import argparse
 import subprocess
 from pathlib import Path
+from shlex import quote, split
 from typing import Optional
 
 from connect.utils.terminal.markdown import render
@@ -53,7 +54,7 @@ class CINone(CIBase):
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         remote = git_remote()
-        cmd = f"git merge-base HEAD refs/remotes/{remote}/HEAD".split()
+        cmd = split(f"git merge-base HEAD refs/remotes/{quote(remote)}/HEAD")
         try:
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
@@ -75,7 +76,7 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        cmd = f"git diff --exit-code --quiet refs/remotes/{remote}/HEAD... -- {lockfile.resolve()}".split()
+        cmd = split(f"git diff --exit-code --quiet refs/remotes/{quote(remote)}/HEAD... -- {lockfile.resolve()}")
         try:
             # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.

@@ -98,7 +98,7 @@ def ensure_project(ci_env: CIBase) -> None:
 def get_phylum_analysis(ci_env: CIBase) -> dict:
     """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
     # Build up the analyze command based on the provided inputs
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label}"
+    cmd = f"{ci_env.cli_path} analyze -l {shlex.quote(ci_env.phylum_label)}"
     if ci_env.phylum_project:
         cmd = f"{cmd} --project {ci_env.phylum_project}"
         # A group can not be specified without a project

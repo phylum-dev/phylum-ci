@@ -14,6 +14,7 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
+from shlex import quote, split
 from typing import List, Optional, Tuple
 
 from packaging.version import Version
@@ -272,8 +273,8 @@ class CIBase(ABC):
         if not self.common_lockfile_ancestor_commit:
             return None
         try:
-            cmd_line = f"git rev-parse --verify {self.common_lockfile_ancestor_commit}:{self.lockfile.name}".split()
-            prev_lockfile_object = subprocess.run(cmd_line, check=True, capture_output=True, text=True).stdout.strip()
+            cmd = f"git rev-parse --verify {quote(self.common_lockfile_ancestor_commit)}:{quote(self.lockfile.name)}"
+            prev_lockfile_object = subprocess.run(split(cmd), check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
