@@ -15,7 +15,6 @@ import os
 import subprocess
 from argparse import Namespace
 from pathlib import Path
-from shlex import quote, split
 from typing import Optional
 
 import requests
@@ -32,8 +31,8 @@ class CIGitHub(CIBase):
         # It is added before super().__init__(args) so that lockfile change detection will be set properly.
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
-        cmd = f"git config --global --add safe.directory {quote(github_workspace)}"
-        subprocess.run(split(cmd), check=True)
+        cmd = ["git", "config", "--global", "--add", "safe.directory", github_workspace]
+        subprocess.run(cmd, check=True)
 
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
@@ -116,8 +115,8 @@ class CIGitHub(CIBase):
         try:
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
-            cmd = f"git diff --exit-code --quiet {quote(pr_base_sha)} -- {lockfile.resolve()}"
-            subprocess.run(split(cmd), check=True)
+            cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
+            subprocess.run(cmd, check=True)
             return False
         except subprocess.CalledProcessError as err:
             if err.returncode == 1:

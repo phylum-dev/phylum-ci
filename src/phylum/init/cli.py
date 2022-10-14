@@ -50,8 +50,8 @@ def get_expected_phylum_bin_path():
 
 def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
-    cmd = f"{cli_path} --version"
-    version = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip().lower()
+    cmd = [str(cli_path), "--version"]
+    version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     prefix = "phylum "
@@ -269,7 +269,7 @@ def setup_token(token):
     # The phylum CLI settings.yaml file won't exist upon initial install
     # but running a command will trigger the CLI to generate it
     if not phylum_settings_path.exists():
-        cmd = f"{phylum_bin_path} version".split()
+        cmd = [str(phylum_bin_path), "version"]
         subprocess.run(cmd, check=True)
 
     yaml = YAML()
@@ -280,7 +280,7 @@ def setup_token(token):
         yaml.dump(settings_dict, f)
 
     # Check that the token was setup correctly by using it to display the current auth status
-    cmd = f"{phylum_bin_path} auth status".split()
+    cmd = [str(phylum_bin_path), "auth", "status"]
     subprocess.run(cmd, check=True)
 
 
@@ -395,18 +395,18 @@ def main(args=None):
         # Reference: https://github.com/phylum-dev/cli/pull/671
         if args.global_install:
             # Current assumptions for this method:
-            #   * the /usr/local/bin directory exists, has proper permissions, is on the PATH for all users
+            #   * the /usr/local/bin directory exists, has proper permissions, and is on the PATH for all users
             #   * the install is on a system with glibc
-            cmd = "install -m 0755 phylum /usr/local/bin/phylum".split()
+            cmd = ["install", "-m", "0755", "phylum", "/usr/local/bin/phylum"]
         else:
-            cmd = "sh install.sh".split()
+            cmd = ["sh", "install.sh"]
         subprocess.run(cmd, check=True, cwd=extracted_dir)
 
     process_token_option(args)
 
     # Check to ensure everything is working
     phylum_bin_path, _ = get_phylum_bin_path()
-    cmd = f"{phylum_bin_path} --help".split()
+    cmd = [str(phylum_bin_path), "--help"]
     subprocess.run(cmd, check=True)
 
     return 0

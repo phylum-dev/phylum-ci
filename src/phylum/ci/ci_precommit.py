@@ -34,7 +34,7 @@ class CIPreCommit(CIBase):
         """
         super()._check_prerequisites()
 
-        cmd = "git diff --cached --name-only".split()
+        cmd = ["git", "diff", "--cached", "--name-only"]
         staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
         extra_arg_paths = (Path(extra_arg).resolve() for extra_arg in self.extra_args)
 
@@ -75,12 +75,12 @@ class CIPreCommit(CIBase):
     @property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
-        cmd = "git branch --show-current".split()
+        cmd = ["git", "branch", "--show-current"]
         current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
 
         # This is the unique key that git uses to refer to the blob type data object for the lockfile.
         # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-        cmd = f"git hash-object {self.lockfile}".split()
+        cmd = ["git", "hash-object", str(self.lockfile)]
         lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
         label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
         label = label.replace(" ", "-")
@@ -90,7 +90,7 @@ class CIPreCommit(CIBase):
     @property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
-        cmd = "git rev-parse --verify HEAD".split()
+        cmd = ["git", "rev-parse", "--verify", "HEAD"]
         try:
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:

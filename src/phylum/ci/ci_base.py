@@ -14,7 +14,6 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
-from shlex import quote, split
 from typing import List, Optional, Tuple
 
 from packaging.version import Version
@@ -38,8 +37,8 @@ def git_remote() -> str:
     This function is limited in that it will only work when there is a single remote defined.
     A RuntimeError exception will be raised when there is not exactly one remote.
     """
-    cmd = "git remote"
-    remotes = subprocess.run(cmd.split(), check=True, text=True, capture_output=True).stdout.splitlines()
+    cmd = ["git", "remote"]
+    remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()
     if not remotes:
         raise RuntimeError("No git remotes configured")
     if len(remotes) > 1:
@@ -257,7 +256,7 @@ class CIBase(ABC):
         if not self.cli_path:
             raise SystemExit(" [!] Phylum CLI path is unknown. Try using the `init_cli` method first.")
         try:
-            cmd = f"{self.cli_path} parse {self.lockfile}".split()
+            cmd = [str(self.cli_path), "parse", str(self.lockfile)]
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
@@ -273,8 +272,13 @@ class CIBase(ABC):
         if not self.common_lockfile_ancestor_commit:
             return None
         try:
-            cmd = f"git rev-parse --verify {quote(self.common_lockfile_ancestor_commit)}:{quote(self.lockfile.name)}"
-            prev_lockfile_object = subprocess.run(split(cmd), check=True, capture_output=True, text=True).stdout.strip()
+            cmd = [
+                "git",
+                "rev-parse",
+                "--verify",
+                f"{self.common_lockfile_ancestor_commit}:{self.lockfile.name}",
+            ]
+            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
@@ -293,8 +297,8 @@ class CIBase(ABC):
 
         with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
             try:
-                cmd = f"git cat-file blob {prev_lockfile_object}"
-                prev_lockfile_contents = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout
+                cmd = ["git", "cat-file", "blob", prev_lockfile_object]
+                prev_lockfile_contents = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
                 prev_lockfile_fd.write(prev_lockfile_contents)
                 prev_lockfile_fd.flush()
             except subprocess.CalledProcessError as err:
@@ -304,8 +308,8 @@ class CIBase(ABC):
                 print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
                 return []
             try:
-                cmd = f"{self.cli_path} parse {prev_lockfile_fd.name}"
-                parse_result = subprocess.run(cmd.split(), check=True, capture_output=True, text=True).stdout.strip()
+                cmd = [str(self.cli_path), "parse", prev_lockfile_fd.name]
+                parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             except subprocess.CalledProcessError as err:
                 print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
                 print(f" [!] stdout:\n{err.stdout}")
@@ -369,7 +373,7 @@ class CIBase(ABC):
 
         # Exit condition: a Phylum API key should be in place or available at this point.
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
-        cmd = f"{cli_path} auth token".split()
+        cmd = [str(cli_path), "auth", "token"]
         # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
             raise SystemExit(" [!] A Phylum API key is required to continue.")

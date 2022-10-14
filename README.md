@@ -42,7 +42,7 @@ pipx run --spec phylum phylum-init <options>
 pipx run --spec phylum phylum-ci <options>
 ```
 
-These installation methods require Python 3.7+ to run. The application requires a POSIX compliant shell in which to run.
+These installation methods require Python 3.7+ to run.
 For a self contained environment, consider using the Docker image as described below.
 
 ### Usage

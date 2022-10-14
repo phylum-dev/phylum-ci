@@ -19,7 +19,6 @@ import sys
 import urllib.parse
 from argparse import Namespace
 from pathlib import Path
-from shlex import quote, split
 from typing import Optional
 
 import requests
@@ -113,7 +112,7 @@ class CIAzure(CIBase):
         if pr_tgt_branch.startswith(old_ref_prefix):
             pr_tgt_branch = pr_tgt_branch.replace(old_ref_prefix, new_ref_prefix, 1)
 
-        cmd = split(f"git merge-base {quote(pr_src_branch)} {quote(pr_tgt_branch)}")
+        cmd = ["git", "merge-base", pr_src_branch, pr_tgt_branch]
         try:
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             print(f" [+] Common lockfile ancestor commit: {common_ancestor_commit}")
@@ -141,8 +140,8 @@ class CIAzure(CIBase):
         try:
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
-            cmd = f"git diff --exit-code --quiet {pr_base_sha} -- {lockfile.resolve()}"
-            subprocess.run(cmd.split(), check=True)
+            cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
+            subprocess.run(cmd, check=True)
             return False
         except subprocess.CalledProcessError as err:
             if err.returncode == 1:
