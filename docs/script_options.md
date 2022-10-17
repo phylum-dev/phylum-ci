@@ -1,9 +1,10 @@
 # Overview
 
 The command line options for the script entry points provided by this package are contained on this page.
-They are automatically updated with the [rich-codex] tool for each release.
-The output is stored as SVG files, which should allow for copy and paste functionality when viewed from most
-browsers (hint: it may be necessary to click on the image and bring up the raw SVG file in the browser by itself).
+They are automatically updated with the [rich-codex] tool for each release. The output is stored as SVG files,
+which should allow for search and copy/paste functionality when viewed from most browsers.
+
+> **HINT:** Click on an image to bring up the raw SVG file, which should allow for search and copy/paste functionality.
 
 [rich-codex]: https://ewels.github.io/rich-codex/
 
