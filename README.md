@@ -107,7 +107,7 @@ no token exists and one will need to be manually created or set, after the CLI i
 
 The options for `phylum-init`, automatically updated to be current for the latest release:
 
-> **HINT:** Click on the image to bring up the raw SVG file, which should allow for search and copy/paste functionality.
+> **HINT:** Click on the image to bring up the SVG file, which should allow for search and copy/paste functionality.
 
 ![phylum-init options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-init_options.svg)
 
@@ -138,7 +138,7 @@ The current CI platforms/environments supported are:
 
 The options for `phylum-ci`, automatically updated to be current for the latest release:
 
-> **HINT:** Click on the image to bring up the raw SVG file, which should allow for search and copy/paste functionality.
+> **HINT:** Click on the image to bring up the SVG file, which should allow for search and copy/paste functionality.
 
 ![phylum-ci options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-ci_options.svg)
 

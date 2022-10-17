@@ -4,7 +4,7 @@ The command line options for the script entry points provided by this package ar
 They are automatically updated with the [rich-codex] tool for each release. The output is stored as SVG files,
 which should allow for search and copy/paste functionality when viewed from most browsers.
 
-> **HINT:** Click on an image to bring up the raw SVG file, which should allow for search and copy/paste functionality.
+> **HINT:** Click on an image to bring up the SVG file, which should allow for search and copy/paste functionality.
 
 [rich-codex]: https://ewels.github.io/rich-codex/
 
