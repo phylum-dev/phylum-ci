@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 from typing import List, Optional, Sequence, Tuple
@@ -90,10 +91,8 @@ def ensure_project(ci_env: CIBase) -> None:
     elif ret.returncode == 14:
         print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
     else:
-        # TODO: Use the `shlex.join` method, introduced in Python 3.8, to produce a shell-escaped string
-        #       to protect against injection vulnerabilities (e.g., users copy/pasting the output here).
-        #       https://github.com/phylum-dev/phylum-ci/issues/18
-        print(f" [!] There was a problem creating the project with command: {' '.join(cmd)}")
+        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+        print(f" [!] There was a problem creating the project with command: {shell_escaped_cmd}")
         ret.check_returncode()
 
 
@@ -108,10 +107,8 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
             cmd.extend(["--group", ci_env.phylum_group])
     cmd.extend(["--verbose", "--json", str(ci_env.lockfile)])
 
-    # TODO: Use the `shlex.join` method, introduced in Python 3.8, to produce a shell-escaped string
-    #       to protect against injection vulnerabilities (e.g., users copy/pasting the output here).
-    #       https://github.com/phylum-dev/phylum-ci/issues/18
-    print(f" [*] Performing analysis with command: {' '.join(cmd)} ...")
+    shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+    print(f" [*] Performing analysis with command: {shell_escaped_cmd}")
     try:
         analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
