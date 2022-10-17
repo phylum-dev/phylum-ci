@@ -73,16 +73,16 @@ def ensure_project(ci_env: CIBase) -> None:
     if not ci_env.phylum_project:
         return
 
-    cmd = f"{ci_env.cli_path} project create {ci_env.phylum_project}"
+    cmd = [str(ci_env.cli_path), "project", "create", ci_env.phylum_project]
     if ci_env.phylum_group:
         print(f" [-] Using Phylum group: {ci_env.phylum_group}")
-        cmd = f"{ci_env.cli_path} project create --group {ci_env.phylum_group} {ci_env.phylum_project}"
+        cmd = [str(ci_env.cli_path), "project", "create", "--group", ci_env.phylum_group, ci_env.phylum_project]
 
     print(f" [*] Creating a Phylum project with the name: {ci_env.phylum_project} ...")
     if ci_env.phylum_project_file.exists():
         print(f" [+] Overwriting existing `.phylum_project` file found at: {ci_env.phylum_project_file}")
 
-    ret = subprocess.run(shlex.split(cmd), check=False)
+    ret = subprocess.run(cmd, check=False)
     # The Phylum CLI will return a unique error code of 14 when a project that already
     # exists is attempted to be created. This situation is recognized and allowed to happen
     # since it means the project exists as expected. Any other exit code is an error.
@@ -91,24 +91,26 @@ def ensure_project(ci_env: CIBase) -> None:
     elif ret.returncode == 14:
         print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
     else:
-        print(f" [!] There was a problem creating the project with command: {cmd}")
+        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+        print(f" [!] There was a problem creating the project with command: {shell_escaped_cmd}")
         ret.check_returncode()
 
 
 def get_phylum_analysis(ci_env: CIBase) -> dict:
     """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
     # Build up the analyze command based on the provided inputs
-    cmd = f"{ci_env.cli_path} analyze -l {ci_env.phylum_label}"
+    cmd = [str(ci_env.cli_path), "analyze", "-l", ci_env.phylum_label]
     if ci_env.phylum_project:
-        cmd = f"{cmd} --project {ci_env.phylum_project}"
+        cmd.extend(["--project", ci_env.phylum_project])
         # A group can not be specified without a project
         if ci_env.phylum_group:
-            cmd = f"{cmd} --group {ci_env.phylum_group}"
-    cmd = f"{cmd} --verbose --json {ci_env.lockfile}"
+            cmd.extend(["--group", ci_env.phylum_group])
+    cmd.extend(["--verbose", "--json", str(ci_env.lockfile)])
 
-    print(f" [*] Performing analysis with command: {cmd} ...")
+    shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+    print(f" [*] Performing analysis with command: {shell_escaped_cmd}")
     try:
-        analysis_result = subprocess.run(shlex.split(cmd), check=True, capture_output=True, text=True).stdout
+        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
         # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
         # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
@@ -183,15 +185,11 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     analysis_group.add_argument(
         "-p",
         "--project",
-        # NOTE: The method of using the shlex module is known to be compatible with UNIX shells.
-        #       It may not function as desired for other operating systems and/or shell types.
-        type=shlex.quote,
         help="Name of a Phylum project to create and use to perform the analysis.",
     )
     analysis_group.add_argument(
         "-g",
         "--group",
-        type=shlex.quote,
         help="Optional group name, which will be the owner of the project. Only used when a project is also specified.",
     )
 
