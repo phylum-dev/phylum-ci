@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.17.1 (2022-10-17)
+### Fix
+* Sanitize user input to guard against possible cmd injection ([#144](https://github.com/phylum-dev/phylum-ci/issues/144)) ([`4d72ece`](https://github.com/phylum-dev/phylum-ci/commit/4d72ecee9d226f3e78eeddd93239f22c0e23bf8d))
+
+### Documentation
+* Provide more hints about using the SVG files ([#146](https://github.com/phylum-dev/phylum-ci/issues/146)) ([`747e230`](https://github.com/phylum-dev/phylum-ci/commit/747e230e2f3a1628abc0bac90eb51c5e797bb723))
+
 ## v0.17.0 (2022-10-10)
 ### Feature
 * Allow for creating projects ([#139](https://github.com/phylum-dev/phylum-ci/issues/139)) ([`e47abec`](https://github.com/phylum-dev/phylum-ci/commit/e47abec72455f2e6f4adb60331dfed15f4bed9e0))
