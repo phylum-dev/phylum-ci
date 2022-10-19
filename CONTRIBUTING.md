@@ -109,24 +109,36 @@ Here's how to set up `phylum-ci` for local development.
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
 
     ```sh
-    # Use `pyenv install --list` to get available versions and usually install the latest patch version.
-    # NOTE: These versions are examples; the latest patch version available from pyenv should be used in place of `.x`.
-    #       example: `pyenv install --list |grep 3.9.` to show latest patch version for the cpython 3.9 minor release.
+    # Use `pyenv install --list` to get available versions and usually install the
+    # latest patch version. For example, use `pyenv install --list |grep 3.9.` to
+    # show latest patch version for the cpython 3.9 minor release.
+
+    # NOTE: These versions are examples; the latest patch version available from
+    #       pyenv should be used in place of `.x`.
     pyenv install 3.7.x
     pyenv install 3.8.x
     pyenv install 3.9.x
     pyenv install 3.10.x
     pyenv rehash
+
     # Ensure all environments are available globally (helps tox to find them)
     pyenv global 3.10.x 3.9.x 3.8.x 3.7.x
     ```
 
-4. Ensure [poetry](https://python-poetry.org/docs/) is installed
+4. Ensure [poetry v1.2+](https://python-poetry.org/docs/) is installed
+   1. The dependency group syntax feature was added in Poetry v1.2.0, and it's use in `phylum-ci` means the project will
+      no longer build with Poetry v1.1
 5. Install dependencies with `poetry`, which will automatically create a virtual environment:
 
     ```sh
     cd phylum-ci
-    poetry install
+
+    # Install the main dependencies only:
+    poetry install --sync
+
+    # Alternatively, specific dependency groups can be installed at the same time.
+    # It makes sense to add the "test" group now if new code is going to be added and tested:
+    poetry install --sync --with test
     ```
 
 6. Create a branch for local development:
@@ -167,6 +179,8 @@ Here's how to set up `phylum-ci` for local development.
 8. When you're done making changes, check that your changes pass the tests:
 
     ```sh
+    # Ensure the "test" dependency group is installed, if not done previously
+    poetry install --sync --with test
     poetry run tox
     ```
 
@@ -223,7 +237,7 @@ To run a script entry point with the local checkout of the code (in develop mode
 
 ```sh
 # If not done previously, ensure the project is installed by poetry (only required once)
-poetry install
+poetry install --sync
 
 # Use the `poetry run` command to ensure the installed project is used
 poetry run phylum-init -h
