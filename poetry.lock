@@ -313,7 +313,7 @@ docs = ["jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)
 testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
 [[package]]
-name = "Levenshtein"
+name = "levenshtein"
 version = "0.20.7"
 description = "Python extension for computing string edit distances and similarities."
 category = "dev"
@@ -1151,7 +1151,7 @@ keyring = [
     {file = "keyring-23.9.3-py3-none-any.whl", hash = "sha256:69732a15cb1433bdfbc3b980a8a36a04878a6cfd7cb99f497b573f31618001c0"},
     {file = "keyring-23.9.3.tar.gz", hash = "sha256:69b01dd83c42f590250fe7a1f503fc229b14de83857314b1933a3ddbf595c4a5"},
 ]
-Levenshtein = [
+levenshtein = [
     {file = "Levenshtein-0.20.7-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a7f4d3c478b1fcf412bf6c82914b02fed33ab359120df9172dda7bc855227461"},
     {file = "Levenshtein-0.20.7-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:bee682ab1005aff597946234e47c95fcf0f44d2b1f38075f0aba26bbc4e7545a"},
     {file = "Levenshtein-0.20.7-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:17b5f1d1a4a5ac536283298c98cafc5632ae3897c8601fb2ec8babc6f47a1be9"},
