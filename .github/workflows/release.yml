@@ -148,7 +148,7 @@ jobs:
           else
             poetry run semantic-release publish -v DEBUG
           fi
-          echo "::set-output name=url::https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/"
+          echo "url=https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/" >> $GITHUB_OUTPUT
 
       - name: Build docker image
         run: |
