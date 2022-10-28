@@ -54,24 +54,28 @@ packaging = "*"
 "ruamel.yaml" = "*"
 connect-markdown-renderer = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
 pytest = "*"
 tomli = "*"
 tox = "*"
 
-# NOTE: The dependencies in this next group are not required for local development. However, it is not currently
-#       possible to specify extras in dev-dependencies; they have to be in the dependencies section to be recognized:
-#       https://github.com/python-poetry/poetry/issues/759
-# TODO: Move these to an optional group when Poetry 1.2 is available, using the groups feature:
-#       https://github.com/python-poetry/poetry/issues/1644
-#       https://github.com/phylum-dev/phylum-ci/issues/15
-# ---START---
+[tool.poetry.group.ci]
+optional = true
+
+[tool.poetry.group.ci.dependencies]
 tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
 python-semantic-release = "*"
 rich-codex = "*"
+
+[tool.poetry.group.qa]
+optional = true
+
+[tool.poetry.group.qa.dependencies]
 types-requests = "*"
-# ---END---
 
 [tool.black]
 line-length = 120
