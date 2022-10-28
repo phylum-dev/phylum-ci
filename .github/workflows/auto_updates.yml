@@ -48,13 +48,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      - name: Install the project with poetry
+      # The project does not need to be installed to update the lockfile
+      - name: Update Python dependencies
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry install --verbose --no-root --sync
-
-      - name: Update Python dependencies
-        run: poetry update -vv
+          poetry update -vv --lock
 
       - name: Update pre-commit hooks
         run: pre-commit autoupdate --freeze
