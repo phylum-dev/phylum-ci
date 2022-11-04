@@ -46,26 +46,6 @@ jobs:
       - name: Run tox via poetry
         run: poetry run tox
 
-  # This job reports the results of the test-matrix job above and is used to enforce status checks in the repo settings
-  # without needing to update those settings everytime the test matrix is updated.
-  test-rollup:
-    name: Test rollup
-    if: always()
-    needs: test-matrix
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check for test matrix failure
-        if: needs.test-matrix.result != 'success'
-        shell: bash
-        run: |
-          echo "One or more jobs in the test matrix was not successful"
-          exit 1
-
-      - name: Confirm test matrix success
-        if: needs.test-matrix.result == 'success'
-        shell: bash
-        run: echo "All jobs in the test matrix were successful"
-
   # This job is meant to be a sanity check on the Docker image...that it can be created and
   # have the script entry points called without error.
   docker:
@@ -132,3 +112,23 @@ jobs:
           docker run --rm phylum-ci:from-dist phylum-ci --help
           docker run --rm phylum-ci:from-dist phylum-init --help
           docker run --rm phylum-ci:from-dist phylum --help
+
+  # This job reports the results of the test jobs above and is used to enforce status checks in
+  # the repo settings without needing to update those settings everytime the test jobs are updated.
+  test-rollup:
+    name: Test rollup
+    if: always()
+    needs: [test-matrix, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for test jobs failure
+        if: (needs.test-matrix.result != 'success') || (needs.docker.result != 'success')
+        shell: bash
+        run: |
+          echo "One or more test matrix jobs was/were not successful"
+          exit 1
+
+      - name: Confirm test jobs success
+        if: (needs.test-matrix.result == 'success') && (needs.docker.result == 'success')
+        shell: bash
+        run: echo "All test matrix jobs were successful"
