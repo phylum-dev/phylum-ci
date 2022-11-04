@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     defaults:
       run:
         shell: bash
@@ -40,6 +40,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
+          poetry lock --check
           poetry install --verbose --no-root --sync --with test,ci
 
       - name: Run tox via poetry
@@ -73,7 +74,7 @@ jobs:
     strategy:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.10"]
+        python-version: ["3.11"]
     defaults:
       run:
         shell: bash
@@ -98,6 +99,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
+          poetry lock --check
           poetry install --verbose --no-root --sync
 
       - name: Build docker image from source

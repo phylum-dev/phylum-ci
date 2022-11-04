@@ -8,6 +8,7 @@
 [![GitHub Workflow Status (branch)][workflow_shield]][workflow_test]
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
+[![Downloads](https://pepy.tech/badge/phylum/month)][downloads]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
 
@@ -20,6 +21,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
 [changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md
 [security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
+[downloads]: https://pepy.tech/project/phylum
 
 ## Installation and usage
 

@@ -103,7 +103,7 @@ Here's how to set up `phylum-ci` for local development.
 3. Ensure all supported Python versions are installed locally
    1. The strategy is to support all released minor versions of Python that are not end-of-life yet
    2. The current list
-      1. at the time of this writing is 3.7, 3.8, 3.9, and 3.10
+      1. at the time of this writing is 3.7, 3.8, 3.9, 3.10, and 3.11
       2. can be inferred with the Python Developer's Guide, which maintains the
          [status of active Python releases](https://devguide.python.org/#status-of-python-branches)
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
@@ -119,10 +119,11 @@ Here's how to set up `phylum-ci` for local development.
     pyenv install 3.8.x
     pyenv install 3.9.x
     pyenv install 3.10.x
+    pyenv install 3.11.x
     pyenv rehash
 
     # Ensure all environments are available globally (helps tox to find them)
-    pyenv global 3.10.x 3.9.x 3.8.x 3.7.x
+    pyenv global 3.11.x 3.10.x 3.9.x 3.8.x 3.7.x
     ```
 
 4. Ensure [poetry v1.2+](https://python-poetry.org/docs/) is installed
@@ -132,6 +133,9 @@ Here's how to set up `phylum-ci` for local development.
 
     ```sh
     cd phylum-ci
+
+    # Verify the lockfile corresponds to the current version of `pyproject.toml`
+    poetry lock --check
 
     # Install the main dependencies only:
     poetry install --sync
@@ -203,7 +207,7 @@ Before you submit a pull request, check that it meets these guidelines:
 * Have you created sufficient tests?
 * Have you updated all affected documentation?
 
-The pull request should work for Python 3.6, 3.7, 3.8 and 3.9.
+The pull request should work for Python 3.6, 3.7, 3.8, 3.9, 3.10, and 3.11.
 Check <https://github.com/phylum-dev/phylum-ci/actions> and make sure that the tests
 pass for all supported Python versions.
 
