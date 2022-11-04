@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.18.0 (2022-11-04)
+### Feature
+* Add Python 3.11 support ([#157](https://github.com/phylum-dev/phylum-ci/issues/157)) ([`815c368`](https://github.com/phylum-dev/phylum-ci/commit/815c3683b619e910efc3965ddd3f754fa3a11168))
+
 ## v0.17.1 (2022-10-17)
 ### Fix
 * Sanitize user input to guard against possible cmd injection ([#144](https://github.com/phylum-dev/phylum-ci/issues/144)) ([`4d72ece`](https://github.com/phylum-dev/phylum-ci/commit/4d72ecee9d226f3e78eeddd93239f22c0e23bf8d))
