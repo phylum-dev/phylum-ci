@@ -49,7 +49,7 @@
 # $ docker run --rm --entrypoint entrypoint.sh phylumio/phylum-ci:latest "ls -alh /"
 ##########################################################################################
 
-FROM python:3.10-slim-bullseye AS builder
+FROM python:3.11-slim-bullseye AS builder
 
 # PKG_SRC is the path to a built distribution/wheel and PKG_NAME is the name of the built
 # distribution/wheel. Both can optionally be specified in glob form. When not defined,
@@ -99,7 +99,7 @@ RUN find ${PHYLUM_VENV} -type f -name '*.pyc' -delete
 # Place in a directory included in the final layer and also known to be part of the $PATH
 COPY entrypoint.sh ${PHYLUM_VENV}/bin/
 
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 # CLI_VER specifies the Phylum CLI version to install in the image.
 # Values should be provided in a format acceptable to the `phylum-init` script.

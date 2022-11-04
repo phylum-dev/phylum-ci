@@ -17,7 +17,7 @@ def test_project_version():
 
 def test_python_version():
     """Ensure the python version used to test is a supported version."""
-    supported_minor_versions = (7, 8, 9, 10)
+    supported_minor_versions = (7, 8, 9, 10, 11)
     python_version = sys.version_info
     assert python_version.major == 3, "Only Python 3 is supported"
     assert python_version.minor in supported_minor_versions, "Attempting to run unsupported Python version"
