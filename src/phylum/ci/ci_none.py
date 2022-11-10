@@ -9,7 +9,6 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from connect.utils.terminal.markdown import render
 from phylum.ci.ci_base import CIBase, git_remote
 
 
@@ -58,6 +57,8 @@ class CINone(CIBase):
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] stdout:\n{err.stdout}")
+            print(f" [!] stderr:\n{err.stderr}")
             common_ancestor_commit = None
         return common_ancestor_commit
 
@@ -75,17 +76,13 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
+        # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
+        # Any other exit code is an error and a reason to re-raise.
         cmd = ["git", "diff", "--exit-code", "--quiet", f"refs/remotes/{remote}/HEAD...", "--", str(lockfile.resolve())]
-        try:
-            # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
-            # Any other exit code is an error and a reason to re-raise.
-            subprocess.run(cmd, check=True)
+        ret = subprocess.run(cmd, check=False)
+        if ret.returncode == 0:
             return False
-        except subprocess.CalledProcessError as err:
-            if err.returncode == 1:
-                return True
-            raise
-
-    def post_output(self) -> None:
-        """Post the output of the analysis in the means appropriate for the CI environment."""
-        print(f" [+] Analysis output:\n{render(self.analysis_output)}")
+        if ret.returncode == 1:
+            return True
+        ret.check_returncode()
+        return False  # unreachable code but this makes mypy happy

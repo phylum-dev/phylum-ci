@@ -14,7 +14,6 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from connect.utils.terminal.markdown import render
 from phylum.ci.ci_base import CIBase
 
 
@@ -95,6 +94,8 @@ class CIPreCommit(CIBase):
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] stdout:\n{err.stdout}")
+            print(f" [!] stderr:\n{err.stderr}")
             common_ancestor_commit = None
         return common_ancestor_commit
 
@@ -106,7 +107,3 @@ class CIPreCommit(CIBase):
         """
         staged_files = (Path(staged_file).resolve() for staged_file in self.extra_args)
         return lockfile in staged_files
-
-    def post_output(self) -> None:
-        """Post the output of the analysis in the means appropriate for the CI environment."""
-        print(f" [+] Analysis output:\n{render(self.analysis_output)}")

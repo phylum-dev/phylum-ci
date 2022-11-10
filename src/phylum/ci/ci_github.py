@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
@@ -112,53 +113,73 @@ class CIGitHub(CIBase):
         if pr_base_sha is None:
             return False
 
-        try:
-            # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-            # Any other exit code is an error and a reason to re-raise.
-            cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
-            subprocess.run(cmd, check=True)
+        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
+        # Any other exit code is an error and a reason to re-raise.
+        cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
+        ret = subprocess.run(cmd, check=False)
+        if ret.returncode == 0:
             return False
-        except subprocess.CalledProcessError as err:
-            if err.returncode == 1:
-                return True
-            print(" [!] Consider changing the `fetch_depth` input during checkout to fetch more branch history")
-            raise
+        if ret.returncode == 1:
+            return True
+        # Reference: https://github.com/actions/checkout
+        print(" [!] Consider changing the `fetch-depth` input during checkout to fetch more branch history")
+        ret.check_returncode()
+        return False  # unreachable code but this makes mypy happy
 
     def post_output(self) -> None:
-        """Post the output of the analysis as a comment on the GitHub Pull Request (PR)."""
-        # API Reference: https://docs.github.com/en/rest/issues/comments
-        # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
+        """Post the output of the analysis.
+
+        Post output directly in the logs regardless of the context.
+        Post output as a comment on the GitHub Pull Request (PR).
+        """
+        super().post_output()
+
         comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
+        if comments_url is None:
+            raise SystemExit(" [!] The API for posting a GitHub comment was not found.")
 
-        headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {self.github_token}",
-        }
+        post_github_comment(comments_url, self.github_token, self.analysis_output)
 
-        query_params = {"per_page": 100}
-        print(f" [*] Getting all current pull request comments with GET URL: {comments_url} ...")
-        req = requests.get(comments_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
-        req.raise_for_status()
-        pr_comments = req.json()
 
-        print(" [*] Checking pull request comments for existing content to avoid duplication ...")
-        if not pr_comments:
-            print(" [+] No existing pull request comments found.")
-        # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
-        #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
-        #       We only care about the most recent Phylum comment.
-        for pr_comment in reversed(pr_comments):
-            if pr_comment.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                print(" [+] The most recently posted Phylum pull request comment was found.")
-                if pr_comment.get("body", "") == self.analysis_output:
-                    print(" [+] It contains the same content as the current analysis. Nothing to do.")
-                    return
-                print(" [+] It does not contain the same content as the current analysis.")
-                break
+def post_github_comment(comments_url: str, github_token: str, comment: str) -> None:
+    """Post a comment on a GitHub Pull Request (PR).
 
-        # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
-        # there were no Phylum PR comments. Either way, create a new PR comment.
-        body_params = {"body": self.analysis_output}
-        print(f" [*] Creating new pull request comment with POST URL: {comments_url} ...")
-        response = requests.post(comments_url, headers=headers, json=body_params, timeout=REQ_TIMEOUT)
-        response.raise_for_status()
+    The `comments_url` should be the full API endpoint for a particular GitHub issue/PR.
+    API Reference: https://docs.github.com/en/rest/issues/comments
+    This is the same endpoint for listing all PR comments (GET) and creating new ones (POST).
+
+    The comment will only be created if there isn't already a Phylum comment
+    or if the most recently posted Phylum comment does not contain the same content.
+    """
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {github_token}",
+    }
+
+    query_params = {"per_page": 100}
+    print(f" [*] Getting all current pull request comments with GET URL: {comments_url} ...")
+    req = requests.get(comments_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
+    req.raise_for_status()
+    pr_comments = req.json()
+
+    print(" [*] Checking pull request comments for existing content to avoid duplication ...")
+    if not pr_comments:
+        print(" [+] No existing pull request comments found.")
+    # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
+    #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
+    #       We only care about the most recent Phylum comment.
+    for pr_comment in reversed(pr_comments):
+        if pr_comment.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
+            print(" [+] The most recently posted Phylum pull request comment was found.")
+            if pr_comment.get("body", "") == comment:
+                print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                return
+            print(" [+] It does not contain the same content as the current analysis.")
+            break
+
+    # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
+    # there were no Phylum PR comments. Either way, create a new PR comment.
+    body_params = {"body": comment}
+    print(f" [*] Creating new pull request comment with POST URL: {comments_url} ...")
+    response = requests.post(comments_url, headers=headers, json=body_params, timeout=REQ_TIMEOUT)
+    response.raise_for_status()

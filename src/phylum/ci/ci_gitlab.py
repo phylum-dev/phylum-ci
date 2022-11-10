@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-from connect.utils.terminal.markdown import render
+
 from phylum.ci.ci_base import CIBase, git_remote
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
@@ -130,6 +130,8 @@ class CIGitLab(CIBase):
                 common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
             except subprocess.CalledProcessError as err:
                 print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+                print(f" [!] stdout:\n{err.stdout}")
+                print(f" [!] stderr:\n{err.stderr}")
                 common_ancestor_commit = None
 
         return common_ancestor_commit
@@ -143,17 +145,18 @@ class CIGitLab(CIBase):
         if diff_base_sha is None:
             return False
 
-        try:
-            # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-            # Any other exit code is an error and a reason to re-raise.
-            cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
-            subprocess.run(cmd, check=True)
+        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
+        # Any other exit code is an error and a reason to re-raise.
+        cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
+        ret = subprocess.run(cmd, check=False)
+        if ret.returncode == 0:
             return False
-        except subprocess.CalledProcessError as err:
-            if err.returncode == 1:
-                return True
-            print(" [!] Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history")
-            raise
+        if ret.returncode == 1:
+            return True
+        # Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning
+        print(" [!] Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history")
+        ret.check_returncode()
+        return False  # unreachable code but this makes mypy happy
 
     def post_output(self) -> None:
         """Post the output of the analysis.
@@ -161,7 +164,7 @@ class CIGitLab(CIBase):
         Post output directly in the logs regardless of the pipeline context.
         Post output as a note (comment) on the GitLab CI Merge Request (MR) when operating in a merge request pipeline.
         """
-        print(f" [+] Analysis output:\n{render(self.analysis_output)}")
+        super().post_output()
 
         if not is_in_mr():
             # Can't post the output to the MR when there is no MR
