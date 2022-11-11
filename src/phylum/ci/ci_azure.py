@@ -2,6 +2,9 @@
 
 Azure References:
   * https://learn.microsoft.com/azure/devops/pipelines
+  * https://learn.microsoft.com/azure/devops/pipelines/repos
+  * https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git
+  * https://learn.microsoft.com/azure/devops/pipelines/repos/github
   * https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens
   * https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
   * https://learn.microsoft.com/azure/devops/pipelines/build/variables
@@ -28,7 +31,7 @@ from phylum.ci.ci_github import post_github_comment
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
 
-PAT_ERR_MSG = """
+AZURE_PAT_ERR_MSG = """
 An Azure DevOps token with API access is required to use the API (e.g., to post comments).
 This can be the default `System.AccessToken` provided automatically at the start
 of each build for the scoped build identity or a personal access token (PAT).
@@ -39,6 +42,17 @@ The `System.AccessToken` scoped build identity needs at least the `Contribute to
 See the Azure DevOps documentation for using the `System.AccessToken`:
   * https://learn.microsoft.com/azure/devops/pipelines/build/variables#systemaccesstoken
   * https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#job-authorization-scope
+"""
+
+GITHUB_PAT_ERR_MSG = """
+A GitHub token with API access is required to use the API (e.g., to post comments).
+This can be either a classic or fine-grained personal access token (PAT).
+A classic PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
+A fine-grained PAT needs read access to `metadata` and read/write access to `pull requests`.
+See the GitHub Token Documentation for more info:
+  * https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+  * https://docs.github.com/rest/overview/permissions-required-for-fine-grained-personal-access-tokens
+  * https://docs.github.com/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
 """
 
 
@@ -55,7 +69,9 @@ class CIAzure(CIBase):
         These are the current pre-requisites for operating within an Azure Pipelines Environment:
           * The environment must actually be within Azure Pipelines
           * The environment must be part of a Pull Request (PR) pipeline
-          * An Azure token providing API access is available
+          * An token providing API access is available to match the triggering repo
+            * An Azure token for Azure Repos Git
+            * A GitHub token for GitHub hosted repos
         """
         super()._check_prerequisites()
 
@@ -76,13 +92,23 @@ class CIAzure(CIBase):
 
         azure_token = os.getenv("AZURE_TOKEN", "")
         if not azure_token and self.triggering_repo == "TfsGit":
-            raise SystemExit(f" [!] An Azure DevOps token with API access must be set at `AZURE_TOKEN`: {PAT_ERR_MSG}")
+            raise SystemExit(f" [!] An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}")
         self._azure_token = azure_token
+
+        github_token = os.getenv("GITHUB_TOKEN", "")
+        if not github_token and self.triggering_repo == "GitHub":
+            raise SystemExit(f" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}")
+        self._github_token = github_token
 
     @property
     def azure_token(self) -> str:
         """Get the default `System.AccessToken` or custom Personal Access Token (PAT) in use."""
         return self._azure_token
+
+    @property
+    def github_token(self) -> str:
+        """Get the custom Personal Access Token (PAT) in use."""
+        return self._github_token
 
     @property
     def phylum_label(self) -> str:
@@ -186,16 +212,13 @@ class CIAzure(CIBase):
             pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
             if not pr_number:
                 raise SystemExit(" [!] The GitHub PR number could not be found.")
-            github_token = os.getenv("GITHUB_TOKEN")
-            if not github_token:
-                raise SystemExit(" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`")
 
             # API Reference: https://docs.github.com/en/rest/issues/comments
             # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
             pr_comments_api_endpoint = f"/repos/{owner_repo}/issues/{pr_number}/comments"
             comments_url = f"{github_api_root_url}{pr_comments_api_endpoint}"
 
-            post_github_comment(comments_url, github_token, self.analysis_output)
+            post_github_comment(comments_url, self.github_token, self.analysis_output)
 
 
 def post_azure_comment(azure_token: str, comment: str) -> None:
@@ -209,7 +232,7 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     #   * PR Threads - List: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/list
     #   * PR Threads - Create: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/create
 
-    # This is the latest available API version a/o SEP 2022. While it is a "preview" version, it was chosen to
+    # This is the latest available API version a/o NOV 2022. While it is a "preview" version, it was chosen to
     # lean forward in an effort to maintain relevance and recency for a longer period of time going forward.
     # It does appear that the APIs for PR Threads are stable between this version and the previous major version
     # with accessible documentation.
@@ -240,7 +263,7 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     resp = requests.get(pr_threads_url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()
     if resp.status_code != requests.codes.OK:
-        raise SystemExit(f" [!] Are the permissions on the Azure DevOps token `AZURE_TOKEN` correct? {PAT_ERR_MSG}")
+        raise SystemExit(f" [!] Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}")
     pr_threads = resp.json()
 
     print(" [*] Checking pull request threads for existing comment content to avoid duplication ...")

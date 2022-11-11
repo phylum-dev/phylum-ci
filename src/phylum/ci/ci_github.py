@@ -23,6 +23,20 @@ from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.constants import REQ_TIMEOUT
 
+PAT_ERR_MSG = """
+A GitHub token with API access is required to use the API (e.g., to post comments).
+This can be the default `GITHUB_TOKEN` provided automatically at the start of each workflow run.
+It can also be either a classic or fine-grained personal access token (PAT).
+A `GITHUB_TOKEN` needs at least write access for `pull-requests` scope (even though the `issues` API is used).
+A classic PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
+A fine-grained PAT needs read access to `metadata` and read/write access to `pull requests`.
+See the GitHub Token Documentation for more info:
+  * https://docs.github.com/actions/security-guides/automatic-token-authentication
+  * https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+  * https://docs.github.com/rest/overview/permissions-required-for-fine-grained-personal-access-tokens
+  * https://docs.github.com/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
+"""
+
 
 class CIGitHub(CIBase):
     """Provide methods for a GitHub Actions environment."""
@@ -51,17 +65,9 @@ class CIGitHub(CIBase):
         if os.getenv("GITHUB_ACTIONS") != "true":
             raise SystemExit(" [!] Must be working within the GitHub Actions environment")
 
-        # A GitHub token with API access is required to use the API (e.g., to post comments). This can be the default
-        # `GITHUB_TOKEN` provided automatically at the start of each workflow run or a personal access token (PAT).
-        # A `GITHUB_TOKEN` needs at least write access for `pull-requests` scope (even though the `issues` API is used).
-        # A PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
-        # See the GitHub Token Documentation for more info:
-        # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
-        # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
-        # https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
-            raise SystemExit(" [!] A GitHub token with API access must be set at `GITHUB_TOKEN` environment variable")
+            raise SystemExit(f" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`: {PAT_ERR_MSG}")
         self._github_token = github_token
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
