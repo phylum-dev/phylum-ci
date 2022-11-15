@@ -3,6 +3,7 @@
 import sys
 
 from packaging.version import Version
+
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 
 from ..constants import PYPROJECT
@@ -11,7 +12,7 @@ from ..constants import PYPROJECT
 def test_project_version():
     """Ensure the source version can be normalized as specified in PEP-440."""
     package_version = Version(__version__)
-    source_version = Version(PYPROJECT.get("tool", {}).get("poetry", {}).get("version"))
+    source_version = Version(PYPROJECT.get("tool", {}).get("poetry", {}).get("version", "0.0.0"))
     assert package_version == source_version
 
 

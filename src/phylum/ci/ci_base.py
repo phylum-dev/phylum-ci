@@ -16,7 +16,10 @@ from argparse import Namespace
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from connect.utils.terminal.markdown import render
 from packaging.version import Version
+from ruamel.yaml import YAML
+
 from phylum.ci.common import PackageDescriptor, Packages, ProjectThresholdInfo, ReturnCode, RiskDomain
 from phylum.ci.constants import (
     FAILED_COMMENT,
@@ -28,7 +31,6 @@ from phylum.ci.constants import (
 from phylum.constants import MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-from ruamel.yaml import YAML
 
 
 def git_remote() -> str:
@@ -75,8 +77,8 @@ class CIBase(ABC):
         """Initialize the base class object.
 
         Each child class is expected to at least:
-          * define `self.ci_platform_name`
           * call `super().__init__(args)`
+          * define `self.ci_platform_name`
         """
         self.args = args
         self._phylum_project_file = Path.cwd().joinpath(".phylum_project").resolve()
@@ -236,14 +238,13 @@ class CIBase(ABC):
         else:
             raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
 
-    @abstractmethod
     def post_output(self) -> None:
-        """Post the output of the analysis in the means appropriate for the CI environment.
+        """Post the output of the analysis as markdown rendered for output to the terminal/logs.
 
-        Output in the form of comments on a pull/merge request should be unique and not added multiple times as
-        the review changes but the lockfile doesn't.
+        Each implementation that offers analysis output in the form of comments on a pull/merge request should
+        ensure those comments are unique and not added multiple times as the review changes but the lockfile doesn't.
         """
-        raise NotImplementedError()
+        print(f" [+] Analysis output:\n{render(self.analysis_output)}")
 
     # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
     #       https://github.com/phylum-dev/phylum-ci/issues/18
@@ -260,6 +261,7 @@ class CIBase(ABC):
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
+            print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
             raise SystemExit(f" [!] Is {self.lockfile} valid? If so, please report this as a bug.") from err
         parsed_pkgs = json.loads(parse_result)
@@ -282,7 +284,8 @@ class CIBase(ABC):
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
-            print(f" [?] stderr: {err.stderr}")
+            print(f" [?] stdout:\n{err.stdout}")
+            print(f" [?] stderr:\n{err.stderr}")
             print(" [+] Assuming a previous lockfile version does not exist ...")
             prev_lockfile_object = None
         return prev_lockfile_object
@@ -483,6 +486,7 @@ class CIBase(ABC):
             # The `RiskDomain` dataclass and this logic can be simplified once the API standardizes the use of names
             # so that risk domains are referenced with the same name everywhere (e.g., vulnerability/vulnerabilities
             # and malicious_code/malicious)
+            vul = None
             potential_names = [risk_domain.package_name, risk_domain.project_name]
             for potential_name in potential_names:
                 vul = risk_vectors.get(potential_name)

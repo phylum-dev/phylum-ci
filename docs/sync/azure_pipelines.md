@@ -7,8 +7,11 @@ hidden: false
 
 ## Overview
 
+Azure Pipelines [supports several different source repositories][supported_repos]. This integration works with repos
+hosted on [Azure Repos Git][azure_repos_git] and [GitHub][github_repos].
+
 Once configured for a repository, the Azure Pipelines integration will provide analysis of project dependencies from
-a lockfile during a Pull Request (MR) and output the results as a comment in a thread on the PR.
+a lockfile during a Pull Request (PR) and output the results as a comment in a thread on the PR.
 The CI job will return an error (i.e., fail the pipeline) if any of the newly added/modified dependencies from the
 PR fail to meet the project risk thresholds for any of the five Phylum risk domains:
 
@@ -29,22 +32,34 @@ If one or more dependencies are still processing (no results available), then th
 the CI pipeline job will only fail if dependencies that have _completed analysis results_ do not meet the specified
 project risk thresholds.
 
+[supported_repos]: https://learn.microsoft.com/azure/devops/pipelines/repos
+[azure_repos_git]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git
+[github_repos]: https://learn.microsoft.com/azure/devops/pipelines/repos/github
+[risk_domains]: https://docs.phylum.io/docs/phylum-package-score#risk-domains
+
 ## Prerequisites
 
 The Azure Pipelines environment is primarily supported through the use of a Docker image.
 The pre-requisites for using this image are:
 
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
-* Azure DevOps Services is used with [Azure Repos Git][azure_repos_git] repository type
+* Azure DevOps Services is used with a [Azure Repos Git][azure_repos_git] or [GitHub][github_repos] repository type
   * Azure DevOps Server versions are not guaranteed to work at this time
-  * GitHub and Bitbucket Cloud hosted repositories are not supported at this time
-* An [Azure token][azure_auth] with API access
+  * Bitbucket Cloud hosted repositories are not supported at this time
+* An [Azure token][azure_auth] with API access, when the build repository is [Azure Repos Git][azure_repos_git]
   * Can be the default `System.AccessToken` provided automatically at the start of each pipeline build
     * The [scoped build identity][build_scope] using this token needs the `Contribute to pull requests` permission
     * See documentation for using the [token][access_token] and setting it's [job authorization scope][auth_scope]
-  * Can be a personal access token (PAT) - see [documentation][PAT]
+  * Can be a personal access token (PAT) - see [documentation][AZP_PAT]
     * Needs at least the `Pull Request Threads` scope (read & write)
     * Consider using a service account for this token
+* A [GitHub PAT][GH_PAT] with API access, when the build repository is [GitHub][github_repos]
+  * Can be a fine-grained PAT
+    * Needs repository access and permissions: read access to `metadata` and read/write access to `pull requests`
+    * See [permissions required for fine-grained PATs][fine_pats]
+  * Can be a classic PAT
+    * Needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used
+    * See [documentation][scopes]
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
@@ -55,14 +70,15 @@ The pre-requisites for using this image are:
 * A `.phylum_project` file exists at the root of the repository
   * See [`phylum project`][phylum_project] and [`phylum project create`][phylum_project_create] command documentation
 
-[risk_domains]: https://docs.phylum.io/docs/phylum-package-score#risk-domains
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
-[azure_repos_git]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git
 [azure_auth]: https://learn.microsoft.com/azure/devops/integrate/get-started/authentication/authentication-guidance
 [build_scope]: https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#scoped-build-identities
 [access_token]: https://learn.microsoft.com/azure/devops/pipelines/build/variables#systemaccesstoken
 [auth_scope]: https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#job-authorization-scope
-[PAT]: https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
+[AZP_PAT]: https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
+[GH_PAT]: https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+[fine_pats]: https://docs.github.com/rest/overview/permissions-required-for-fine-grained-personal-access-tokens
+[scopes]: https://docs.github.com/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
@@ -90,7 +106,8 @@ jobs:
         displayName: Analyze dependencies with Phylum
         env:
           PHYLUM_API_KEY: $(PHYLUM_TOKEN)
-          AZURE_TOKEN: $(AZURE_PAT)
+          AZURE_TOKEN: $(AZURE_PAT)     # For Azure repos only
+          GITHUB_TOKEN: $(GITHUB_PAT)   # For GitHub repos only
 ```
 
 This single stage pipeline configuration contains a single container job named `Phylum`, triggered to run on pushes
@@ -101,7 +118,8 @@ Let's take a deeper dive into each part of the configuration:
 
 ### Pipeline control
 
-Choose when to run the pipeline. See the [YAML schema trigger definition][yaml_trigger] documentation for more detail.
+Choose when to run the pipeline. See the YAML schema [trigger definition][yaml_trigger] and [pr definition][yaml_pr]
+documentation for more detail.
 
 ```yaml
 # This is a CI trigger that will cause the
@@ -110,14 +128,27 @@ trigger:
   - main
 ```
 
-It is recommended to also enable PR validation for the target trigger branch(es). To do so, navigate to the branch
-policies for the desired branch (`main` in this example), and configure the [Build validation policy][build_validation]
-for that branch. For more information, see the documentation on [PR triggers for Azure Repos Git][pr_triggers] hosted
-repositories or, more broadly, [events that trigger pipelines][triggers].
+It is recommended to also enable PR validation for the target trigger branch(es). To do so for GitHub repos, use
+the `pr` keyword. See the YAML schema [pr definition][yaml_pr] documentation for more detail.
+
+```yaml
+# This is a PR trigger that will cause the pipeline to run when
+# a pull request is opened with `main` as the target branch.
+# NOTE: This has no affect for Azure Repos Git based repositories
+pr:
+  - main
+```
+
+To enable PR validation for Azure Repos Git, navigate to the branch policies for the desired branch
+(`main` in this example), and configure the [Build validation policy][build_validation] for that branch.
+For more information, see the documentation on [PR triggers for Azure Repos Git][az_pr_triggers] hosted repositories,
+[PR triggers for GitHub][gh_pr_triggers], or more broadly [events that trigger pipelines][triggers].
 
 [yaml_trigger]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/trigger
+[yaml_pr]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/pr
 [build_validation]: https://learn.microsoft.com/azure/devops/repos/git/branch-policies#build-validation
-[pr_triggers]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git#pr-triggers
+[az_pr_triggers]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git#pr-triggers
+[gh_pr_triggers]: https://learn.microsoft.com/azure/devops/pipelines/repos/github#pr-triggers
 [triggers]: https://learn.microsoft.com/azure/devops/pipelines/build/triggers
 
 ### Job names
@@ -279,7 +310,10 @@ A [Phylum token][phylum_tokens] with API access is required to perform analysis 
 See also [`phylum auth register`][phylum_register] command documentation and consider using a bot or group account
 for this token.
 
-An Azure DevOps token with API access is required to use the API (e.g., to post notes/comments).
+#### Azure Repos Git Build Repositories
+
+An Azure DevOps token with API access is required to use the API (e.g., to post notes/comments) when the build
+repository is [Azure Repos Git][azure_repos_git].
 This can be the default `System.AccessToken` provided automatically at the start of each pipeline build for the
 [scoped build identity][build_scope] or a personal access token (PAT).
 
@@ -302,10 +336,24 @@ identity, follow these steps:
 See the Azure DevOps documentation for [using the `System.AccessToken`][access_token] and setting it's
 [job authorization scope][auth_scope].
 
-Values for the `PHYLUM_API_KEY` and `AZURE_TOKEN` environment variable (e.g., `PHYLUM_TOKEN` and `AZURE_PAT`
-in the example here) can come from the pipeline UI, a variable group, or an Azure Key Vault. View the full
-[documentation for how to set secret variables][secret_variables] for more information.
-Since these tokens are sensitive, **care should be taken to protect them appropriately**.
+#### GitHub Build Repositories
+
+A [GitHub PAT][GH_PAT] with API access is required to use the API (e.g., to post notes/comments) when the build
+repository is [GitHub][github_repos].
+This can be a fine-grained or classic PAT.
+
+If using a fine-grained PAT, it will need repository access and permissions for read access to `metadata` and
+read/write access to `pull requests`. See [permissions required for fine-grained PATs][fine_pats] for more info.
+
+If using a classic PAT, it will need the `repo` scope or minimally the `public_repo` scope if private
+repositories are not used. See [documentation for scopes][scopes] for more info.
+
+#### Setting Values
+
+Values for the `PHYLUM_API_KEY` and either `AZURE_TOKEN` or `GITHUB_TOKEN` environment variable (e.g., `PHYLUM_TOKEN`
+and one of either `AZURE_PAT` or `GITHUB_PAT` in the example here) can come from the pipeline UI, a variable group,
+or an Azure Key Vault. View the full [documentation for how to set secret variables][secret_variables] for more
+information. Since these tokens are sensitive, **care should be taken to protect them appropriately**.
 
 [azure_pat]: https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
 [secret_variables]: https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
@@ -320,7 +368,8 @@ Since these tokens are sensitive, **care should be taken to protect them appropr
           # https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
           PHYLUM_API_KEY: $(PHYLUM_TOKEN)
 
-          # NOTE: These are examples. Only one `AZURE_TOKEN` entry line is expected.
+          # NOTE: These are examples. Only one `AZURE_TOKEN` entry line is expected, and
+          #       only when the build repository is hosted in Azure Repos Git.
           #
           # Use the `System.AccessToken` provided automatically at the start of each pipeline build.
           # This value does not have to be set as a secret variable since it is provided by default.
@@ -330,6 +379,13 @@ Since these tokens are sensitive, **care should be taken to protect them appropr
           # This value (`AZURE_PAT`) will need to be set as a secret variable:
           # https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
           AZURE_TOKEN: $(AZURE_PAT)
+
+          # NOTE: A `GITHUB_TOKEN` entry is only needed for GitHub hosted build repositories.
+          #
+          # Use a personal access token (PAT).
+          # This value (`GITHUB_PAT`) will need to be set as a secret variable:
+          # https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
+          GITHUB_TOKEN: $(GITHUB_PAT)
 ```
 
 ## Alternatives

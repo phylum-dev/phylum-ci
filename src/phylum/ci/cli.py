@@ -117,7 +117,8 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
         if "failed threshold requirements" in err.stderr:
             analysis_result = err.stdout
         else:
-            print(f" [!] stderr: {err.stderr}")
+            print(f" [!] stdout:\n{err.stdout}")
+            print(f" [!] stderr:\n{err.stderr}")
             raise
     analysis = json.loads(analysis_result)
     return analysis
