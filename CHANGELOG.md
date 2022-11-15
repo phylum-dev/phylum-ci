@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.19.0 (2022-11-15)
+### Feature
+* Extend Azure Pipelines integration to support GitHub repos ([#160](https://github.com/phylum-dev/phylum-ci/issues/160)) ([`39e80ac`](https://github.com/phylum-dev/phylum-ci/commit/39e80ac1c98ceb74056bfe3de60c3043a4db66a8))
+
 ## v0.18.0 (2022-11-04)
 ### Feature
 * Add Python 3.11 support ([#157](https://github.com/phylum-dev/phylum-ci/issues/157)) ([`815c368`](https://github.com/phylum-dev/phylum-ci/commit/815c3683b619e910efc3965ddd3f754fa3a11168))
