@@ -43,7 +43,7 @@ The Azure Pipelines environment is primarily supported through the use of a Dock
 The pre-requisites for using this image are:
 
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
-* Azure DevOps Services is used with a [Azure Repos Git][azure_repos_git] or [GitHub][github_repos] repository type
+* Azure DevOps Services is used with an [Azure Repos Git][azure_repos_git] or [GitHub][github_repos] repository type
   * Azure DevOps Server versions are not guaranteed to work at this time
   * Bitbucket Cloud hosted repositories are not supported at this time
 * An [Azure token][azure_auth] with API access, when the build repository is [Azure Repos Git][azure_repos_git]
@@ -92,6 +92,8 @@ Phylum analysis of dependencies can be added to existing pipelines or on it's ow
 
 ```yaml
 trigger:
+  - main
+pr:
   - main
 
 jobs:
