@@ -1,9 +1,11 @@
 """"Test the phylum-init command line interface (CLI)."""
 import subprocess
 import sys
+from pathlib import Path
 
 from phylum import __version__
-from phylum.init import SCRIPT_NAME
+from phylum.init import SCRIPT_NAME, sig
+from phylum.init.cli import save_file_from_url
 
 from ..constants import PYPROJECT
 
@@ -37,3 +39,11 @@ def test_version_option():
     assert not ret.stderr, "Nothing should be written to stderr"
     assert ret.returncode == 0, "A non-successful return code was provided"
     assert ret.stdout == expected_output, "Output did not match expected input"
+
+
+def test_phylum_pubkey_is_constant(tmp_path):
+    """Ensure the RSA public key in use by Phylum has not changed."""
+    phylum_pubkey_url = "https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub"
+    downloaded_key_path: Path = tmp_path / "signing-key.pub"
+    save_file_from_url(phylum_pubkey_url, downloaded_key_path)
+    assert downloaded_key_path.read_bytes() == sig.PHYLUM_RSA_PUBKEY, "The key should not be changing"
