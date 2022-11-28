@@ -1,8 +1,7 @@
 """Verify Phylum generated digital signatures.
 
-This module is meant to be a quick and dirty means of verifying RSA signatures in Python.
-It makes use of the hazardous materials layer of the `cryptography` library, but does so
-in a way that closely follows the example documentation:
+This module is meant to be a simple means of verifying RSA signatures in Python. It makes use of the hazardous materials
+layer of the `cryptography` library, but does so in a way that closely follows the example documentation:
 
 https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#verification
 
@@ -13,6 +12,16 @@ There are a number of assumptions:
 * The RSA signature was created with the PKCS1 v1.5 padding scheme
 * The files to be verified were created by Phylum, Inc.
 * The source of the `.signature` files is a trusted location, controlled by Phylum, Inc. for it's CLI releases
+
+If these assumptions are not met, the signature verification will fail and the CLI install will exit with a message and
+a non-zero return code. The Phylum RSA public key is hard-coded in this module on purpose. It helps to limit network
+calls to GitHub, which can be a source of failure. It also has the advantage of "spreading" the public key to multiple
+locations so that a change to it (malicious or benign) will require access and coordination to each of those sources.
+It is understood that this method is not fool proof but should help to identify failures to the Phylum devs sooner.
+
+A functional test exists to check that the hard-coded signature matches the one hosted at
+https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub since that is where the quickstart
+documentation directs CLI users.
 """
 from pathlib import Path
 from textwrap import dedent
@@ -55,19 +64,20 @@ def verify_sig(file_path: Path, sig_path: Path) -> None:
         if isinstance(phylum_public_key, rsa.RSAPublicKey):
             phylum_rsa_public_key: rsa.RSAPublicKey = phylum_public_key
         else:
-            raise RuntimeError(f"The public key was expected to be RSA but instead got: {type(phylum_public_key)}")
+            raise SystemExit(f" [!] The public key was expected to be RSA but instead got: {type(phylum_public_key)}")
     except UnsupportedAlgorithm as err:
         openssl_ver = backend.openssl_version_text()
-        msg = f"The serialized key type is not supported by the OpenSSL version `cryptography` is using: {openssl_ver}"
-        raise RuntimeError(msg) from err
+        msg = f" [!] Serialized key type is not supported by the OpenSSL version `cryptography` is using: {openssl_ver}"
+        raise SystemExit(msg) from err
     except ValueError as err:
-        raise RuntimeError("The PEM data's structure could not be decoded successfully") from err
+        raise SystemExit(" [!] The PEM data's structure could not be decoded successfully") from err
 
     # Confirm the data from `file_path` with the signature from the `sig_path`
     try:
         print(f" [*] Verifying {file_path} with signature from {sig_path} ...", end="")
+        # NOTE: The verify method has no return value, but will raise an exception when the signature does not validate
         phylum_rsa_public_key.verify(sig_path.read_bytes(), file_path.read_bytes(), padding.PKCS1v15(), hashes.SHA256())
         print("SUCCESS", flush=True)
     except InvalidSignature as err:
         print("FAIL", flush=True)
-        raise RuntimeError("The signature could not be verified") from err
+        raise SystemExit(" [!] The signature could not be verified and may be invalid") from err

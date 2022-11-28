@@ -119,7 +119,7 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
         else:
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
-            raise
+            raise SystemExit(f" [!] {err}") from err
     analysis = json.loads(analysis_result)
     return analysis
 

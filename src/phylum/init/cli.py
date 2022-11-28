@@ -124,7 +124,7 @@ def is_supported_version(version: str) -> bool:
         provided_version = Version(canonicalize_version(version))
         min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
     except InvalidVersion as err:
-        raise ValueError("An invalid version was provided") from err
+        raise SystemExit(f" [!] An invalid version was provided: {version}") from err
 
     return provided_version >= min_supported_version
 
