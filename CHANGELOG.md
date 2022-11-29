@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.20.0 (2022-11-29)
+### Feature
+* Support RSA SHA256 signature verification in `phylum-init` ([#165](https://github.com/phylum-dev/phylum-ci/issues/165)) ([`4fad7dd`](https://github.com/phylum-dev/phylum-ci/commit/4fad7ddac071de506e0ec684d31b10e4e658ccca))
+
+### Breaking
+* CLI installs prior to v3.12.0 are no longer supported. BREAKING CHANGE: CLI installs and upgrades can no longer be confirmed with `.minisig` minisign signatures and must instead use `.signature` RSA SHA256 based signatures. ([`4fad7dd`](https://github.com/phylum-dev/phylum-ci/commit/4fad7ddac071de506e0ec684d31b10e4e658ccca))
+
 ## v0.19.0 (2022-11-15)
 ### Feature
 * Extend Azure Pipelines integration to support GitHub repos ([#160](https://github.com/phylum-dev/phylum-ci/issues/160)) ([`39e80ac`](https://github.com/phylum-dev/phylum-ci/commit/39e80ac1c98ceb74056bfe3de60c3043a4db66a8))
