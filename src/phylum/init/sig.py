@@ -17,7 +17,7 @@ If these assumptions are not met, the signature verification will fail and the C
 a non-zero return code. The Phylum RSA public key is hard-coded in this module on purpose. It helps to limit network
 calls to GitHub, which can be a source of failure. It also has the advantage of "spreading" the public key to multiple
 locations so that a change to it (malicious or benign) will require access and coordination to each of those sources.
-It is understood that this method is not fool proof but should help to identify failures to the Phylum devs sooner.
+It is understood that this method is not fool proof but should help the Phylum devs identify failures.
 
 A functional test exists to check that the hard-coded signature matches the one hosted at
 https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub since that is where the quickstart
