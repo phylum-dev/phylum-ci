@@ -15,6 +15,8 @@ from typing import List, Optional, Tuple
 import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
+from ruamel.yaml import YAML
+
 from phylum import __version__
 from phylum.constants import (
     MIN_CLI_VER_FOR_INSTALL,
@@ -24,8 +26,7 @@ from phylum.constants import (
     TOKEN_ENVVAR_NAME,
 )
 from phylum.init import SCRIPT_NAME
-from phylum.init.sig import verify_minisig
-from ruamel.yaml import YAML
+from phylum.init.sig import verify_sig
 
 
 def get_phylum_settings_path():
@@ -123,7 +124,7 @@ def is_supported_version(version: str) -> bool:
         provided_version = Version(canonicalize_version(version))
         min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
     except InvalidVersion as err:
-        raise ValueError("An invalid version was provided") from err
+        raise SystemExit(f" [!] An invalid version was provided: {version}") from err
 
     return provided_version >= min_supported_version
 
@@ -187,7 +188,7 @@ def get_target_triple():
     return f"{arch}-{plat}"
 
 
-def save_file_from_url(url, path):
+def save_file_from_url(url: str, path: Path) -> None:
     """Save a file from a given URL to a local file path, in binary mode."""
     print(f" [*] Getting {url} file ...", end="")
     req = requests.get(url, timeout=REQ_TIMEOUT)
@@ -370,19 +371,19 @@ def main(args=None):
         raise SystemExit(f" [!] The identified target triple `{target_triple}` is not supported for release {tag_name}")
 
     archive_name = f"phylum-{target_triple}.zip"
-    minisig_name = f"{archive_name}.minisig"
+    sig_name = f"{archive_name}.signature"
     archive_url = get_archive_url(tag_name, archive_name)
-    minisig_url = f"{archive_url}.minisig"
+    sig_url = f"{archive_url}.signature"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = pathlib.Path(temp_dir)
         archive_path = temp_dir_path / archive_name
-        minisig_path = temp_dir_path / minisig_name
+        sig_path = temp_dir_path / sig_name
 
         save_file_from_url(archive_url, archive_path)
-        save_file_from_url(minisig_url, minisig_path)
+        save_file_from_url(sig_url, sig_path)
 
-        verify_minisig(archive_path, minisig_path)
+        verify_sig(archive_path, sig_path)
 
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:

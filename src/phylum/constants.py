@@ -1,13 +1,12 @@
 """Provide constants for use throughout the package."""
 
 # This is the minimum CLI version supported for new installs.
-# Linux platform support in the CLI was changed from `unknown-linux-musl` to `unknown-linux-gnu` starting with
-# v3.8.0-rc2, changing the artifact names available to download and install in a non-backwards compatible manner.
-MIN_CLI_VER_FOR_INSTALL = "v3.8.0-rc2"
+# `--label` was added as a long form option to the analyze command starting with v3.12.0
+MIN_CLI_VER_FOR_INSTALL = "v3.12.0"
 
 # This is the minimum CLI version supported for existing installs.
-# The `parse` command was added to the CLI in v3.3.0-rc1 and is relied upon to normalize packages in lockfiles.
-MIN_CLI_VER_INSTALLED = "v3.3.0-rc1"
+# `--label` was added as a long form option to the analyze command starting with v3.12.0
+MIN_CLI_VER_INSTALLED = "v3.12.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
