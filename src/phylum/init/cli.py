@@ -19,6 +19,7 @@ from ruamel.yaml import YAML
 
 from phylum import __version__
 from phylum.constants import (
+    GITHUB_API_VERSION,
     MIN_CLI_VER_FOR_INSTALL,
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
@@ -87,7 +88,10 @@ def get_latest_version():
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
 
-    headers = {"Accept": "application/vnd.github+json"}
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": GITHUB_API_VERSION,
+    }
     req = requests.get(github_api_url, headers=headers, timeout=REQ_TIMEOUT)
     req.raise_for_status()
     req_json = req.json()
@@ -105,7 +109,10 @@ def supported_releases() -> List[str]:
     # API Reference: https://docs.github.com/en/rest/releases/releases#list-releases
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases"
 
-    headers = {"Accept": "application/vnd.github+json"}
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": GITHUB_API_VERSION,
+    }
     query_params = {"per_page": 100}
     req = requests.get(github_api_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
     req.raise_for_status()
@@ -147,7 +154,10 @@ def supported_targets(release_tag: str) -> List[str]:
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
 
-    headers = {"Accept": "application/vnd.github+json"}
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": GITHUB_API_VERSION,
+    }
     req = requests.get(github_api_url, headers=headers, timeout=REQ_TIMEOUT)
     req.raise_for_status()
     req_json = req.json()

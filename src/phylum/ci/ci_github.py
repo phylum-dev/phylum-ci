@@ -21,7 +21,7 @@ import requests
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
-from phylum.constants import REQ_TIMEOUT
+from phylum.constants import GITHUB_API_VERSION, REQ_TIMEOUT
 
 PAT_ERR_MSG = """
 A GitHub token with API access is required to use the API (e.g., to post comments).
@@ -158,7 +158,8 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     or if the most recently posted Phylum comment does not contain the same content.
     """
     headers = {
-        "Accept": "application/vnd.github.v3+json",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": GITHUB_API_VERSION,
         "Authorization": f"token {github_token}",
     }
 
