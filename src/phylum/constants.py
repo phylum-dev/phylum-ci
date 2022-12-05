@@ -48,6 +48,10 @@ SUPPORTED_LOCKFILES = {
     # Java
     "effective-pom.xml": "mvn",
     "gradle.lockfile": "gradle",
+    # Go
+    "go.sum": "go",
+    # Rust
+    "Cargo.lock": "cargo",
 }
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
