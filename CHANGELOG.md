@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.21.0 (2022-12-06)
+### Feature
+* Add `go.sum` and `Cargo.lock` as supported lockfiles ([#169](https://github.com/phylum-dev/phylum-ci/issues/169)) ([`187a863`](https://github.com/phylum-dev/phylum-ci/commit/187a8634a9c96fc10812f8581087b58f218c9d60))
+
 ## v0.20.0 (2022-11-29)
 ### Feature
 * Support RSA SHA256 signature verification in `phylum-init` ([#165](https://github.com/phylum-dev/phylum-ci/issues/165)) ([`4fad7dd`](https://github.com/phylum-dev/phylum-ci/commit/4fad7ddac071de506e0ec684d31b10e4e658ccca))
