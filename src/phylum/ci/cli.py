@@ -275,8 +275,8 @@ def main(args: Optional[Sequence[str]] = None) -> int:
 
     # Bail early if there are no changes to the lockfile
     print(f" [+] lockfile in use: {ci_env.lockfile}")
-    if parsed_args.force_analysis:
-        print(" [+] `--force-analysis` flag specified. Proceeding with analysis ...")
+    if ci_env.force_analysis:
+        print(" [+] Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     else:
         if ci_env.is_lockfile_changed:
             print(" [+] The lockfile has changed. Proceeding with analysis ...")

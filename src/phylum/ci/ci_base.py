@@ -83,6 +83,8 @@ class CIBase(ABC):
                     " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
                 )
 
+        self._all_deps = args.all_deps
+        self._force_analysis = args.force_analysis
         self._phylum_project = args.project
         self._phylum_group = args.group
 
@@ -115,6 +117,16 @@ class CIBase(ABC):
     def is_lockfile_changed(self) -> bool:
         """Get the lockfile's modification status."""
         return self._lockfile_changed
+
+    @property
+    def all_deps(self) -> bool:
+        """Get the status of analyzing all dependencies."""
+        return self._all_deps
+
+    @property
+    def force_analysis(self) -> bool:
+        """Get the status of forcing an analysis."""
+        return self._force_analysis
 
     @property
     def phylum_project(self) -> str:
@@ -380,7 +392,7 @@ class CIBase(ABC):
 
     def analyze(self, analysis: dict) -> ReturnCode:
         """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
-        if self.args.all_deps:
+        if self.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
             packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
