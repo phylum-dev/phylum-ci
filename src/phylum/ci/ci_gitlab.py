@@ -16,8 +16,9 @@ from typing import Optional
 
 import requests
 
-from phylum.ci.ci_base import CIBase, git_remote
+from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
+from phylum.ci.git import git_hash_object, git_remote
 from phylum.constants import REQ_TIMEOUT
 
 SHA1_ALL_ZEROES = "0000000000000000000000000000000000000000"
@@ -90,10 +91,7 @@ class CIGitLab(CIBase):
             label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_title}"
         else:
             current_branch = os.getenv("CI_COMMIT_BRANCH", "unknown-branch")
-            # This is the unique key that git uses to refer to the blob type data object for the lockfile.
-            # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-            cmd = ["git", "hash-object", str(self.lockfile)]
-            lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+            lockfile_hash_object = git_hash_object(self.lockfile)
             label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
 
         label = label.replace(" ", "-")

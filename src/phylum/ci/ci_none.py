@@ -9,7 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from phylum.ci.ci_base import CIBase, git_remote
+from phylum.ci.ci_base import CIBase
+from phylum.ci.git import git_curent_branch_name, git_hash_object, git_remote
 
 
 class CINone(CIBase):
@@ -36,16 +37,10 @@ class CINone(CIBase):
     @property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
-        cmd = ["git", "branch", "--show-current"]
-        current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
-
-        # This is the unique key that git uses to refer to the blob type data object for the lockfile.
-        # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-        cmd = ["git", "hash-object", str(self.lockfile)]
-        lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+        current_branch = git_curent_branch_name()
+        lockfile_hash_object = git_hash_object(self.lockfile)
         label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
         label = label.replace(" ", "-")
-
         return label
 
     @property
