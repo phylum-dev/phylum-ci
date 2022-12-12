@@ -31,9 +31,8 @@ def git_default_branch_name(remote: str) -> str:
     default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-    prefix_len = len(prefix)
     if default_branch_name.startswith(prefix):
-        default_branch_name = default_branch_name[prefix_len:]
+        default_branch_name = default_branch_name.replace(prefix, "", 1)
 
     print(f" [+] Default branch name: {default_branch_name}")
 
