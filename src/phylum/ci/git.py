@@ -20,6 +20,23 @@ def git_remote() -> str:
     return remote
 
 
+def git_set_remote_head(remote: str) -> None:
+    """Set the remote HEAD ref for a given remote.
+
+    Some CI environment do not set the remote HEAD. Use this function to do so.
+    It assumes git credentials are available to run the command.
+    """
+    print(" [*] Automatically setting the remote HEAD ref ...")
+    cmd = ["git", "remote", "set-head", remote, "--auto"]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as err:
+        print(f" [!] Setting the remote HEAD failed: {err}")
+        print(f" [!] stdout:\n{err.stdout}")
+        print(f" [!] stderr:\n{err.stderr}")
+        raise SystemExit(" [!] Ensure credentials are available to run git commands") from err
+
+
 def git_default_branch_name(remote: str) -> str:
     """Get the default branch name and return it.
 
@@ -28,7 +45,14 @@ def git_default_branch_name(remote: str) -> str:
     """
     prefix = f"refs/remotes/{remote}/"
     cmd = ["git", "symbolic-ref", f"{prefix}HEAD"]
-    default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+    try:
+        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+    except subprocess.CalledProcessError:
+        # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
+        # the except block, is due to wanting to minimize calling commands that require git credentials.
+        print(" [!] Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
+        git_set_remote_head(remote)
+        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     if default_branch_name.startswith(prefix):

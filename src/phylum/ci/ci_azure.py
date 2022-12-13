@@ -26,9 +26,10 @@ from typing import Optional
 
 import requests
 
-from phylum.ci.ci_base import CIBase, git_remote
+from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
 from phylum.ci.constants import PHYLUM_HEADER
+from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
 from phylum.constants import REQ_TIMEOUT
 
 AZURE_PAT_ERR_MSG = """
