@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
@@ -123,9 +124,7 @@ class CIAzure(CIBase):
         label = label.replace(" ", "-")
         return label
 
-    # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
-    #       https://github.com/phylum-dev/phylum-ci/issues/18
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         # There is no single predefined variable available to provide the PR base SHA.

@@ -16,6 +16,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from backports.cached_property import cached_property
 from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
@@ -188,7 +189,7 @@ class CIBase(ABC):
         """
         raise NotImplementedError()
 
-    @property
+    @cached_property
     @abstractmethod
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit.
@@ -242,9 +243,7 @@ class CIBase(ABC):
         """
         print(f" [+] Analysis output:\n{render(self.analysis_output)}")
 
-    # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
-    #       https://github.com/phylum-dev/phylum-ci/issues/18
-    @property
+    @cached_property
     def current_lockfile_packages(self) -> Packages:
         """Get the current lockfile packages.
 

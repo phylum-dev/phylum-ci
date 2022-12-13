@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from backports.cached_property import cached_property
+
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name, git_hash_object, git_remote
 
@@ -43,7 +45,7 @@ class CINone(CIBase):
         label = label.replace(" ", "-")
         return label
 
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         remote = git_remote()

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
@@ -97,7 +98,7 @@ class CIGitLab(CIBase):
         label = label.replace(" ", "-")
         return label
 
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         # Reference: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html

@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
@@ -101,7 +102,7 @@ class CIGitHub(CIBase):
         label = label.replace(" ", "-")
         return label
 
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
         return self.pr_event.get("pull_request", {}).get("base", {}).get("sha")
