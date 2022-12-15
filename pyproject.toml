@@ -47,14 +47,15 @@ phylum-ci = "phylum.ci.cli:script_main"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
-# TODO: Remove this dependency when Python 3.7 support is removed
-#       https://github.com/phylum-dev/phylum-ci/issues/18
-importlib-metadata = {version = "*", python = "<3.8"}
 requests = "*"
 cryptography = "*"
 packaging = "*"
 "ruamel.yaml" = "*"
 connect-markdown-renderer = "*"
+# TODO: Remove these deps when Python 3.7 support is removed: importlib-metadata and backports-cached-property
+#       https://github.com/phylum-dev/phylum-ci/issues/18
+importlib-metadata = {version = "*", python = "<3.8"}
+backports-cached-property = "*"
 
 [tool.poetry.group.test]
 optional = true

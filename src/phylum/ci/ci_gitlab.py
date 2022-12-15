@@ -8,6 +8,7 @@ GitLab References:
   * https://docs.gitlab.com/ee/api/notes.html#merge-requests
 """
 import os
+import shlex
 import subprocess
 from argparse import Namespace
 from functools import lru_cache
@@ -15,12 +16,12 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from backports.cached_property import cached_property
 
-from phylum.ci.ci_base import CIBase, git_remote
+from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
+from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
 from phylum.constants import REQ_TIMEOUT
-
-SHA1_ALL_ZEROES = "0000000000000000000000000000000000000000"
 
 
 @lru_cache(maxsize=1)
@@ -58,7 +59,7 @@ class CIGitLab(CIBase):
 
         These are the current pre-requisites for operating within a GitLab CI Environment:
           * The environment must actually be within GitLab CI
-          * A GitLab token providing API access is available
+          * A GitLab token providing API access is available when operating in an MR pipeline
         """
         super()._check_prerequisites()
 
@@ -90,49 +91,55 @@ class CIGitLab(CIBase):
             label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_title}"
         else:
             current_branch = os.getenv("CI_COMMIT_BRANCH", "unknown-branch")
-            # This is the unique key that git uses to refer to the blob type data object for the lockfile.
-            # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-            cmd = ["git", "hash-object", str(self.lockfile)]
-            lockfile_hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+            lockfile_hash_object = git_hash_object(self.lockfile)
             label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
 
         label = label.replace(" ", "-")
         return label
 
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit."""
-        # Reference: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        """Find the common lockfile ancestor commit.
+
+        Some pre-defined variables are used: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        """
+        remote = git_remote()
+
         if is_in_mr():
             common_ancestor_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
-        else:
-            # CI_COMMIT_BEFORE_SHA contains the previous latest commit present on the branch *pipeline*.
-            # It will always be all zeroes in merge request pipelines.
-            # It will be all zeroes for the first pipeline run in branch pipelines,
-            # whether or not the commit the pipeline runs on is the first commit in the branch.
-            # If there are multiple commits between pipeline runs (e.g., push a collection of commits), the value
-            # points to the commit of the previous pipeline run, skipping over all the intermediate commits.
-            # Think of this as a pointer to the previous commit **that ran in the same branch pipeline**.
-            common_ancestor_commit = os.getenv("CI_COMMIT_BEFORE_SHA")
+            return common_ancestor_commit
 
-        # There is not an environment variable provided by GitLab CI to show or determine the common ancestor commit
-        # when running in a branch pipeline, on the initial run of that pipeline. Fallback to computing it manually.
-        if common_ancestor_commit == SHA1_ALL_ZEROES:
-            print(" [-] Detected initial branch pipeline run")
-            remote = git_remote()
-            # The default branch is found this way because there is a GitLab runner bug where HEAD is not available:
-            # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4078
-            default_branch = os.getenv("CI_DEFAULT_BRANCH", "HEAD")
-            # This is a best effort attempt since it is finding the merge base between the current commit
-            # and the default branch instead of finding the exact commit from which the branch was created.
-            cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/{default_branch}"]
-            try:
-                common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
-            except subprocess.CalledProcessError as err:
-                print(f" [!] The common lockfile ancestor commit could not be found: {err}")
-                print(f" [!] stdout:\n{err.stdout}")
-                print(f" [!] stderr:\n{err.stderr}")
-                common_ancestor_commit = None
+        src_branch_name = os.getenv("CI_COMMIT_BRANCH")
+        if not src_branch_name:
+            raise SystemExit(" [!] The CI_COMMIT_BRANCH environment variable must exist and be set")
+        src_branch = f"refs/remotes/{remote}/{src_branch_name}"
+
+        # The default branch name is used instead of `HEAD` because of a GitLab runner bug where HEAD is not available:
+        # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4078
+        default_branch_name = os.getenv("CI_DEFAULT_BRANCH")
+        if not default_branch_name:
+            default_branch_name = git_default_branch_name(remote)
+        default_branch = f"refs/remotes/{remote}/{default_branch_name}"
+
+        if src_branch == default_branch:
+            print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+            self._force_analysis = True
+            self._all_deps = True
+
+        # This is a best effort attempt since it is finding the merge base between the current commit
+        # and the default branch instead of finding the exact commit from which the branch was created.
+        cmd = ["git", "merge-base", src_branch, default_branch]
+        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+        print(f" [*] Finding common lockfile ancestor commit with command: {shell_escaped_cmd}")
+        try:
+            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        except subprocess.CalledProcessError as err:
+            ref_url = "https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"
+            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] stdout:\n{err.stdout}")
+            print(f" [!] stderr:\n{err.stderr}")
+            print(f" [!] Ensure the git strategy is set to `clone` for repo checkouts: {ref_url}")
+            common_ancestor_commit = None
 
         return common_ancestor_commit
 

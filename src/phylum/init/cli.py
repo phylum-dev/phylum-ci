@@ -57,9 +57,8 @@ def get_phylum_cli_version(cli_path: Path) -> str:
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     prefix = "phylum "
-    prefix_len = len(prefix)
     if version.startswith(prefix):
-        version = version[prefix_len:]
+        version = version.replace(prefix, "", 1)
 
     return version
 

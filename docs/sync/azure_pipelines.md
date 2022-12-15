@@ -11,9 +11,14 @@ Azure Pipelines [supports several different source repositories][supported_repos
 hosted on [Azure Repos Git][azure_repos_git] and [GitHub][github_repos].
 
 Once configured for a repository, the Azure Pipelines integration will provide analysis of project dependencies from
-a lockfile during a Pull Request (PR) and output the results as a comment in a thread on the PR.
-The CI job will return an error (i.e., fail the pipeline) if any of the newly added/modified dependencies from the
-PR fail to meet the project risk thresholds for any of the five Phylum risk domains:
+a lockfile. This can happen in a branch pipeline run from a CI trigger or in a Pull Request (PR) pipeline run from a
+PR trigger. For PR triggered pipelines, analyzed dependencies will include any that are added/modified in the PR.
+For CI triggered pipelines, the analyzed dependencies will be determined by comparing the lockfile in the branch to
+the default branch. **All** dependencies will be analyzed when the CI triggered pipeline is run on the default branch.
+
+The results will be provided in the pipeline logs and provided as a comment in a thread on the PR. The CI job will
+return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the project risk thresholds
+for any of the five Phylum risk domains:
 
 * Vulnerability (aka `vul`)
 * Malicious Code (aka `mal`)
@@ -46,14 +51,16 @@ The pre-requisites for using this image are:
 * Azure DevOps Services is used with an [Azure Repos Git][azure_repos_git] or [GitHub][github_repos] repository type
   * Azure DevOps Server versions are not guaranteed to work at this time
   * Bitbucket Cloud hosted repositories are not supported at this time
-* An [Azure token][azure_auth] with API access, when the build repository is [Azure Repos Git][azure_repos_git]
+* An [Azure token][azure_auth] with API access
+  * This is only required when the build repository is [Azure Repos Git][azure_repos_git] and PR triggers are enabled
   * Can be the default `System.AccessToken` provided automatically at the start of each pipeline build
     * The [scoped build identity][build_scope] using this token needs the `Contribute to pull requests` permission
     * See documentation for using the [token][access_token] and setting it's [job authorization scope][auth_scope]
   * Can be a personal access token (PAT) - see [documentation][AZP_PAT]
     * Needs at least the `Pull Request Threads` scope (read & write)
     * Consider using a service account for this token
-* A [GitHub PAT][GH_PAT] with API access, when the build repository is [GitHub][github_repos]
+* A [GitHub PAT][GH_PAT] with API access
+  * This is only required when the build repository is [GitHub][github_repos] and PR triggers are enabled
   * Can be a fine-grained PAT
     * Needs repository access and permissions: read access to `metadata` and read/write access to `pull requests`
     * See [permissions required for fine-grained PATs][fine_pats]
@@ -104,6 +111,7 @@ jobs:
     steps:
       - checkout: self
         fetchDepth: 0
+        persistCredentials: true
       - script: phylum-ci
         displayName: Analyze dependencies with Phylum
         env:
@@ -188,7 +196,7 @@ documentation for more detail.
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.15.0-CLIv3.10.0`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.21.0-CLIv4.0.1`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -197,8 +205,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.15.0-CLIv3.10.0 | jq .Descriptor.digest
-"sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.21.0-CLIv4.0.1 | jq .Descriptor.digest
+"sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -210,10 +218,10 @@ For instance, at the time of this writing, all of these tag references pointed t
     container: phylumio/phylum-ci:latest
 
     # Use a specific release version of the `phylum-ci` package
-    container: phylumio/phylum-ci:0.15.0-CLIv3.10.0
+    container: phylumio/phylum-ci:0.21.0-CLIv4.0.1
 
     # Use a specific image with it's SHA256 digest
-    container: phylumio/phylum-ci@sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e
+    container: phylumio/phylum-ci@sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -231,14 +239,20 @@ specified here, with `fetchDepth` set to `0`. It is also possible to disable the
 [pipeline settings UI][pipeline_settings]. See the [YAML schema steps.checkout definition][yaml_checkout] documentation
 for more detail.
 
-[pipeline_settings]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git#shallow-fetch
-[yaml_checkout]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
+In order to support CI triggers, certain git operations are needed to determine the default branch name and set the
+remote HEAD ref for it since Azure Pipelines does not do so during repository checkout. These operations require git
+credentials to be available after the initial fetch, which is done with the `persistCredentials` property. This property
+is not required if CI triggers are disabled (e.g., via `trigger: none`).
 
 ```yaml
       # Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
       - checkout: self
         fetchDepth: 0
+        persistCredentials: true    # Needed only for CI triggers
 ```
+
+[pipeline_settings]: https://learn.microsoft.com/azure/devops/pipelines/repos/azure-repos-git#shallow-fetch
+[yaml_checkout]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
 
 ### Script arguments
 
@@ -315,7 +329,7 @@ for this token.
 #### Azure Repos Git Build Repositories
 
 An Azure DevOps token with API access is required to use the API (e.g., to post notes/comments) when the build
-repository is [Azure Repos Git][azure_repos_git].
+repository is [Azure Repos Git][azure_repos_git] and PR triggers are enabled.
 This can be the default `System.AccessToken` provided automatically at the start of each pipeline build for the
 [scoped build identity][build_scope] or a personal access token (PAT).
 
@@ -341,7 +355,7 @@ See the Azure DevOps documentation for [using the `System.AccessToken`][access_t
 #### GitHub Build Repositories
 
 A [GitHub PAT][GH_PAT] with API access is required to use the API (e.g., to post notes/comments) when the build
-repository is [GitHub][github_repos].
+repository is [GitHub][github_repos] and PR triggers are enabled.
 This can be a fine-grained or classic PAT.
 
 If using a fine-grained PAT, it will need repository access and permissions for read access to `metadata` and
@@ -370,8 +384,8 @@ information. Since these tokens are sensitive, **care should be taken to protect
           # https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
           PHYLUM_API_KEY: $(PHYLUM_TOKEN)
 
-          # NOTE: These are examples. Only one `AZURE_TOKEN` entry line is expected, and
-          #       only when the build repository is hosted in Azure Repos Git.
+          # NOTE: These are examples. Only one `AZURE_TOKEN` entry line is expected, and only
+          #       when the build repository is hosted in Azure Repos Git with PR triggers enabled.
           #
           # Use the `System.AccessToken` provided automatically at the start of each pipeline build.
           # This value does not have to be set as a secret variable since it is provided by default.
@@ -382,7 +396,8 @@ information. Since these tokens are sensitive, **care should be taken to protect
           # https://learn.microsoft.com/azure/devops/pipelines/process/set-secret-variables
           AZURE_TOKEN: $(AZURE_PAT)
 
-          # NOTE: A `GITHUB_TOKEN` entry is only needed for GitHub hosted build repositories.
+          # NOTE: A `GITHUB_TOKEN` entry is only needed for GitHub hosted build repositories
+          #       with PR triggers enabled.
           #
           # Use a personal access token (PAT).
           # This value (`GITHUB_PAT`) will need to be set as a secret variable:

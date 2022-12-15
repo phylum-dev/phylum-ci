@@ -17,18 +17,21 @@ Azure References:
 """
 import base64
 import os
+import shlex
 import subprocess
-import sys
 import urllib.parse
 from argparse import Namespace
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
 import requests
+from backports.cached_property import cached_property
 
-from phylum.ci.ci_base import CIBase, git_remote
+from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
 from phylum.ci.constants import PHYLUM_HEADER
+from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
 from phylum.constants import REQ_TIMEOUT
 
 AZURE_PAT_ERR_MSG = """
@@ -56,20 +59,49 @@ See the GitHub Token Documentation for more info:
 """
 
 
+@lru_cache(maxsize=1)
+def is_in_pr() -> bool:
+    """Indicate if the integration is operating in the context of a pull request pipeline.
+
+    Azure Pipelines allows for triggering pipelines to run in different contexts:
+        * On every push, for the last commit in the push (e.g., CI triggers)
+        * For pull requests (e.g., PR triggers)
+
+    There are other types of triggers but the one we really care about is PR triggers.
+    Those will mean running in a context that allows for full output in the form of
+    comments. All other triggers will mean running in a context that only provides for
+    log based output and a simple fail/succeed result.
+    Reference: https://learn.microsoft.com/azure/devops/pipelines/build/triggers
+
+    Knowing when the context is within a pull request helps to ensure the logic used
+    to determine the lockfile changes is correct. It also helps to ensure output is not
+    attempted to be posted when NOT in the context of a review.
+    """
+    # References:
+    # https://github.com/watson/ci-info/blob/master/vendors.json
+    # https://learn.microsoft.com/azure/devops/pipelines/build/variables
+    return bool(os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID"))
+
+
 class CIAzure(CIBase):
     """Provide methods for an Azure Pipelines CI environment."""
 
     def __init__(self, args: Namespace) -> None:
         super().__init__(args)
         self.ci_platform_name = "Azure Pipelines"
+        if is_in_pr():
+            print(" [-] Pipeline context: PR trigger")
+        else:
+            # There are other types of events that trigger pipelines, but only PR and CI triggers are supported.
+            # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/triggers
+            print(" [-] Pipeline context: CI trigger")
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for operating within an Azure Pipelines Environment:
           * The environment must actually be within Azure Pipelines
-          * The environment must be part of a Pull Request (PR) pipeline
-          * An token providing API access is available to match the triggering repo
+          * A token providing API access is available to match the triggering repo when operating in a PR pipeline
             * An Azure token for Azure Repos Git
             * A GitHub token for GitHub hosted repos
         """
@@ -80,9 +112,6 @@ class CIAzure(CIBase):
         # https://learn.microsoft.com/azure/devops/pipelines/build/variables
         if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI") is None:
             raise SystemExit(" [!] Must be working within the Azure Pipelines environment")
-        if os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID") is None:
-            print(" [+] Not in a Pull Request pipeline. Nothing to do. Exiting ...")
-            sys.exit(0)
 
         self.triggering_repo = os.getenv("BUILD_REPOSITORY_PROVIDER", "unknown")
         print(f" [+] Triggering repository: {self.triggering_repo}")
@@ -91,12 +120,12 @@ class CIAzure(CIBase):
             raise SystemExit(f" [!] Triggering repository `{self.triggering_repo}` not supported")
 
         azure_token = os.getenv("AZURE_TOKEN", "")
-        if not azure_token and self.triggering_repo == "TfsGit":
+        if not azure_token and self.triggering_repo == "TfsGit" and is_in_pr():
             raise SystemExit(f" [!] An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}")
         self._azure_token = azure_token
 
         github_token = os.getenv("GITHUB_TOKEN", "")
-        if not github_token and self.triggering_repo == "GitHub":
+        if not github_token and self.triggering_repo == "GitHub" and is_in_pr():
             raise SystemExit(f" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}")
         self._github_token = github_token
 
@@ -113,49 +142,87 @@ class CIAzure(CIBase):
     @property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
-        pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
-        pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref")
-        ref_prefix = "refs/heads/"
-        if pr_src_branch.startswith(ref_prefix):
-            pr_src_branch = pr_src_branch.replace(ref_prefix, "", 1)
-        label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
+        if is_in_pr():
+            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
+            pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref")
+            ref_prefix = "refs/heads/"
+            # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
+            if pr_src_branch.startswith(ref_prefix):
+                pr_src_branch = pr_src_branch.replace(ref_prefix, "", 1)
+            label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
+        else:
+            current_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "unknown-branch")
+            lockfile_hash_object = git_hash_object(self.lockfile)
+            label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
+
         label = label.replace(" ", "-")
         return label
 
-    # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
-    #       https://github.com/phylum-dev/phylum-ci/issues/18
-    @property
+    @cached_property
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit."""
-        # There is no single predefined variable available to provide the PR base SHA.
-        # Instead, it can be determined with a `git merge-base` command, like is done for the CINone implementation.
-        # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/variables
-        pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
-        pr_tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
-        if not all([pr_src_branch, pr_tgt_branch]):
-            raise SystemExit(" [!] SYSTEM_PULLREQUEST_SOURCEBRANCH and SYSTEM_PULLREQUEST_TARGETBRANCH must both exist")
+        remote = git_remote()
+
+        if is_in_pr():
+            # There is no single predefined variable available to provide the PR base SHA.
+            # Instead, it can be determined with a `git merge-base` command, like is done for the CINone implementation.
+            # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/variables
+            src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
+            tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
+            if not src_branch:
+                raise SystemExit(" [!] The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
+            if not tgt_branch:
+                raise SystemExit(" [!] The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
+            print(f" [+] SYSTEM_PULLREQUEST_SOURCEBRANCH: {src_branch}")
+            print(f" [+] SYSTEM_PULLREQUEST_TARGETBRANCH: {tgt_branch}")
+        else:
+            # Assume the working context is within a CI triggered build environment when not in a PR.
+
+            src_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "")
+            if not src_branch:
+                raise SystemExit(" [!] The BUILD_SOURCEBRANCHNAME environment variable must exist and be set")
+            print(f" [+] BUILD_SOURCEBRANCHNAME: {src_branch}")
+
+            # This is a best effort attempt since it is finding the merge base between the current commit
+            # and the default branch instead of finding the exact commit from which the branch was created.
+            tgt_branch = f"refs/remotes/{remote}/HEAD"
+
+            # If the current commit is on the default branch, then the merge base will be the same
+            # as the current commit and it won't be possible to provide a useful common lockfile
+            # ancestor commit. In this case, it is better to force analysis of the lockfile and
+            # consider *all* dependencies in analysis results instead of just the newly added ones.
+            if src_branch == git_default_branch_name(remote):
+                print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+                self._force_analysis = True
+                self._all_deps = True
 
         # Because the checkout step only fetches the bare minimum needed for the pipeline, and
         # because the PR merge commit is checked out in a "detached HEAD" state, it is necessary
         # to be explicit about the refs so that they can be found in this limited git repository.
-        remote = git_remote()
         old_ref_prefix = "refs/heads/"
         new_ref_prefix = f"refs/remotes/{remote}/"
         if self.triggering_repo == "TfsGit":
-            if pr_src_branch.startswith(old_ref_prefix):
-                pr_src_branch = pr_src_branch.replace(old_ref_prefix, new_ref_prefix, 1)
-            if pr_tgt_branch.startswith(old_ref_prefix):
-                pr_tgt_branch = pr_tgt_branch.replace(old_ref_prefix, new_ref_prefix, 1)
+            if src_branch.startswith(old_ref_prefix):
+                # This prefix should be present for PR triggers
+                src_branch = src_branch.replace(old_ref_prefix, new_ref_prefix, 1)
+            else:
+                # CI triggers provide the branch name, without any prefix
+                src_branch = f"{new_ref_prefix}{src_branch}"
+            if tgt_branch.startswith(old_ref_prefix):
+                tgt_branch = tgt_branch.replace(old_ref_prefix, new_ref_prefix, 1)
         if self.triggering_repo == "GitHub":
-            # The source and target branches from GitHub triggered repositories are simply the
-            # branch name, without any prefix (e.g., `mybranch` instead of `refs/heads/mybranch`).
-            pr_src_branch = f"{new_ref_prefix}{pr_src_branch}"
-            pr_tgt_branch = f"{new_ref_prefix}{pr_tgt_branch}"
+            # The source branch from GitHub triggered repositories are simply the branch
+            # name, without any prefix (e.g., `mybranch` instead of `refs/heads/mybranch`).
+            src_branch = f"{new_ref_prefix}{src_branch}"
+            if is_in_pr():
+                # The target branch is the same, but only when in a PR context
+                tgt_branch = f"{new_ref_prefix}{tgt_branch}"
 
-        cmd = ["git", "merge-base", pr_src_branch, pr_tgt_branch]
+        cmd = ["git", "merge-base", src_branch, tgt_branch]
+        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+        print(f" [*] Finding common lockfile ancestor commit with command: {shell_escaped_cmd}")
         try:
             common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
-            print(f" [+] Common lockfile ancestor commit: {common_ancestor_commit}")
         except subprocess.CalledProcessError as err:
             ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
             print(f" [!] The common lockfile ancestor commit could not be found: {err}")
@@ -168,20 +235,16 @@ class CIAzure(CIBase):
 
     def _is_lockfile_changed(self, lockfile: Path) -> bool:
         """Predicate for detecting if the given lockfile has changed."""
-        pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH")
-        pr_tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH")
-        pr_base_sha = self.common_lockfile_ancestor_commit
-        print(f" [+] SYSTEM_PULLREQUEST_SOURCEBRANCH: {pr_src_branch}")
-        print(f" [+] SYSTEM_PULLREQUEST_TARGETBRANCH: {pr_tgt_branch}")
-        print(f" [+] PR base SHA: {pr_base_sha}")
+        diff_base_sha = self.common_lockfile_ancestor_commit
+        print(f" [+] The common lockfile ancestor commit: {diff_base_sha}")
 
         # Assume no change when there isn't enough information to tell
-        if pr_base_sha is None:
+        if diff_base_sha is None:
             return False
 
         # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
         # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
+        cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
         ret = subprocess.run(cmd, check=False)
         if ret.returncode == 0:
             return False
@@ -200,6 +263,10 @@ class CIAzure(CIBase):
         Post output as a comment on the GitHub PR for PR triggers and GitHub hosted repos.
         """
         super().post_output()
+
+        if not is_in_pr():
+            # Can't post the output to the PR when there is no PR
+            return
 
         if self.triggering_repo == "TfsGit":
             post_azure_comment(self.azure_token, self.analysis_output)

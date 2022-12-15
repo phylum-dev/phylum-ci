@@ -16,6 +16,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from backports.cached_property import cached_property
 from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
@@ -31,22 +32,6 @@ from phylum.ci.constants import (
 from phylum.constants import MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-
-
-def git_remote() -> str:
-    """Get the git remote and return it.
-
-    This function is limited in that it will only work when there is a single remote defined.
-    A RuntimeError exception will be raised when there is not exactly one remote.
-    """
-    cmd = ["git", "remote"]
-    remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()
-    if not remotes:
-        raise RuntimeError("No git remotes configured")
-    if len(remotes) > 1:
-        raise RuntimeError("Only one git remote is supported at this time")
-    remote = remotes[0]
-    return remote
 
 
 def detect_lockfile() -> Optional[Path]:
@@ -99,6 +84,8 @@ class CIBase(ABC):
                     " [!] A lockfile is required and was not detected. Consider specifying one with `--lockfile`."
                 )
 
+        self._all_deps = args.all_deps
+        self._force_analysis = args.force_analysis
         self._phylum_project = args.project
         self._phylum_group = args.group
 
@@ -131,6 +118,16 @@ class CIBase(ABC):
     def is_lockfile_changed(self) -> bool:
         """Get the lockfile's modification status."""
         return self._lockfile_changed
+
+    @property
+    def all_deps(self) -> bool:
+        """Get the status of analyzing all dependencies."""
+        return self._all_deps
+
+    @property
+    def force_analysis(self) -> bool:
+        """Get the status of forcing an analysis."""
+        return self._force_analysis
 
     @property
     def phylum_project(self) -> str:
@@ -192,7 +189,7 @@ class CIBase(ABC):
         """
         raise NotImplementedError()
 
-    @property
+    @cached_property
     @abstractmethod
     def common_lockfile_ancestor_commit(self) -> Optional[str]:
         """Find the common lockfile ancestor commit.
@@ -246,9 +243,7 @@ class CIBase(ABC):
         """
         print(f" [+] Analysis output:\n{render(self.analysis_output)}")
 
-    # TODO: Use the `@functools.cached_property` decorator, introduced in Python 3.8, to avoid computing more than once.
-    #       https://github.com/phylum-dev/phylum-ci/issues/18
-    @property
+    @cached_property
     def current_lockfile_packages(self) -> Packages:
         """Get the current lockfile packages.
 
@@ -396,7 +391,7 @@ class CIBase(ABC):
 
     def analyze(self, analysis: dict) -> ReturnCode:
         """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
-        if self.args.all_deps:
+        if self.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
             packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
