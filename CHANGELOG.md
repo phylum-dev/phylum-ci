@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.22.0 (2022-12-15)
+### Feature
+* Support Azure Pipelines CI triggers ([#173](https://github.com/phylum-dev/phylum-ci/issues/173)) ([`7d6d859`](https://github.com/phylum-dev/phylum-ci/commit/7d6d859ad368d1ab0a933f24679e3d3c08a40eac))
+
+### Breaking
+* For GitLab branch pipelines, the analyzed dependencies are now determined by comparing the lockfile in the branch to the default branch instead of the previous commit that ran in that branch pipeline. All dependencies will be analyzed when the branch pipeline is run on the default branch. ([`7d6d859`](https://github.com/phylum-dev/phylum-ci/commit/7d6d859ad368d1ab0a933f24679e3d3c08a40eac))
+
 ## v0.21.0 (2022-12-06)
 ### Feature
 * Add `go.sum` and `Cargo.lock` as supported lockfiles ([#169](https://github.com/phylum-dev/phylum-ci/issues/169)) ([`187a863`](https://github.com/phylum-dev/phylum-ci/commit/187a8634a9c96fc10812f8581087b58f218c9d60))
