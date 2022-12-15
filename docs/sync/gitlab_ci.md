@@ -8,10 +8,14 @@ hidden: false
 ## Overview
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from a
-lockfile. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR) pipeline. The
-results will be provided in the pipeline logs and provided as a note (comment) on the MR.
-The CI job will return an error (i.e., fail the build) if any of the newly added/modified dependencies from the MR
-fail to meet the project risk thresholds for any of the five Phylum risk domains:
+lockfile. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR) pipeline. For
+MR pipelines, analyzed dependencies will include any that are added/modified in the MR. For branch pipelines, the
+analyzed dependencies will be determined by comparing the lockfile in the branch to the default branch. **All**
+dependencies will be analyzed when the branch pipeline is run on the default branch.
+
+The results will be provided in the pipeline logs and provided as a note (comment) on the MR. The CI job will
+return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the project risk
+thresholds for any of the five Phylum risk domains:
 
 * Vulnerability (aka `vul`)
 * Malicious Code (aka `mal`)
@@ -116,7 +120,7 @@ the pipeline source should be specified.
 
 It is also possible to allow for both pipeline types while ensuring only one runs at a time by using workflow
 rules to automatically [switch between branch pipelines and merge request pipelines][switch]. To do so, remove
-any job level rules related to pipeline sources and add the following workflow level rules to the configuration:
+any _job_ level rules related to pipeline sources and add the following _workflow_ level rules to the configuration:
 
 ```yaml
 workflow:
@@ -138,7 +142,7 @@ See the [GitLab CI/CD Job Control][job_control] documentation for more detail.
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.15.0-CLIv3.10.0`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.21.0-CLIv4.0.1`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -147,8 +151,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.15.0-CLIv3.10.0 | jq .Descriptor.digest
-"sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.21.0-CLIv4.0.1 | jq .Descriptor.digest
+"sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -163,10 +167,10 @@ For instance, at the time of this writing, all of these tag references pointed t
   image: phylumio/phylum-ci:latest
 
   # Use a specific release version of the `phylum-ci` package
-  image: phylumio/phylum-ci:0.15.0-CLIv3.10.0
+  image: phylumio/phylum-ci:0.21.0-CLIv4.0.1
 
   # Use a specific image with it's SHA256 digest
-  image: phylumio/phylum-ci@sha256:db450b4233484faf247fffbd28fc4f2b2d4d22cef12dfb1d8716be296690644e
+  image: phylumio/phylum-ci@sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
