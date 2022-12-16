@@ -470,7 +470,7 @@ class CIBase(ABC):
         """
         failed_flag = False
         risk_vectors = package_result.get("riskVectors", {})
-        issue_flags = []
+        issue_flags: List = []
 
         fail_string = f"\n### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
         fail_string += "|Risk Domain|Identified Score|Requirement|Requirement Source|\n"
@@ -479,10 +479,10 @@ class CIBase(ABC):
         for threshold_option, risk_domain in PROJECT_THRESHOLD_OPTIONS.items():
             pti = self._get_project_threshold_info(project_thresholds, threshold_option)
             # The `RiskDomain` dataclass and this logic can be simplified once the API standardizes the use of names
-            # so that risk domains are referenced with the same name everywhere (e.g., vulnerability/vulnerabilities
-            # and malicious_code/malicious)
+            # so that risk domains are referenced with the same name everywhere (e.g., malicious_code/malicious):
+            # https://github.com/phylum-dev/api/issues/499
             vul = None
-            potential_names = [risk_domain.package_name, risk_domain.project_name]
+            potential_names = {risk_domain.package_name, risk_domain.project_name}
             for potential_name in potential_names:
                 vul = risk_vectors.get(potential_name)
                 if vul is not None:

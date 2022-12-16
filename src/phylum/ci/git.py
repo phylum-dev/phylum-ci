@@ -23,7 +23,7 @@ def git_remote() -> str:
 def git_set_remote_head(remote: str) -> None:
     """Set the remote HEAD ref for a given remote.
 
-    Some CI environment do not set the remote HEAD. Use this function to do so.
+    Some CI environments do not set the remote HEAD. Use this function to do so.
     It assumes git credentials are available to run the command.
     """
     print(" [*] Automatically setting the remote HEAD ref ...")
