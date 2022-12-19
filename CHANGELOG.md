@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.22.1 (2022-12-19)
+### Fix
+* Issue summary entries repeated in output ([#175](https://github.com/phylum-dev/phylum-ci/issues/175)) ([`30d9e42`](https://github.com/phylum-dev/phylum-ci/commit/30d9e42dab881178a6560a8579a2e0c6a3ca204b))
+
 ## v0.22.0 (2022-12-15)
 ### Feature
 * Support Azure Pipelines CI triggers ([#173](https://github.com/phylum-dev/phylum-ci/issues/173)) ([`7d6d859`](https://github.com/phylum-dev/phylum-ci/commit/7d6d859ad368d1ab0a933f24679e3d3c08a40eac))
