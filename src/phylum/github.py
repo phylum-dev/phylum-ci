@@ -6,8 +6,7 @@ from typing import Optional
 
 import requests
 
-from phylum import __version__
-from phylum.constants import REQ_TIMEOUT
+from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 # GitHub API version to use when making requests to the REST API.
 # Reference: https://docs.github.com/rest/overview/api-versions
@@ -17,7 +16,7 @@ GITHUB_API_VERSION = "2022-11-28"
 DEFAULT_HEADERS = {
     "Accept": "application/vnd.github+json",
     "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    "User-Agent": f"phylum-ci/{__version__}",
+    "User-Agent": PHYLUM_USER_AGENT,
 }
 
 # Reference URL for how to create a GitHub Personal Access Token (PAT)

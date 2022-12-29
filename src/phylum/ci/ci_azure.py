@@ -32,7 +32,7 @@ from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
-from phylum.constants import REQ_TIMEOUT
+from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 AZURE_PAT_ERR_MSG = """
 An Azure DevOps token with API access is required to use the API (e.g., to post comments).
@@ -322,7 +322,10 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     b64_ado_pat = base64.b64encode(bytes(f":{azure_token}", encoding="ascii")).decode(encoding="ascii")
 
     query_params = {"api-version": api_version}
-    headers = {"Authorization": f"Basic {b64_ado_pat}"}
+    headers = {
+        "User-Agent": PHYLUM_USER_AGENT,
+        "Authorization": f"Basic {b64_ado_pat}",
+    }
 
     query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
     print(f" [*] Getting list of all current PR threads with GET URL: {pr_threads_url}?{query_params_encoded} ...")

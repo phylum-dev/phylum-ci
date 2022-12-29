@@ -1,4 +1,5 @@
 """Provide constants for use throughout the package."""
+from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
 # `--label` was added as a long form option to the analyze command starting with v3.12.0
@@ -57,3 +58,7 @@ SUPPORTED_LOCKFILES = {
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
 # Reference: https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts
 REQ_TIMEOUT: float = 10.0
+
+# User-Agent header to use when making web requests, to identify this tool instead of falling
+# back to the default provided by the Python Requests package (e.g., `python-requests/2.28.1`).
+PHYLUM_USER_AGENT = f"phylum-ci/{__version__}"
