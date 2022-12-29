@@ -57,7 +57,3 @@ SUPPORTED_LOCKFILES = {
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
 # Reference: https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts
 REQ_TIMEOUT: float = 10.0
-
-# GitHub API version to use when making requests to the REST API.
-# Reference: https://docs.github.com/rest/overview/api-versions
-GITHUB_API_VERSION = "2022-11-28"
