@@ -2,7 +2,7 @@
 import os
 import textwrap
 import time
-from typing import Optional
+from typing import Dict, Optional
 
 import requests
 
@@ -23,7 +23,7 @@ DEFAULT_HEADERS = {
 PAT_REF = "https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
 
 
-def get_headers(github_token: Optional[str] = None) -> dict[str, str]:
+def get_headers(github_token: Optional[str] = None) -> Dict[str, str]:
     """Get the headers to use for a GitHub API request.
 
     Authenticated requests are made by providing a GitHub token. The token can be passed by parameter
