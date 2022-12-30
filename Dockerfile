@@ -106,6 +106,11 @@ FROM python:3.11-slim-bullseye
 # When not defined, the value will default to `latest`.
 ARG CLI_VER
 
+# GITHUB_TOKEN is an optional build argument that can be used to provide a
+# GitHub Personal Access Token (PAT) in order to make authenticated requests
+# and therefore increase the API rate limit.
+ARG GITHUB_TOKEN
+
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
