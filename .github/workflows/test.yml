@@ -60,6 +60,7 @@ jobs:
         shell: bash
     env:
       DOCKER_BUILDKIT: 1
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
