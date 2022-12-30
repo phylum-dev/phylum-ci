@@ -105,6 +105,7 @@ jobs:
             --cache-from phylumio/phylum-ci:latest \
             --build-arg PKG_SRC=dist/phylum-*.whl \
             --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
             .
 
       - name: Test docker image built from dist
