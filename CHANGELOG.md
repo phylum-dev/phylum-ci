@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.23.0 (2023-01-03)
+### Feature
+* Improve experience around GitHub rate limiting API requests ([#179](https://github.com/phylum-dev/phylum-ci/issues/179)) ([`df5f1e2`](https://github.com/phylum-dev/phylum-ci/commit/df5f1e2db6a9b58c6af80b488d9322393188d14a))
+
+### Breaking
+* The `--phylum-release` option (`-r`) default is no longer `latest`. Default behavior now is to use the installed version and fall back to `latest` when no Phylum CLI is already installed. ([`df5f1e2`](https://github.com/phylum-dev/phylum-ci/commit/df5f1e2db6a9b58c6af80b488d9322393188d14a))
+
 ## v0.22.1 (2022-12-19)
 ### Fix
 * Issue summary entries repeated in output ([#175](https://github.com/phylum-dev/phylum-ci/issues/175)) ([`30d9e42`](https://github.com/phylum-dev/phylum-ci/commit/30d9e42dab881178a6560a8579a2e0c6a3ca204b))
