@@ -84,6 +84,7 @@ jobs:
             --build-arg PKG_NAME=phylum-*.whl \
             --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
             .
 
       - name: Test docker image with latest phylum wheel
