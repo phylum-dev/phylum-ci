@@ -21,7 +21,7 @@ from backports.cached_property import cached_property
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
 from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
-from phylum.constants import REQ_TIMEOUT
+from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 
 @lru_cache(maxsize=1)
@@ -184,7 +184,10 @@ class CIGitLab(CIBase):
         # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
         base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
         url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
-        headers = {"PRIVATE-TOKEN": self.gitlab_token}
+        headers = {
+            "User-Agent": PHYLUM_USER_AGENT,
+            "PRIVATE-TOKEN": self.gitlab_token,
+        }
 
         print(f" [*] Getting all current merge request notes with GET URL: {url} ...")
         req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)

@@ -18,7 +18,7 @@ from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
 from phylum.constants import TOKEN_ENVVAR_NAME
-from phylum.init.cli import get_target_triple, version_check
+from phylum.init.cli import default_phylum_cli_version, get_target_triple, version_check
 
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
@@ -244,10 +244,10 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-r",
         "--phylum-release",
         dest="version",
-        default="latest",
-        type=version_check,
-        help="""The version of the Phylum CLI to install, when one is not already installed. Can be specified as
-            `latest` or a specific tagged release, with or without the leading `v`.""",
+        # NOTE: `default` and `type` values are not used here in an effort to minimize rate limited GitHub API calls.
+        help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
+            with or without the leading `v`. Default behavior is to use the installed version and fall back to `latest`
+            when no CLI is already installed.""",
     )
     cli_group.add_argument(
         "-t",
@@ -269,6 +269,14 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
 def main(args: Optional[Sequence[str]] = None) -> int:
     """Main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
+
+    if parsed_args.version:
+        print(f" [+] Phylum CLI version was specified as: {parsed_args.version}")
+        parsed_args.version = version_check(parsed_args.version)
+    else:
+        print(" [+] Phylum CLI version not specified")
+        parsed_args.version = default_phylum_cli_version()
+    print(f" [*] Using Phylum CLI version: {parsed_args.version}")
 
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)

@@ -27,6 +27,14 @@
 #
 # $ docker build --tag phylum-ci --build-arg CLI_VER=v3.8.0 .
 #
+# Another build arg is exposed to optionally specify a GitHub Personal Access Token (PAT):
+#
+# $ docker build --tag phylum-ci --build-arg GITHUB_TOKEN .
+#
+# Providing a build argument like this (without a value) works when there is already an
+# environment variable defined with the same name. Providing a GitHub PAT is useful to
+# make authenticated requests and therefore increase the API rate limit.
+#
 # To make use of BuildKit's inline layer caching feature, add the `BUILDKIT_INLINE_CACHE`
 # build argument to any instance of building an image. Then, that image can be used
 # locally or remotely (if it was pushed to a repository) to warm the build cache by using
@@ -105,6 +113,11 @@ FROM python:3.11-slim-bullseye
 # Values should be provided in a format acceptable to the `phylum-init` script.
 # When not defined, the value will default to `latest`.
 ARG CLI_VER
+
+# GITHUB_TOKEN is an optional build argument that can be used to provide a
+# GitHub Personal Access Token (PAT) in order to make authenticated requests
+# and therefore increase the API rate limit.
+ARG GITHUB_TOKEN
 
 LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"

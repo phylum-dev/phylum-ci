@@ -22,7 +22,8 @@ from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
-from phylum.constants import GITHUB_API_VERSION, REQ_TIMEOUT
+from phylum.constants import REQ_TIMEOUT
+from phylum.github import get_headers, github_request
 
 PAT_ERR_MSG = """
 A GitHub token with API access is required to use the API (e.g., to post comments).
@@ -158,17 +159,9 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     The comment will only be created if there isn't already a Phylum comment
     or if the most recently posted Phylum comment does not contain the same content.
     """
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-        "Authorization": f"token {github_token}",
-    }
-
     query_params = {"per_page": 100}
     print(f" [*] Getting all current pull request comments with GET URL: {comments_url} ...")
-    req = requests.get(comments_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
-    req.raise_for_status()
-    pr_comments = req.json()
+    pr_comments = github_request(comments_url, params=query_params, github_token=github_token)
 
     print(" [*] Checking pull request comments for existing content to avoid duplication ...")
     if not pr_comments:
@@ -187,6 +180,7 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
 
     # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
     # there were no Phylum PR comments. Either way, create a new PR comment.
+    headers = get_headers(github_token=github_token)
     body_params = {"body": comment}
     print(f" [*] Creating new pull request comment with POST URL: {comments_url} ...")
     response = requests.post(comments_url, headers=headers, json=body_params, timeout=REQ_TIMEOUT)

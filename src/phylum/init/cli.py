@@ -19,13 +19,13 @@ from ruamel.yaml import YAML
 
 from phylum import __version__
 from phylum.constants import (
-    GITHUB_API_VERSION,
     MIN_CLI_VER_FOR_INSTALL,
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
     SUPPORTED_PLATFORMS,
     TOKEN_ENVVAR_NAME,
 )
+from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
 
@@ -82,22 +82,31 @@ def get_phylum_bin_path() -> Tuple[Optional[Path], Optional[str]]:
     return cli_path, cli_version
 
 
-def get_latest_version():
+def default_phylum_cli_version() -> str:
+    """Find the default version of the Phylum CLI to use and return it.
+
+    The default behavior is to use the installed version and fall back to `latest` when no CLI is already installed.
+    """
+    _, installed_cli_version = get_phylum_bin_path()
+    if installed_cli_version is None:
+        print(" [+] No installed Phylum CLI found")
+        return "latest"
+    print(f" [+] Found installed Phylum CLI version: {installed_cli_version}")
+    return installed_cli_version
+
+
+@lru_cache(maxsize=1)
+def get_latest_version() -> str:
     """Get the "latest" version programmatically and return it."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
-
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
-    req = requests.get(github_api_url, headers=headers, timeout=REQ_TIMEOUT)
-    req.raise_for_status()
-    req_json = req.json()
+    req_json = github_request(github_api_url)
 
     # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
     latest_version = req_json.get("tag_name")
+    if not latest_version:
+        raise SystemExit(f" [!] The `tag_name` entry was not available or not set when querying: {github_api_url}")
 
     return latest_version
 
@@ -107,15 +116,9 @@ def supported_releases() -> List[str]:
     """Get the most recent supported releases programmatically and return them."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#list-releases
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases"
-
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
     query_params = {"per_page": 100}
-    req = requests.get(github_api_url, headers=headers, params=query_params, timeout=REQ_TIMEOUT)
-    req.raise_for_status()
-    req_json = req.json()
+
+    req_json = github_request(github_api_url, params=query_params)
 
     # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
@@ -135,6 +138,7 @@ def is_supported_version(version: str) -> bool:
     return provided_version >= min_supported_version
 
 
+@lru_cache(maxsize=1)
 def supported_targets(release_tag: str) -> List[str]:
     """Get the supported Rust target triples programmatically for a given release tag and return them.
 
@@ -153,13 +157,7 @@ def supported_targets(release_tag: str) -> List[str]:
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
 
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
-    req = requests.get(github_api_url, headers=headers, timeout=REQ_TIMEOUT)
-    req.raise_for_status()
-    req_json = req.json()
+    req_json = github_request(github_api_url)
 
     assets = req_json.get("assets", [])
     targets: List[str] = []
@@ -173,7 +171,7 @@ def supported_targets(release_tag: str) -> List[str]:
     return list(set(targets))
 
 
-def version_check(version):
+def version_check(version: str) -> str:
     """Check a given version for validity and return a normalized form of it."""
     if version == "latest":
         version = get_latest_version()
@@ -185,12 +183,12 @@ def version_check(version):
     supported_versions = supported_releases()
     if version not in supported_versions:
         releases = ", ".join(supported_versions)
-        raise argparse.ArgumentTypeError(f"version must be from a supported release: {releases}")
+        raise SystemExit(f" [!] Specified Phylum CLI version must be from a supported release: {releases}")
 
     return version
 
 
-def get_target_triple():
+def get_target_triple() -> str:
     """Get the "target triple" from the current system and return it."""
     arch = SUPPORTED_ARCHES.get(platform.uname().machine.lower(), "unknown")
     plat = SUPPORTED_PLATFORMS.get(platform.uname().system.lower(), "unknown")
@@ -210,7 +208,7 @@ def save_file_from_url(url: str, path: Path) -> None:
     print("Done")
 
 
-def get_archive_url(tag_name, archive_name):
+def get_archive_url(tag_name: str, archive_name: str) -> str:
     """Craft an archive download URL from a given tag name and archive name."""
     # Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_base_uri = "https://github.com/phylum-dev/cli/releases"
@@ -242,7 +240,7 @@ def is_token_set(phylum_settings_path, token=None):
 
 
 def process_token_option(args):
-    """Process the token option as parsed from the arguments."""
+    """Process the Phylum token option as parsed from the arguments."""
     phylum_settings_path = get_phylum_settings_path()
 
     # The token option takes precedence over the Phylum API key environment variable.
@@ -312,10 +310,10 @@ def get_args(args=None):
         "-r",
         "--phylum-release",
         dest="version",
-        default="latest",
-        type=version_check,
+        # NOTE: `default` and `type` values are not used here in an effort to minimize rate limited GitHub API calls.
         help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
-            with or without the leading `v`.""",
+            with or without the leading `v`. Default behavior is to use the installed version and fall back to `latest`
+            when no CLI is already installed.""",
     )
     parser.add_argument(
         "-t",
@@ -361,18 +359,26 @@ def main(args=None):
     """Main entrypoint."""
     args = get_args(args=args)
 
+    if args.version:
+        print(f" [+] Phylum CLI version was specified as: {args.version}")
+        args.version = version_check(args.version)
+    else:
+        print(" [+] Phylum CLI version not specified")
+        args.version = default_phylum_cli_version()
+    print(f" [*] Using Phylum CLI version: {args.version}")
+
     if args.list_releases:
-        print("Looking up supported releases ...")
+        print(" [*] Looking up supported releases ...")
         releases = ", ".join(supported_releases())
-        print(f"Supported releases: {releases}")
+        print(f" [=] Supported releases: {releases}")
         return 0
 
     tag_name = args.version
+    print(f" [*] Looking up supported targets for release {tag_name} ...")
     supported_target_triples = supported_targets(tag_name)
     if args.list_targets:
-        print(f"Looking up supported targets for release {tag_name} ...")
         targets = ", ".join(supported_target_triples)
-        print(f"Supported targets for release {tag_name}: {targets}")
+        print(f" [=] Supported targets for release {tag_name}: {targets}")
         return 0
 
     target_triple = args.target
@@ -396,7 +402,7 @@ def main(args=None):
 
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:
-                raise zipfile.BadZipFile(f"There was a bad file in the zip archive {archive_name}")
+                raise zipfile.BadZipFile(f" [!] There was a bad file in the zip archive {archive_name}")
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 

@@ -83,7 +83,12 @@ jobs:
           poetry install --verbose --no-root --sync
 
       - name: Build docker image from source
-        run: docker build --tag phylum-ci:from-src --cache-from phylumio/phylum-ci:latest .
+        run: |
+          docker build \
+            --tag phylum-ci:from-src \
+            --cache-from phylumio/phylum-ci:latest \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            .
 
       - name: Test docker image built from source
         run: |
@@ -103,6 +108,7 @@ jobs:
             --cache-from phylumio/phylum-ci:latest \
             --build-arg PKG_SRC=dist/phylum-*.whl \
             --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
             .
 
       - name: Test docker image built from dist
