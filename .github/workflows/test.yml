@@ -83,9 +83,12 @@ jobs:
           poetry install --verbose --no-root --sync
 
       - name: Build docker image from source
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: docker build --tag phylum-ci:from-src --build-arg GITHUB_TOKEN --cache-from phylumio/phylum-ci:latest .
+        run: |
+          docker build \
+            --tag phylum-ci:from-src \
+            --cache-from phylumio/phylum-ci:latest \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            .
 
       - name: Test docker image built from source
         run: |
