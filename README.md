@@ -14,7 +14,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 
 [license]: https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE
 [issues]: https://github.com/phylum-dev/phylum-ci/issues
-[workflow_shield]: https://img.shields.io/github/workflow/status/phylum-dev/phylum-ci/Test/main?label=Test&logo=GitHub
+[workflow_shield]: https://img.shields.io/github/actions/workflow/status/phylum-dev/phylum-ci/test.yml?branch=main&label=tests&logo=GitHub
 [workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
 [pre-commit]: https://github.com/pre-commit/pre-commit
