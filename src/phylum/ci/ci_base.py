@@ -99,6 +99,7 @@ class CIBase(ABC):
         self.incomplete_pkgs: Packages = []
         self._analysis_output = "No analysis output yet"
         self.ci_platform_name = "Unknown"
+        self._project_id = "00000000-0000-0000-0000-000000000000"
 
         # The token option takes precedence over the Phylum API key environment variable.
         token = os.getenv(TOKEN_ENVVAR_NAME)
@@ -176,6 +177,29 @@ class CIBase(ABC):
         return self._cli_path
 
     @property
+    def project_id(self) -> str:
+        """Get the GUID for the project."""
+        return self._project_id
+
+    @cached_property
+    def project_url(self) -> str:
+        """Construct a project URL and return it.
+
+        The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
+        """
+        query = {"label": self.phylum_label}
+        if self.phylum_group is not None:
+            query["group"] = self.phylum_group
+        query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
+        project_url = f"https://app.phylum.io/projects/{self.project_id}?{query_params}"
+        return project_url
+
+    @property
+    def project_url_md(self) -> str:
+        """Construct a markdown link for viewing the project in the Phylum UI."""
+        return f"\n[View this project in the Phylum UI]({self.project_url})"
+
+    @property
     def analysis_output(self) -> str:
         """Get the output from the overall analysis, in markdown format."""
         return self._analysis_output
@@ -241,7 +265,14 @@ class CIBase(ABC):
         Each implementation that offers analysis output in the form of comments on a pull/merge request should
         ensure those comments are unique and not added multiple times as the review changes but the lockfile doesn't.
         """
-        print(f" [+] Analysis output:\n{render(self.analysis_output)}")
+        # Pull out the project URL link, which doesn't render well
+        output = self.analysis_output.replace(self.project_url_md, "")
+
+        # Post the markdown output, rendered for terminal/log output
+        print(f" [+] Analysis output:\n{render(output)}")
+
+        # Post the project URL link separately
+        print(f"View this project in the Phylum UI: {self.project_url}\n")
 
     @cached_property
     def current_lockfile_packages(self) -> Packages:
@@ -376,21 +407,11 @@ class CIBase(ABC):
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
             raise SystemExit(" [!] A Phylum API key is required to continue.")
 
-    def get_project_url(self, project_id: str) -> str:
-        """Construct a project URL from a given project ID and return it.
-
-        The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
-        """
-        query = {"label": self.phylum_label}
-        if self.phylum_group is not None:
-            query["group"] = self.phylum_group
-        query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
-        project_url = f"https://app.phylum.io/projects/{project_id}?{query_params}"
-        print(f" [+] Project URL: {project_url}")
-        return project_url
-
     def analyze(self, analysis: dict) -> ReturnCode:
         """Analyze the results gathered from passing a lockfile to `phylum analyze`."""
+        self._project_id = analysis.get("project", "00000000-0000-0000-0000-000000000000")
+        print(f" [+] Project ID: {self.project_id}")
+
         if self.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
@@ -431,9 +452,7 @@ class CIBase(ABC):
             returncode = ReturnCode.SUCCESS
             output = SUCCESS_COMMENT
 
-        project_id = analysis.get("project", "00000000-0000-0000-0000-000000000000")
-        project_url = self.get_project_url(project_id)
-        output += f"\n[View this project in the Phylum UI]({project_url})"
+        output += self.project_url_md
         self._analysis_output = output
 
         return returncode
