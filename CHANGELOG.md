@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.23.1 (2023-01-10)
+### Fix
+* Link to Phylum UI project clipped in logs ([#186](https://github.com/phylum-dev/phylum-ci/issues/186)) ([`95d6838`](https://github.com/phylum-dev/phylum-ci/commit/95d6838d053efbecab06068b44f5b8396ed49d95))
+
 ## v0.23.0 (2023-01-03)
 ### Feature
 * Improve experience around GitHub rate limiting API requests ([#179](https://github.com/phylum-dev/phylum-ci/issues/179)) ([`df5f1e2`](https://github.com/phylum-dev/phylum-ci/commit/df5f1e2db6a9b58c6af80b488d9322393188d14a))
