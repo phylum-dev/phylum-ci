@@ -38,22 +38,29 @@ risk thresholds.
 
 ## Prerequisites
 
-The GitLab CI environment is primarily supported through the use of a Docker image.
+The GitLab CI environment is primarily supported through the use of a Docker image. GitLab [SaaS subscriptions][gl_saas]
+hosted on <https://gitlab.com> are supported. [Self-managed subscriptions][self_managed] are supported for
+"on-premises" installs which still have access to the internet. Self-hosted "offline" (e.g., air-gapped networks)
+installs of GitLab may work but have not been confirmed.
+
 The pre-requisites for using this image are:
 
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
   * This is only required when using the integration in merge request pipelines
+  * The token needs `api` scope
+  * Tokens that specify a role will work with any role _other than_ `Guest`
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
-  * Support for on-premises installs are not available at this time
 * A `.phylum_project` file exists at the root of the repository
   * See [`phylum project`][phylum_project] and [`phylum project create`][phylum_project_create] command documentation
 
+[gl_saas]: https://docs.gitlab.com/ee/subscriptions/gitlab_com/
+[self_managed]: https://docs.gitlab.com/ee/subscriptions/self_managed/
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
 [gitlab_tokens]: https://docs.gitlab.com/ee/security/token_overview.html
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
@@ -142,7 +149,7 @@ See the [GitLab CI/CD Job Control][job_control] documentation for more detail.
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.21.0-CLIv4.0.1`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.23.1-CLIv4.4.0`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -151,8 +158,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.21.0-CLIv4.0.1 | jq .Descriptor.digest
-"sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.23.1-CLIv4.4.0 | jq .Descriptor.digest
+"sha256:f2840ad448278e26b69a076a93f2c90cb083803243a614f5efb518f032626578"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -167,10 +174,10 @@ For instance, at the time of this writing, all of these tag references pointed t
   image: phylumio/phylum-ci:latest
 
   # Use a specific release version of the `phylum-ci` package
-  image: phylumio/phylum-ci:0.21.0-CLIv4.0.1
+  image: phylumio/phylum-ci:0.23.1-CLIv4.4.0
 
   # Use a specific image with it's SHA256 digest
-  image: phylumio/phylum-ci@sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc
+  image: phylumio/phylum-ci@sha256:f2840ad448278e26b69a076a93f2c90cb083803243a614f5efb518f032626578
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -188,6 +195,7 @@ A GitLab token with API access is required to use the API (e.g., to post notes/c
 project, or group access token. The account used to create the token will be the one that appears to post the
 notes/comments on the MR. Therefore, it might be worth looking into using a bot account, which is available for
 project and group access tokens. See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
+The token needs `api` scope. Project or Group access tokens should specify a role _other than_ `Guest`.
 
 Note, the GitLab token is only required when this Phylum integration is used in [merge request pipelines][mr_pipelines].
 It is not required when used in branch pipelines.
