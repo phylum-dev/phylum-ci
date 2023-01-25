@@ -48,7 +48,7 @@ The pre-requisites for using this image are:
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
   * This is only required when using the integration in merge request pipelines
-  * The token needs `api` scope
+  * The token needs the `api` scope
   * Tokens that specify a role will work with any role _other than_ `Guest`
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
@@ -195,7 +195,7 @@ A GitLab token with API access is required to use the API (e.g., to post notes/c
 project, or group access token. The account used to create the token will be the one that appears to post the
 notes/comments on the MR. Therefore, it might be worth looking into using a bot account, which is available for
 project and group access tokens. See the [GitLab Token Overview][gitlab_tokens] documentation for more info.
-The token needs `api` scope. Project or Group access tokens should specify a role _other than_ `Guest`.
+The token needs the `api` scope. Project or Group access tokens should specify a role _other than_ `Guest`.
 
 Note, the GitLab token is only required when this Phylum integration is used in [merge request pipelines][mr_pipelines].
 It is not required when used in branch pipelines.
