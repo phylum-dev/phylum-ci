@@ -47,13 +47,13 @@ The pre-requisites for using the git `pre-commit` hook are:
   * That usually means a connection to the internet, optionally via a proxy
   * Support for on-premises installs are not available at this time
 * A `.phylum_project` file exists at the root of the repository
-  * See [`phylum project`](https://docs.phylum.io/docs/phylum_project) and
-    [`phylum project create`](https://docs.phylum.io/docs/phylum_project_create) command documentation
+  * See [`phylum init`][phylum_init] command documentation
 
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
+[phylum_init]: https://docs.phylum.io/docs/phylum_init
 
 **NOTE: If the `phylum` CLI binary is installed locally, it will be used. Otherwise, the hook will install it.**
 

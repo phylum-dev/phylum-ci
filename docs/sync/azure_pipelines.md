@@ -75,7 +75,7 @@ The pre-requisites for using this image are:
   * That usually means a connection to the internet, optionally via a proxy
   * Support for on-premises installs are not available at this time
 * A `.phylum_project` file exists at the root of the repository
-  * See [`phylum project`][phylum_project] and [`phylum project create`][phylum_project_create] command documentation
+  * See [`phylum init`] command documentation
 
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
 [azure_auth]: https://learn.microsoft.com/azure/devops/integrate/get-started/authentication/authentication-guidance
@@ -90,8 +90,6 @@ The pre-requisites for using this image are:
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
-[phylum_project]: https://docs.phylum.io/docs/phylum_project
-[phylum_project_create]: https://docs.phylum.io/docs/phylum_project_create
 
 ## Configure `azure-pipelines.yml`
 

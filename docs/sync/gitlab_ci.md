@@ -57,7 +57,7 @@ The pre-requisites for using this image are:
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
 * A `.phylum_project` file exists at the root of the repository
-  * See [`phylum project`][phylum_project] and [`phylum project create`][phylum_project_create] command documentation
+  * See [`phylum init`][phylum_init] command documentation
 
 [gl_saas]: https://docs.gitlab.com/ee/subscriptions/gitlab_com/
 [self_managed]: https://docs.gitlab.com/ee/subscriptions/self_managed/
@@ -67,8 +67,7 @@ The pre-requisites for using this image are:
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
-[phylum_project]: https://docs.phylum.io/docs/phylum_project
-[phylum_project_create]: https://docs.phylum.io/docs/phylum_project_create
+[phylum_init]: https://docs.phylum.io/docs/phylum_init
 
 ## Configure `.gitlab-ci.yml`
 
