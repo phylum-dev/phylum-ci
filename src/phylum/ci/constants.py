@@ -14,15 +14,9 @@ SUCCESS_DETAILS = "The Phylum risk analysis is complete and did not identify any
 
 # Expandable HTML providing information on why there was a failure
 FAILURE_DETAILS = """
-        <details>
-        <summary>Background</summary>
-        <br />
-        This repository analyzes the risk of new dependencies. An administrator of
-        this repository has set score requirements for Phylum's five risk domains.
-        <br /><br />
-        If you see this comment, one or more dependencies added to the
-        package manager lockfile have failed Phylum's risk analysis.
-        </details>
+        This repository analyzes risk of new dependencies with Phylum. An administrator
+        of this repository has set score requirements for Phylum's five risk domains.
+        One or more dependencies added to the lockfile failed the risk analysis.
         """.strip()
 
 # String template providing information about an incomplete analysis.
