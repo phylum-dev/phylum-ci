@@ -12,6 +12,7 @@ from phylum import __version__
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.ci_azure import CIAzure
 from phylum.ci.ci_base import CIBase, CIEnvs
+from phylum.ci.ci_bitbucket import CIBitbucket
 from phylum.ci.ci_github import CIGitHub
 from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
@@ -42,6 +43,11 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"):
         print(" [+] CI environment detected: Azure Pipelines")
         ci_envs.append(CIAzure(args))
+
+    # Detect Bitbucket Pipelines
+    if os.getenv("BITBUCKET_COMMIT"):
+        print(" [+] CI environment detected: Bitbucket Pipelines")
+        ci_envs.append(CIBitbucket(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,
