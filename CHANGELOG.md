@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.24.0 (2023-02-10)
+### Feature
+* Add support for Bitbucket Pipelines ([#196](https://github.com/phylum-dev/phylum-ci/issues/196)) ([`3a95dce`](https://github.com/phylum-dev/phylum-ci/commit/3a95dced668b1ffa01c0c57bc40acafb7e1ab2c9))
+
+### Documentation
+* Update GitLab CI documentation ([#191](https://github.com/phylum-dev/phylum-ci/issues/191)) ([`8bd9c72`](https://github.com/phylum-dev/phylum-ci/commit/8bd9c7288af48b9e2d71bec7ca4706bf6533fa16))
+
 ## v0.23.1 (2023-01-10)
 ### Fix
 * Link to Phylum UI project clipped in logs ([#186](https://github.com/phylum-dev/phylum-ci/issues/186)) ([`95d6838`](https://github.com/phylum-dev/phylum-ci/commit/95d6838d053efbecab06068b44f5b8396ed49d95))
