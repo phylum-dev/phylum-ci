@@ -14,14 +14,14 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from backports.cached_property import cached_property
 from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
 
-from phylum.ci.common import PackageDescriptor, Packages, ProjectThresholdInfo, ReturnCode, RiskDomain
+from phylum.ci.common import IssueEntry, PackageDescriptor, Packages, ProjectThresholdInfo, ReturnCode, RiskDomain
 from phylum.ci.constants import (
     FAILED_COMMENT,
     INCOMPLETE_COMMENT_TEMPLATE,
@@ -351,7 +351,7 @@ class CIBase(ABC):
         return prev_lockfile_packages
 
     def get_new_deps(self) -> Packages:
-        """Get the new dependencies added to the lockfile and return them."""
+        """Get the new dependencies added to the lockfile and return them in sorted order."""
         curr_lockfile_packages = self.current_lockfile_packages
 
         prev_lockfile_object = self.previous_lockfile_object
@@ -363,10 +363,10 @@ class CIBase(ABC):
 
         prev_pkg_set = set(prev_lockfile_packages)
         curr_pkg_set = set(curr_lockfile_packages)
-        new_deps = curr_pkg_set.difference(prev_pkg_set)
+        new_deps = sorted(curr_pkg_set.difference(prev_pkg_set))
         print(f" [+] New dependencies: {new_deps}")
 
-        return list(new_deps)
+        return new_deps
 
     def init_cli(self) -> None:
         """Check for an existing Phylum CLI install, install it if needed, and set the path class instance variable."""
@@ -415,7 +415,7 @@ class CIBase(ABC):
         if self.all_deps:
             print(" [+] Considering all current dependencies ...")
             pkgs = analysis.get("packages", [])
-            packages = [PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs]
+            packages = sorted([PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs])
             print(f" [+] {len(packages)} current dependencies")
             risk_data = self.parse_risk_data(analysis, packages)
         else:
@@ -518,8 +518,8 @@ class CIBase(ABC):
         fail_string += "|-----------|----------|-----|\n"
 
         issue_list = build_issues_list(package_result, issue_flags)
-        for domain, severity, title in issue_list:
-            fail_string += f"|{domain}|{severity}|{title}|\n"
+        for issue in issue_list:
+            fail_string += f"|{issue.domain}|{issue.severity}|{issue.title}|\n"
 
         if failed_flag:
             self.gbl_failed = True
@@ -562,15 +562,15 @@ class CIBase(ABC):
 CIEnvs = List[CIBase]
 
 
-def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[Tuple[str, str, str]]:
+def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[IssueEntry]:
     """Build a list of issues from a given package's result object and return it."""
     issues = []
     pkg_issues = package_result.get("issues", [])
     for flag in issue_flags:
         for pkg_issue in pkg_issues:
             if flag == pkg_issue.get("domain"):
-                domain = pkg_issue.get("domain")
                 severity = pkg_issue.get("severity")
+                domain = pkg_issue.get("domain")
                 title = pkg_issue.get("title")
-                issues.append((domain, severity, title))
-    return issues
+                issues.append(IssueEntry(severity, domain, title))
+    return sorted(issues)
