@@ -2,7 +2,7 @@
 
 Contributions are welcome and appreciated!
 
-Phylum is the future of software supply chain security and is eager to provide integrations across the diverse
+Phylum is the software supply chain security company and is eager to provide integrations across the diverse
 set of environments and ecosystems used by developers. If there is an unsupported use case for managing the
 security of your dependencies, we want to know about it. If there is a way Phylum can be used to make your life
 as a developer easier, we want to be there for you and do it!
