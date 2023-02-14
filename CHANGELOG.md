@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.24.1 (2023-02-14)
+### Fix
+* Duplicate PR comments are possible ([#199](https://github.com/phylum-dev/phylum-ci/issues/199)) ([`d660406`](https://github.com/phylum-dev/phylum-ci/commit/d6604066da7acbd1a05a132c7c3456d7395aadbb))
+
+### Documentation
+* Align to main website ([#198](https://github.com/phylum-dev/phylum-ci/issues/198)) ([`cc5ff48`](https://github.com/phylum-dev/phylum-ci/commit/cc5ff481ecc1a277eb46c0f1291a5d1620a5772a))
+
 ## v0.24.0 (2023-02-10)
 ### Feature
 * Add support for Bitbucket Pipelines ([#196](https://github.com/phylum-dev/phylum-ci/issues/196)) ([`3a95dce`](https://github.com/phylum-dev/phylum-ci/commit/3a95dced668b1ffa01c0c57bc40acafb7e1ab2c9))
