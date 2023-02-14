@@ -1,5 +1,5 @@
 """Provide common data structures for the package."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import List
 
