@@ -5,7 +5,7 @@ hidden: false
 ---
 # Integrations
 
-Phylum is the future of software supply chain security and is eager to provide
+Phylum is the software supply chain security company and is eager to provide
 integrations across the diverse set of environments and ecosystems used by developers.
 
 ## Current Integrations
