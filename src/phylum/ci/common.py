@@ -1,6 +1,6 @@
 """Provide common data structures for the package."""
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import List
 
 
@@ -44,6 +44,35 @@ class RiskDomain:
     output_name: str
     project_name: str
     package_name: str
+
+
+class RiskLevel(Enum):
+    """Enumeration for risk levels, with their explanations, as provided by `phylum-types`.
+
+    The definition order of attributes is from highest risk level to lowest.
+    This ensures the sort order for dataclasses using this enumeration will be correct.
+    Reference: https://github.com/phylum-dev/phylum-types
+    """
+
+    # Should fix as soon as possible, may be under active exploitation
+    CRITICAL = "critical"
+    # Possibly exploitable behavior in some circumstances
+    HIGH = "high"
+    # May be indicative of overall quality issues
+    MEDIUM = "medium"
+    # Minor issues like cosmetic code smells, possibly a problem in great number or rare circumstances
+    LOW = "low"
+    # Informational, no action needs to be taken
+    INFO = "info"
+
+
+@dataclass(order=True)
+class IssueEntry:
+    """Class for keeping track of an individual issue entry."""
+
+    severity: RiskLevel
+    domain: str
+    title: str
 
 
 class ReturnCode(IntEnum):
