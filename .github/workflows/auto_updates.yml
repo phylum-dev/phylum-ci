@@ -64,7 +64,7 @@ jobs:
         # NOTE: The git user name and email used for commits is already configured,
         #       by the crazy-max/ghaction-import-gpg action.
         run: |
-          git commit -a -m "build: Bump poetry.lock dependencies and pre-commit hooks"
+          git commit -a -m "build: Bump `poetry.lock` dependencies and `pre-commit` hooks"
           git push --force origin HEAD:workflow-auto-updates
 
       - name: Create Pull Request
@@ -74,11 +74,12 @@ jobs:
           # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
           github-token: ${{ secrets.GH_RELEASE_PAT }}
           script: |
-            github.rest.pulls.create({
+            const response = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               head: "workflow-auto-updates",
               base: context.ref,
-              title: "build: bump poetry.lock dependencies and pre-commit hooks",
+              title: "build: bump `poetry.lock` dependencies and `pre-commit` hooks",
               body: "Bump dependencies in `poetry.lock` and hooks in `.pre-commit-config.yaml`.",
             });
+            console.log(response);
