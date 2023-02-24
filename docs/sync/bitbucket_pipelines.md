@@ -13,7 +13,7 @@ conditions:
 ```yaml
 # Ensure these variables are set at the repository or workspace level:
 #  - `PHYLUM_API_KEY`: Phylum authentication token
-#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` scope
+#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` (read) scope
 
     - step:
         name: Phylum Analyze
@@ -66,7 +66,7 @@ using this image are:
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [Bitbucket access token][bb_tokens] with API access
   * This is only required when using the integration in pull request pipelines
-  * The token needs the `pullrequest` scope
+  * The token needs the `pullrequest` (read) scope
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
     * See also [`phylum auth register`][phylum_register] command documentation
@@ -91,7 +91,7 @@ Phylum analysis of dependencies can be added to existing CI workflows or on it's
 ```yaml
 # Ensure these variables are set at the repository or workspace level:
 #  - `PHYLUM_API_KEY`: Phylum authentication token
-#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` scope
+#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` (read) scope
 
 pipelines:
   pull-requests:
@@ -129,8 +129,8 @@ See also [`phylum auth register`][phylum_register] command documentation and con
 for this token. Provide the token value in a user-defined variable named `PHYLUM_API_KEY`.
 
 A Bitbucket token with API access is required to use the API (e.g., to post comments). This can be a repository,
-project, or workspace access token. The token needs the `pullrequest` scope. The name given to the token will be
-the one that appears to post the comments on the PR. Therefore, it might be worth naming it something like
+project, or workspace access token. The token needs the `pullrequest` (read) scope. The name given to the token will
+be the one that appears to post the comments on the PR. Therefore, it might be worth naming it something like
 `Phylum Analysis`. See the [Bitbucket Access Tokens][bb_tokens] documentation for more info.
 
 Note, the Bitbucket token is only required when this Phylum integration is used in
