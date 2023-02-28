@@ -46,7 +46,7 @@ jobs:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
         with:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
@@ -56,7 +56,7 @@ jobs:
 
       # This GPG key is for the `phylum-bot` account and used in order to ensure commits and tags are signed/verified
       - name: Import GPG key for bot account
-        uses: crazy-max/ghaction-import-gpg@v5
+        uses: crazy-max/ghaction-import-gpg@111c56156bcc6918c056dbef52164cfa583dc549 # v5.2.0
         with:
           gpg_private_key: ${{ secrets.PHYLUM_BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PHYLUM_BOT_GPG_PASSPHRASE }}
@@ -73,7 +73,7 @@ jobs:
           poetry config repositories.testpypi https://test.pypi.org/legacy/
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
@@ -208,9 +208,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
 
       - name: Update v2-latest using rdme
-        uses: readmeio/rdme@v8
+        uses: readmeio/rdme@8015101d7a10d3810d65583d947d6a17a57ff693 # v8.5.0
         with:
           rdme: docs ./docs/sync --key=${{ secrets.README_API }} --version=2-latest
