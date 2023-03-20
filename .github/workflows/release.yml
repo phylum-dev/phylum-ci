@@ -46,7 +46,7 @@ jobs:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
         with:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
@@ -208,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
 
       - name: Update v2-latest using rdme
         uses: readmeio/rdme@8015101d7a10d3810d65583d947d6a17a57ff693 # v8.5.0
