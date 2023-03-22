@@ -21,8 +21,8 @@ Packages = List[PackageDescriptor]
 class ProjectThresholdInfo:
     """Class for keeping track of project risk threshold information.
 
-    `threshold`: The risk domain threshold value in use.
-    `req_src`: The source of the threshold requirement. For example, `phylum-ci option` for command line options
+    * `threshold`: The risk domain threshold value in use.
+    * `req_src`: The source of the threshold requirement. For example, `phylum-ci option` for command line options
     """
 
     threshold: float

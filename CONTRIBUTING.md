@@ -208,7 +208,7 @@ Before you submit a pull request, check that it meets these guidelines:
 * Have you created sufficient tests?
 * Have you updated all affected documentation?
 
-The pull request should work for Python 3.6, 3.7, 3.8, 3.9, 3.10, and 3.11.
+The pull request should work for Python 3.7, 3.8, 3.9, 3.10, and 3.11.
 Check <https://github.com/phylum-dev/phylum-ci/actions> and make sure that the tests
 pass for all supported Python versions.
 
@@ -219,23 +219,30 @@ squash merging) or any included commit (when rebase merging) must adhere to the 
 important because the conventional commits made to the default branch are used to automatically bump release versions,
 populate the changelog, and create releases.
 
+## Release Process
+
+See the [release process][release] for more info about how to cut a release and the automation workflows involved.
+
+[release]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/release_process.md
+
 ## Tips
 
 To run a subset of tests from the tox test environments, call `tox` from `poetry` and
 interact with `pytest` by passing additional positional arguments:
 
 ```sh
+# passing additional options to pytest requires using the double dash
+# escape twice, once for escaping `poetry` and again for escaping `tox`
+poetry run -- tox -e py310 -- --help
+
 # run a specific test module across all test environments
-poetry run tox tests/unit/test_package_metadata.py
+poetry run -- tox -- tests/unit/test_package_metadata.py
 
 # run a specific test module across a specific test environment
-poetry run tox -e py39 tests/unit/test_package_metadata.py
+poetry run -- tox -e py39 -- tests/unit/test_package_metadata.py
 
 # run a specific test function within a test module, in a specific test environment
-poetry run tox -e py310 tests/unit/test_package_metadata.py::test_python_version
-
-# passing additional options to pytest requires using the double dash escape
-poetry run tox -e py310 -- --help
+poetry run -- tox -e py310 -- tests/unit/test_package_metadata.py::test_python_version
 ```
 
 To run a script entry point with the local checkout of the code (in develop mode), use `poetry`:
@@ -248,8 +255,9 @@ poetry install --sync
 poetry run phylum-init -h
 ```
 
-To iterate during development of the `phylum-ci` integrations, it can be helpful to force the analysis of the lockfile,
-even when it has not changed. It can also be useful to ensure all dependencies are considered. To do so, use the flags:
+To iterate during development of the `phylum-ci` integrations, it can be helpful to force the analysis of the
+lockfile(s), even when it has not changed. It can also be useful to ensure all dependencies are considered.
+To do so, use the flags:
 
 ```sh
 # long form options

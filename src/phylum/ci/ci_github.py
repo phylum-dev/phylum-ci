@@ -12,9 +12,9 @@ GitHub References:
 """
 import json
 import os
+import re
 import subprocess
 from argparse import Namespace
-from pathlib import Path
 from typing import Optional
 
 import requests
@@ -100,19 +100,20 @@ class CIGitHub(CIBase):
         pr_number = self.pr_event.get("pull_request", {}).get("number", "unknown-number")
         pr_src_branch = os.getenv("GITHUB_HEAD_REF", "unknown-ref")
         label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
-        label = label.replace(" ", "-")
+        label = re.sub(r"\s+", "-", label)
         return label
 
     @cached_property
-    def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit."""
+    def common_ancestor_commit(self) -> Optional[str]:
+        """Find the common ancestor commit."""
         return self.pr_event.get("pull_request", {}).get("base", {}).get("sha")
 
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""
+    @property
+    def is_any_lockfile_changed(self) -> bool:
+        """Predicate for detecting if any lockfile has changed."""
         pr_src_branch = os.getenv("GITHUB_HEAD_REF")
         pr_tgt_branch = os.getenv("GITHUB_BASE_REF")
-        pr_base_sha = self.common_lockfile_ancestor_commit
+        pr_base_sha = self.common_ancestor_commit
         print(f" [+] GITHUB_HEAD_REF: {pr_src_branch}")
         print(f" [+] GITHUB_BASE_REF: {pr_tgt_branch}")
         print(f" [+] PR base SHA: {pr_base_sha}")
@@ -121,18 +122,12 @@ class CIGitHub(CIBase):
         if pr_base_sha is None:
             return False
 
-        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-        # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", pr_base_sha, "--", str(lockfile.resolve())]
-        ret = subprocess.run(cmd, check=False)
-        if ret.returncode == 0:
-            return False
-        if ret.returncode == 1:
-            return True
-        # Reference: https://github.com/actions/checkout
-        print(" [!] Consider changing the `fetch-depth` input during checkout to fetch more branch history")
-        ret.check_returncode()
-        return False  # unreachable code but this makes mypy happy
+        err_msg = """\
+            [!] Consider changing the `fetch-depth` input during checkout to fetch more branch history.
+                Reference: https://github.com/actions/checkout"""
+        self.update_lockfiles_change_status(pr_base_sha, err_msg)
+
+        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
     def post_output(self) -> None:
         """Post the output of the analysis.

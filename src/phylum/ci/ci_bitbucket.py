@@ -17,12 +17,12 @@ Bitbucket References:
   * https://developer.atlassian.com/cloud/bitbucket/rest/intro/#pullrequest
 """
 import os
+import re
 import shlex
 import subprocess
 import urllib.parse
 from argparse import Namespace
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
 
 import requests
@@ -30,7 +30,7 @@ from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
-from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
+from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 BITBUCKET_TOK_ERR_MSG = """
@@ -46,8 +46,8 @@ def is_in_pr() -> bool:
     """Indicate if the integration is operating in the context of a pull request pipeline.
 
     Bitbucket allows for the possibility of running pipelines in different contexts:
-        * On every push, for the last commit in the push (e.g., branch and default pipelines)
-        * For pull requests (e.g., pull request pipelines)
+      * On every push, for the last commit in the push (e.g., branch and default pipelines)
+      * For pull requests (e.g., pull request pipelines)
 
     Knowing when the context is within a pull request helps to ensure the logic used
     to determine the lockfile changes is correct. It also helps to ensure output is not
@@ -76,7 +76,7 @@ class CIBitbucket(CIBase):
 
         These are the current pre-requisites for operating within a Bitbucket Pipelines Environment:
           * The environment must actually be within Bitbucket Pipelines
-          * A Bitbucket token providing API access is available when operating in an PR pipeline
+          * A Bitbucket token providing API access is available when operating in a PR pipeline
         """
         super()._check_prerequisites()
 
@@ -109,15 +109,14 @@ class CIBitbucket(CIBase):
             label = f"{self.ci_platform_name}_PR#{pr_id}_{pr_title}"
         else:
             current_branch = os.getenv("BITBUCKET_BRANCH", "unknown-branch")
-            lockfile_hash_object = git_hash_object(self.lockfile)
-            label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
+            label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
 
-        label = label.replace(" ", "-")
+        label = re.sub(r"\s+", "-", label)
         return label
 
     @cached_property
-    def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit.
+    def common_ancestor_commit(self) -> Optional[str]:
+        """Find the common ancestor commit.
 
         Some pre-defined variables are used: https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
         """
@@ -148,9 +147,9 @@ class CIBitbucket(CIBase):
             tgt_branch = f"refs/remotes/{remote}/HEAD"
 
             # If the current commit is on the default branch, then the merge base will be the same
-            # as the current commit and it won't be possible to provide a useful common lockfile
-            # ancestor commit. In this case, it is better to force analysis of the lockfile and
-            # consider *all* dependencies in analysis results instead of just the newly added ones.
+            # as the current commit and it won't be possible to provide a useful common ancestor
+            # commit. In this case, it is better to force analysis of the lockfile(s) and consider
+            # *all* dependencies in analysis results instead of just the newly added ones.
             if src_branch == git_default_branch_name(remote):
                 print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
                 self._force_analysis = True
@@ -169,47 +168,41 @@ class CIBitbucket(CIBase):
 
         cmd = ["git", "merge-base", src_branch, tgt_branch]
         shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [*] Finding common lockfile ancestor commit with command: {shell_escaped_cmd}")
+        print(f" [*] Finding common ancestor commit with command: {shell_escaped_cmd}")
         try:
-            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             ref_url = "https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"
-            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
             print(f" [!] Ensure the git strategy is set to `full clone depth` for repo checkouts: {ref_url}")
-            common_ancestor_commit = None
+            common_commit = None
 
-        return common_ancestor_commit
+        return common_commit
 
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""
-        diff_base_sha = self.common_lockfile_ancestor_commit
-        print(f" [+] The common lockfile ancestor commit: {diff_base_sha}")
+    @property
+    def is_any_lockfile_changed(self) -> bool:
+        """Predicate for detecting if any lockfile has changed."""
+        diff_base_sha = self.common_ancestor_commit
+        print(f" [+] The common ancestor commit: {diff_base_sha}")
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
-        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-        # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
-        ret = subprocess.run(cmd, check=False)
-        if ret.returncode == 0:
-            return False
-        if ret.returncode == 1:
-            return True
-        # Reference: https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/
-        print(" [!] Consider changing the `clone depth` variable in CI settings to clone/fetch more branch history")
-        ret.check_returncode()
-        return False  # unreachable code but this makes mypy happy
+        err_msg = """\
+            [!] Consider changing the `clone depth` variable in CI settings to clone/fetch more branch history.
+                Reference: https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""
+        self.update_lockfiles_change_status(diff_base_sha, err_msg)
+
+        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
     def post_output(self) -> None:
         """Post the output of the analysis.
 
         Post output directly in the logs regardless of the pipeline context.
-        Post output as a comment on the Bitbucket Pipelines Pull Request (PR)
-        when operating in a pull request pipeline.
+        Post output as a comment on the Bitbucket Pipelines Pull Request (PR) when operating in a PR pipeline.
         """
         super().post_output()
 

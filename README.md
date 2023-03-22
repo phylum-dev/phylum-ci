@@ -18,9 +18,6 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
 [pre-commit]: https://github.com/pre-commit/pre-commit
-[contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
-[changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md
-[security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
 [downloads]: https://pepy.tech/project/phylum
 
 ## Installation and usage
@@ -76,7 +73,7 @@ docker run --rm phylumio/phylum-ci phylum-ci --help
 # Export a Phylum token (e.g., from `phylum auth token`)
 export PHYLUM_API_KEY=$(phylum auth token)
 
-# Run it from a git repo directory containing a `.phylum_project` and a lockfile
+# Run it from a git repo directory containing at least one lockfile
 docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=$(pwd),dst=/phylum -w /phylum phylumio/phylum-ci
 ```
 
@@ -93,8 +90,8 @@ version of the Phylum CLI, in the form of `<phylum-ci version>-CLIv<Phylum CLI v
 # Get the most current release of *both* `phylum-ci` and the Phylum CLI
 docker pull phylumio/phylum-ci:latest
 
-# Get the image with `phylum-ci` version 0.13.0 and Phylum CLI version 3.8.0
-docker pull phylumio/phylum-ci:0.13.0-CLIv3.8.0
+# Get the image with `phylum-ci` version 0.24.1 and Phylum CLI version 4.7.0
+docker pull phylumio/phylum-ci:0.24.1-CLIv4.7.0
 ```
 
 #### `phylum-init` Script Entry Point
@@ -120,23 +117,18 @@ The script can be used locally or from within a Continuous Integration (CI) envi
 It will attempt to detect the CI platform based on the environment from which it is run and act accordingly.
 The current CI platforms/environments supported are:
 
-* GitLab CI
-  * See the [GitLab CI Integration documentation][gitlab_docs] for more info
+|Platform/Environment|Information Link|
+|--------------------|---------------------|
+|GitHub Actions|[Documentation][github_docs]|
+|GitLab CI|[Documentation][gitlab_docs]|
+|Azure Pipelines|[Documentation][azure_docs]|
+|Bitbucket Pipelines|[Documentation][bb_pipelines_docs]|
+|Git `pre-commit` Hooks|[Documentation][precommit_docs]|
 
-* GitHub Actions
-  * See the [GitHub Actions Integration documentation][github_docs] for more info
-
-* Azure Pipelines
-  * See the [Azure Pipelines Integration documentation][azure_docs] for more info
-
-* Git `pre-commit` Hooks
-  * See the [Git `pre-commit` Integration documentation][precommit_docs] for more info
-
-* None (local use)
-  * This is the "fall-through" case used when no other environment is detected
-  * Can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI system
-    * Establishing a successful submission prior to submitting a PR/MR to a CI system
-    * Troubleshooting after submitting a PR/MR to a CI system and getting unexpected results
+There is also support for local use. This is the "fall-through" case used when no other environment is detected.
+This can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI
+system. It can also help in establishing a successful submission prior to submitting a PR/MR to a CI system.
+Additionally, local use can aid troubleshooting after submitting a PR/MR to a CI system and getting unexpected results.
 
 The options for `phylum-ci`, automatically updated to be current for the latest release:
 
@@ -144,9 +136,10 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 
 ![phylum-ci options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-ci_options.svg)
 
-[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
 [github_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/github_actions.md
+[gitlab_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/gitlab_ci.md
 [azure_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/azure_pipelines.md
+[bb_pipelines_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/bitbucket_pipelines.md
 [precommit_docs]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/sync/git_precommit.md
 
 ## License
@@ -167,6 +160,8 @@ If not, see <https://www.gnu.org/licenses/gpl.html> or write to `phylum@phylum.i
 Suggestions and help are welcome. Feel free to open an issue or otherwise contribute.
 More information is available on the [contributing documentation][contributing] page.
 
+[contributing]: https://github.com/phylum-dev/phylum-ci/blob/main/CONTRIBUTING.md
+
 ## Code of Conduct
 
 Everyone participating in the `phylum-ci` project, and in particular in the issue tracker and pull requests, is
@@ -178,6 +173,8 @@ expected to treat other people with respect and more generally to follow the gui
 Found a security issue in this repository? See the [security policy][security]
 for details on coordinated disclosure.
 
+[security]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/security.md
+
 ## Change log
 
 All notable changes to this project are documented in the [CHANGELOG][changelog].
@@ -188,3 +185,5 @@ The entries in the changelog are primarily automatically generated through the u
 [conventional commits](https://www.conventionalcommits.org) and the
 [Python Semantic Release](https://python-semantic-release.readthedocs.io/en/latest/index.html) tool.
 However, some entries may be manually edited, where it helps for clarity and understanding.
+
+[changelog]: https://github.com/phylum-dev/phylum-ci/blob/main/CHANGELOG.md

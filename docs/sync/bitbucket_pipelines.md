@@ -27,9 +27,9 @@ conditions:
 ## Overview
 
 Once configured for a repository, the Bitbucket Pipelines integration will provide analysis of project
-dependencies from a lockfile. This can happen in a branch or default pipeline as a result of a commit or in a pull
+dependencies from lockfiles. This can happen in a branch or default pipeline as a result of a commit or in a pull
 request (PR) pipeline. For PR pipelines, analyzed dependencies will include any that are added/modified in the PR.
-For branch pipelines, the analyzed dependencies will be determined by comparing the lockfile in the branch to the
+For branch pipelines, the analyzed dependencies will be determined by comparing lockfiles in the branch to the
 default branch. **All** dependencies will be analyzed when the branch pipeline is run on the default branch.
 
 The results will be provided in the pipeline logs and provided as a comment on the PR. The CI job will return an
@@ -73,8 +73,6 @@ using this image are:
   * Consider using a bot or group account for this token
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
-* A `.phylum_project` file exists at the root of the repository
-  * See [`phylum init`][phylum_init] command documentation
 
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
 [bb_tokens]: https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens
@@ -82,7 +80,6 @@ using this image are:
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
-[phylum_init]: https://docs.phylum.io/docs/phylum_init
 
 ## Configure `bitbucket-pipelines.yml`
 
@@ -274,6 +271,9 @@ view the [script options output][script_options] for the latest release.
     # they can be named differently and may or may not contain strict dependencies.
     # In these cases, it is best to specify an explicit lockfile path.
     - phylum-ci --lockfile requirements-prod.txt
+
+    # Specify multiple explicit lockfile paths
+    - phylum-ci --lockfile requirements-prod.txt path/to/lock.file
 
     # Thresholds for the five risk domains may be set at the Phylum project level.
     # They can be set differently for CI environments to "fail the build."

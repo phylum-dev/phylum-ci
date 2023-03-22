@@ -62,56 +62,22 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
+        # Fallback to default local environment
+        # This happens when the `phylum-ci` command is run directly, from the CLI, but not within a CI environment.
         print(" [+] No CI environment detected")
         ci_env = CINone(args)
 
     return ci_env
 
 
-def ensure_project(ci_env: CIBase) -> None:
-    """Ensure a Phylum project is created and in place.
-
-    When a project is specified through arguments, attempt to create that project,
-    overwriting any `.phylum_project` file that already exists.
-    Continue on without error when a specified project already exists.
-    When a group is specified through arguments, attempt to use that group.
-    """
-    if not ci_env.phylum_project:
-        return
-
-    cmd = [str(ci_env.cli_path), "project", "create", ci_env.phylum_project]
-    if ci_env.phylum_group:
-        print(f" [-] Using Phylum group: {ci_env.phylum_group}")
-        cmd = [str(ci_env.cli_path), "project", "create", "--group", ci_env.phylum_group, ci_env.phylum_project]
-
-    print(f" [*] Creating a Phylum project with the name: {ci_env.phylum_project} ...")
-    if ci_env.phylum_project_file.exists():
-        print(f" [+] Overwriting existing `.phylum_project` file found at: {ci_env.phylum_project_file}")
-
-    ret = subprocess.run(cmd, check=False)
-    # The Phylum CLI will return a unique error code of 14 when a project that already
-    # exists is attempted to be created. This situation is recognized and allowed to happen
-    # since it means the project exists as expected. Any other exit code is an error.
-    if ret.returncode == 0:
-        print(f" [-] Project {ci_env.phylum_project} created successfully.")
-    elif ret.returncode == 14:
-        print(f" [-] Project {ci_env.phylum_project} already exists. Continuing with it ...")
-    else:
-        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [!] There was a problem creating the project with command: {shell_escaped_cmd}")
-        ret.check_returncode()
-
-
 def get_phylum_analysis(ci_env: CIBase) -> dict:
-    """Analyze a project lockfile from a given CI environment with the phylum CLI and return the analysis."""
+    """Analyze a project's lockfile(s) from a given CI environment with the phylum CLI and return the analysis."""
     # Build up the analyze command based on the provided inputs
-    cmd = [str(ci_env.cli_path), "analyze", "--label", ci_env.phylum_label]
-    if ci_env.phylum_project:
-        cmd.extend(["--project", ci_env.phylum_project])
-        # A group can not be specified without a project
-        if ci_env.phylum_group:
-            cmd.extend(["--group", ci_env.phylum_group])
-    cmd.extend(["--verbose", "--json", str(ci_env.lockfile)])
+    cmd = [str(ci_env.cli_path), "analyze", "--label", ci_env.phylum_label, "--project", ci_env.phylum_project]
+    if ci_env.phylum_group:
+        cmd.extend(["--group", ci_env.phylum_group])
+    cmd.extend(["--verbose", "--json"])
+    cmd.extend(str(lockfile.path) for lockfile in ci_env.lockfiles)
 
     shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
     print(f" [*] Performing analysis with command: {shell_escaped_cmd}")
@@ -119,8 +85,8 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
         analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:
         # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
-        # This causes the return code to be non-zero and lands us here. Check for this case to proceed.
-        if "failed threshold requirements" in err.stderr:
+        # This causes the return code to be 100 and lands us here. Check for this case to proceed.
+        if err.returncode == 100:
             analysis_result = err.stdout
         else:
             print(f" [!] stdout:\n{err.stdout}")
@@ -162,10 +128,12 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-l",
         "--lockfile",
         type=pathlib.Path,
-        help="""Path to the package lockfile to analyze. If not specified, an attempt will be made to automatically
-            detect the lockfile. Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that they
-            can be named differently and may or may not contain strict dependencies. In these cases, it is best to
-            specify an explicit lockfile path.""",
+        action="append",
+        nargs="*",
+        help="""Path to the package lockfile(s) to analyze. If not specified here or in the `.phylum_project` file, an
+            attempt will be made to automatically detect the lockfile(s). Some lockfile types (e.g., Python/pip
+            `requirements.txt`) are ambiguous in that they can be named differently and may or may not contain strict
+            dependencies. In these cases, it is best to specify an explicit lockfile path.""",
     )
     analysis_group.add_argument(
         "-a",
@@ -177,7 +145,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-f",
         "--force-analysis",
         action="store_true",
-        help="Specify this flag to force analysis, even when the lockfile has not changed.",
+        help="Specify this flag to force analysis, even when no lockfile has changed.",
     )
     analysis_group.add_argument(
         "-k",
@@ -192,7 +160,9 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     analysis_group.add_argument(
         "-p",
         "--project",
-        help="Name of a Phylum project to create and use to perform the analysis.",
+        help="""Name of a Phylum project to create and use to perform the analysis. Can also specify this option's value
+            in the `.phylum_project` file. The value specified with this option takes precedence when both are provided.
+            A deterministic project name will be used when neither are provided.""",
     )
     analysis_group.add_argument(
         "-g",
@@ -276,6 +246,8 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     """Main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
 
+    # Perform version check and normalization here so as to minimize GitHub API calls when
+    # showing the help message but still bail early when the version provided is invalid
     if parsed_args.version:
         print(f" [+] Phylum CLI version was specified as: {parsed_args.version}")
         parsed_args.version = version_check(parsed_args.version)
@@ -287,27 +259,21 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
-    # Bail early if there are no changes to the lockfile
-    print(f" [+] lockfile in use: {ci_env.lockfile}")
+    # Bail early if there are no changes to any lockfile
+    print(f" [+] lockfile(s) in use: {ci_env.lockfiles}")
     if ci_env.force_analysis:
         print(" [+] Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     else:
-        if ci_env.is_lockfile_changed:
-            print(" [+] The lockfile has changed. Proceeding with analysis ...")
+        if ci_env.is_any_lockfile_changed:
+            print(" [+] A lockfile has changed. Proceeding with analysis ...")
         else:
-            print(" [+] The lockfile has not changed. Nothing to do.")
+            print(" [+] No lockfile has changed. Nothing to do.")
             return 0
 
     # Generate a label to use for analysis and report it
-    print(f" [+] phylum_label: {ci_env.phylum_label}")
+    print(f" [+] Label to use for analysis: {ci_env.phylum_label}")
 
-    # Check for the existence of the CLI and install it if needed
-    ci_env.init_cli()
-
-    # Ensure a Phylum project is created and in place
-    ensure_project(ci_env)
-
-    # Analyze current project lockfile with phylum CLI
+    # Analyze current project lockfile(s) with phylum CLI
     analysis = get_phylum_analysis(ci_env)
 
     # Review analysis results to determine the overall state
@@ -324,9 +290,8 @@ def main(args: Optional[Sequence[str]] = None) -> int:
 
 
 def script_main() -> None:
-    """Script entry point.
-
-    The only point of this function is to ensure the proper exit code is set when called from the script entry point."""
+    """Script entry point."""
+    # The only point of this function is to ensure the proper exit code is set when called from the script entry point
     sys.exit(main())
 
 
