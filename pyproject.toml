@@ -17,7 +17,7 @@ keywords = ["dependency", "security", "CI", "integration"]
 # Classifiers can be found here: https://pypi.org/classifiers/
 # TODO: Update the "Development Status" as the project/package matures
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Natural Language :: English",
@@ -52,6 +52,7 @@ cryptography = "*"
 packaging = "*"
 "ruamel.yaml" = "*"
 connect-markdown-renderer = "*"
+pathspec = "*"
 # TODO: Remove these deps when Python 3.7 support is removed: importlib-metadata and backports-cached-property
 #       https://github.com/phylum-dev/phylum-ci/issues/18
 importlib-metadata = {version = "*", python = "<3.8"}
@@ -64,6 +65,7 @@ optional = true
 pytest = "*"
 tomli = "*"
 tox = "*"
+dulwich = "*"
 
 [tool.poetry.group.ci]
 optional = true
