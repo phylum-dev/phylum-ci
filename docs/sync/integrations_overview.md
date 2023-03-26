@@ -38,4 +38,4 @@ Please let us know what you need by either creating a [GitHub issue][github_issu
 or sending a note through the general [Contact Us][support] options.
 
 [github_issue]: https://github.com/phylum-dev/phylum-ci/issues
-[support]: https://docs.phylum.io/docs/support
+[support]: https://docs.phylum.io/docs/contact_us
