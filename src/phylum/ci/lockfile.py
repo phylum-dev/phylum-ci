@@ -35,14 +35,14 @@ class Lockfile:
         """Return a debug printable string representation of the `Lockfile` object."""
         # NOTE: Any change from this format should be made carefully as caller's
         #       may be relying on `repr(lockfile)` to provide the relative path.
-        #       Example: print(f"Relative path to lockfile: {lockfile!r}")
+        #       Example: print(f"Relative path to lockfile: `{lockfile!r}`")
         return str(self.path.relative_to(Path.cwd()))
 
     def __str__(self) -> str:
         """Return the nicely printable string representation of the `Lockfile` object."""
         # NOTE: Any change from this format should be made carefully as caller's
         #       may be relying on `str(lockfile)` to provide the path.
-        #       Example: print(f"Path to lockfile: {lockfile}")
+        #       Example: print(f"Path to lockfile: `{lockfile}`")
         return str(self.path)
 
     def __lt__(self: Self, other: Self) -> bool:
@@ -86,7 +86,7 @@ class Lockfile:
 
         prev_lockfile_object = self.previous_lockfile_object()
         if not prev_lockfile_object:
-            print(f" [+] No previous lockfile object found for {self.path}. Assuming all current packages are new.")
+            print(f" [+] No previous lockfile object found for `{self!r}`. Assuming all current packages are new.")
             return curr_lockfile_packages
 
         prev_lockfile_packages = self.get_previous_lockfile_packages(prev_lockfile_object)
@@ -98,7 +98,7 @@ class Lockfile:
         #       https://github.com/phylum-dev/roadmap/issues/263
         new_deps_set = curr_pkg_set.difference(prev_pkg_set)
         new_deps_list = sorted(new_deps_set)
-        print(f" [+] New dependencies in {self.path}: {new_deps_list}")
+        print(f" [+] New dependencies in `{self!r}`: {new_deps_list}")
         return new_deps_list
 
     def current_lockfile_packages(self) -> Packages:
@@ -110,7 +110,7 @@ class Lockfile:
             print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
-            raise SystemExit(f" [!] Is {self.path} valid? If so, please report this as a bug.") from err
+            raise SystemExit(f" [!] Is `{self!r}` a valid lockfile? If so, please report this as a bug.") from err
         parsed_pkgs = json.loads(parse_result)
         curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return curr_lockfile_packages
@@ -158,8 +158,9 @@ class Lockfile:
                 print(f" [!] stderr:\n{err.stderr}")
                 msg = textwrap.dedent(
                     f"""\
-                    [!] Due to error, assuming no previous lockfile packages for {self!r}@{self.common_ancestor_commit}.
-                        Please report this as a bug if you believe there is a valid lockfile at that revision.
+                    [!] Due to error, assuming no previous lockfile packages.
+                        Please report this as a bug if you believe `{self!r}`
+                        is a valid lockfile at revision `{self.common_ancestor_commit}`.
                     """
                 )
                 print(msg)
