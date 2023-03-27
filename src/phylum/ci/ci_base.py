@@ -424,6 +424,11 @@ class CIBase(ABC):
             risk_data = self.parse_risk_data(analysis, packages)
         else:
             print(" [+] Only considering newly added dependencies ...")
+            # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is necessary
+            # to ensure the `is_lockfile_changed` property is set for each lockfile. Simply referencing
+            # the `is_any_lockfile_changed` property will ensure this happens.
+            if self.force_analysis and self.is_any_lockfile_changed:
+                print(" [-] Updated each lockfile's change status")
             packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
             print(f" [+] {len(packages)} unique newly added dependencies")
             risk_data = self.parse_risk_data(analysis, packages)
