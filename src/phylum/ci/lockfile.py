@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import List, Optional, TypeVar
 
@@ -32,6 +33,9 @@ class Lockfile:
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Lockfile` object."""
+        # NOTE: Any change from this format should be made carefully as caller's
+        #       may be relying on `repr(lockfile)` to provide the relative path.
+        #       Example: print(f"Relative path to lockfile: {lockfile!r}")
         return str(self.path.relative_to(Path.cwd()))
 
     def __str__(self) -> str:
@@ -119,7 +123,8 @@ class Lockfile:
         if not self.common_ancestor_commit:
             return None
         try:
-            cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self.path.name}"]
+            # Use the `repr` form to get the relative path to the lockfile
+            cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
             prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
@@ -151,7 +156,13 @@ class Lockfile:
                 print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
                 print(f" [!] stdout:\n{err.stdout}")
                 print(f" [!] stderr:\n{err.stderr}")
-                print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
+                msg = textwrap.dedent(
+                    f"""\
+                    [!] Due to error, assuming no previous lockfile packages for {self!r}@{self.common_ancestor_commit}.
+                        Please report this as a bug if you believe there is a valid lockfile at that revision.
+                    """
+                )
+                print(msg)
                 return []
 
         parsed_pkgs = json.loads(parse_result)

@@ -106,9 +106,9 @@ class CIPreCommit(CIBase):
         staged_files = [Path(staged_file).resolve() for staged_file in self.extra_args]
         for lockfile in self.lockfiles:
             if lockfile.path in staged_files:
-                print(f" [-] The lockfile `{lockfile}` has changed")
+                print(f" [-] The lockfile `{lockfile!r}` has changed")
                 lockfile.is_lockfile_changed = True
             else:
-                print(f" [-] The lockfile `{lockfile}` has not changed")
+                print(f" [-] The lockfile `{lockfile!r}` has not changed")
                 lockfile.is_lockfile_changed = False
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)

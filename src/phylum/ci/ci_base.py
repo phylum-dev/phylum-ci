@@ -336,16 +336,16 @@ class CIBase(ABC):
         branch history...which can happen with shallow clones.
         """
         for lockfile in self.lockfiles:
-            print(f" [*] Checking {lockfile} for changes ...")
+            print(f" [*] Checking `{lockfile!r}` for changes ...")
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
             cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(lockfile.path)]
             ret = subprocess.run(cmd, check=False)
             if ret.returncode == 0:
-                print(f" [-] The lockfile `{lockfile}` has not changed")
+                print(f" [-] The lockfile `{lockfile!r}` has not changed")
                 lockfile.is_lockfile_changed = False
             elif ret.returncode == 1:
-                print(f" [-] The lockfile `{lockfile}` has changed")
+                print(f" [-] The lockfile `{lockfile!r}` has changed")
                 lockfile.is_lockfile_changed = True
             else:
                 if err_msg:
