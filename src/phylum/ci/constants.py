@@ -16,7 +16,7 @@ SUCCESS_DETAILS = "The Phylum risk analysis is complete and did not identify any
 FAILURE_DETAILS = """
         This repository analyzes risk of new dependencies with Phylum. An administrator
         of this repository has set score requirements for Phylum's five risk domains.
-        One or more dependencies added to the lockfile failed the risk analysis.
+        One or more dependencies added to a lockfile failed the risk analysis.
         """.strip()
 
 # String template providing information about an incomplete analysis.

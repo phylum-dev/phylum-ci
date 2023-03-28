@@ -8,11 +8,11 @@ GitLab References:
   * https://docs.gitlab.com/ee/api/notes.html#merge-requests
 """
 import os
+import re
 import shlex
 import subprocess
 from argparse import Namespace
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
 
 import requests
@@ -20,7 +20,7 @@ from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER
-from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
+from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 
@@ -29,8 +29,8 @@ def is_in_mr() -> bool:
     """Indicate if the integration is operating in the context of a merge request pipeline.
 
     GitLab CI allows for the possibility of running pipelines in different contexts:
-        * On every push, for the last commit in the push (e.g., branch pipelines)
-        * For merge requests (e.g., merge request pipelines)
+      * On every push, for the last commit in the push (e.g., branch pipelines)
+      * For merge requests (e.g., merge request pipelines)
 
     Knowing when the context is within a merge request helps to ensure the logic used
     to determine the lockfile changes is correct. It also helps to ensure output is not
@@ -87,27 +87,26 @@ class CIGitLab(CIBase):
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         if is_in_mr():
             mr_iid = os.getenv("CI_MERGE_REQUEST_IID", "unknown-IID")
-            mr_title = os.getenv("CI_MERGE_REQUEST_TITLE", "unknown-title")
-            label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_title}"
+            mr_src_branch = os.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME", "unknown-branch")
+            label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_src_branch}"
         else:
             current_branch = os.getenv("CI_COMMIT_BRANCH", "unknown-branch")
-            lockfile_hash_object = git_hash_object(self.lockfile)
-            label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
+            label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
 
-        label = label.replace(" ", "-")
+        label = re.sub(r"\s+", "-", label)
         return label
 
     @cached_property
-    def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit.
+    def common_ancestor_commit(self) -> Optional[str]:
+        """Find the common ancestor commit.
 
         Some pre-defined variables are used: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         """
         remote = git_remote()
 
         if is_in_mr():
-            common_ancestor_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
-            return common_ancestor_commit
+            common_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
+            return common_commit
 
         src_branch_name = os.getenv("CI_COMMIT_BRANCH")
         if not src_branch_name:
@@ -130,40 +129,35 @@ class CIGitLab(CIBase):
         # and the default branch instead of finding the exact commit from which the branch was created.
         cmd = ["git", "merge-base", src_branch, default_branch]
         shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [*] Finding common lockfile ancestor commit with command: {shell_escaped_cmd}")
+        print(f" [*] Finding common ancestor commit with command: {shell_escaped_cmd}")
         try:
-            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             ref_url = "https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"
-            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
             print(f" [!] Ensure the git strategy is set to `clone` for repo checkouts: {ref_url}")
-            common_ancestor_commit = None
+            common_commit = None
 
-        return common_ancestor_commit
+        return common_commit
 
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""
-        diff_base_sha = self.common_lockfile_ancestor_commit
-        print(f" [+] The common lockfile ancestor commit: {diff_base_sha}")
+    @property
+    def is_any_lockfile_changed(self) -> bool:
+        """Predicate for detecting if any lockfile has changed."""
+        diff_base_sha = self.common_ancestor_commit
+        print(f" [+] The common ancestor commit: {diff_base_sha}")
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
-        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-        # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
-        ret = subprocess.run(cmd, check=False)
-        if ret.returncode == 0:
-            return False
-        if ret.returncode == 1:
-            return True
-        # Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning
-        print(" [!] Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history")
-        ret.check_returncode()
-        return False  # unreachable code but this makes mypy happy
+        err_msg = """\
+            [!] Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history.
+                Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
+        self.update_lockfiles_change_status(diff_base_sha, err_msg)
+
+        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
     def post_output(self) -> None:
         """Post the output of the analysis.

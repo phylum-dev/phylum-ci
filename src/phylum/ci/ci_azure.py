@@ -17,12 +17,12 @@ Azure References:
 """
 import base64
 import os
+import re
 import shlex
 import subprocess
 import urllib.parse
 from argparse import Namespace
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
 
 import requests
@@ -31,7 +31,7 @@ from backports.cached_property import cached_property
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
 from phylum.ci.constants import PHYLUM_HEADER
-from phylum.ci.git import git_default_branch_name, git_hash_object, git_remote
+from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 AZURE_PAT_ERR_MSG = """
@@ -64,8 +64,8 @@ def is_in_pr() -> bool:
     """Indicate if the integration is operating in the context of a pull request pipeline.
 
     Azure Pipelines allows for triggering pipelines to run in different contexts:
-        * On every push, for the last commit in the push (e.g., CI triggers)
-        * For pull requests (e.g., PR triggers)
+      * On every push, for the last commit in the push (e.g., CI triggers)
+      * For pull requests (e.g., PR triggers)
 
     There are other types of triggers but the one we really care about is PR triggers.
     Those will mean running in a context that allows for full output in the form of
@@ -143,7 +143,10 @@ class CIAzure(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         if is_in_pr():
-            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
+            # This variable is only populated for PRs from GitHub which have a different PR ID and PR number
+            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
+            if pr_number is None:
+                pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
             pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref")
             ref_prefix = "refs/heads/"
             # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
@@ -152,15 +155,14 @@ class CIAzure(CIBase):
             label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
         else:
             current_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "unknown-branch")
-            lockfile_hash_object = git_hash_object(self.lockfile)
-            label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
+            label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
 
-        label = label.replace(" ", "-")
+        label = re.sub(r"\s+", "-", label)
         return label
 
     @cached_property
-    def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit."""
+    def common_ancestor_commit(self) -> Optional[str]:
+        """Find the common ancestor commit."""
         remote = git_remote()
 
         if is_in_pr():
@@ -188,9 +190,9 @@ class CIAzure(CIBase):
             tgt_branch = f"refs/remotes/{remote}/HEAD"
 
             # If the current commit is on the default branch, then the merge base will be the same
-            # as the current commit and it won't be possible to provide a useful common lockfile
-            # ancestor commit. In this case, it is better to force analysis of the lockfile and
-            # consider *all* dependencies in analysis results instead of just the newly added ones.
+            # as the current commit and it won't be possible to provide a useful common ancestor
+            # commit. In this case, it is better to force analysis of the lockfile(s) and consider
+            # *all* dependencies in analysis results instead of just the newly added ones.
             if src_branch == git_default_branch_name(remote):
                 print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
                 self._force_analysis = True
@@ -220,40 +222,35 @@ class CIAzure(CIBase):
 
         cmd = ["git", "merge-base", src_branch, tgt_branch]
         shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [*] Finding common lockfile ancestor commit with command: {shell_escaped_cmd}")
+        print(f" [*] Finding common ancestor commit with command: {shell_escaped_cmd}")
         try:
-            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
             ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
-            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
             print(f" [!] Ensure shallow fetch is disabled for repo checkouts: {ref_url}")
-            common_ancestor_commit = None
+            common_commit = None
 
-        return common_ancestor_commit
+        return common_commit
 
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed."""
-        diff_base_sha = self.common_lockfile_ancestor_commit
-        print(f" [+] The common lockfile ancestor commit: {diff_base_sha}")
+    @property
+    def is_any_lockfile_changed(self) -> bool:
+        """Predicate for detecting if any lockfile has changed."""
+        diff_base_sha = self.common_ancestor_commit
+        print(f" [+] The common ancestor commit: {diff_base_sha}")
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
-        # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
-        # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", diff_base_sha, "--", str(lockfile.resolve())]
-        ret = subprocess.run(cmd, check=False)
-        if ret.returncode == 0:
-            return False
-        if ret.returncode == 1:
-            return True
-        # Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout
-        print(" [!] Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history")
-        ret.check_returncode()
-        return False  # unreachable code but this makes mypy happy
+        err_msg = """\
+            [!] Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
+                Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
+        self.update_lockfiles_change_status(diff_base_sha, err_msg)
+
+        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
     def post_output(self) -> None:
         """Post the output of the analysis.

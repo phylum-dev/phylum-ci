@@ -2,12 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# `--label` was added as a long form option to the analyze command starting with v3.12.0
-MIN_CLI_VER_FOR_INSTALL = "v3.12.0"
+# Ability to specify multiple lockfiles was added in v4.5.0
+MIN_CLI_VER_FOR_INSTALL = "v4.5.0"
 
 # This is the minimum CLI version supported for existing installs.
-# `--label` was added as a long form option to the analyze command starting with v3.12.0
-MIN_CLI_VER_INSTALLED = "v3.12.0"
+# Ability to specify multiple lockfiles was added in v4.5.0
+MIN_CLI_VER_INSTALLED = "v4.5.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -42,7 +42,6 @@ SUPPORTED_LOCKFILES = {
     # Python
     "requirements.txt": "pip",
     "Pipfile.lock": "pipenv",
-    "Pipfile": "pipenv",
     "poetry.lock": "poetry",
     # C#
     "*.csproj": "nuget",

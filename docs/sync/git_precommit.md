@@ -46,14 +46,11 @@ The pre-requisites for using the git `pre-commit` hook are:
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
   * Support for on-premises installs are not available at this time
-* A `.phylum_project` file exists at the root of the repository
-  * See [`phylum init`][phylum_init] command documentation
 
 [phylum_tokens]: https://docs.phylum.io/docs/api-keys
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
 [phylum_register]: https://docs.phylum.io/docs/phylum_auth_register
-[phylum_init]: https://docs.phylum.io/docs/phylum_init
 
 **NOTE: If the `phylum` CLI binary is installed locally, it will be used. Otherwise, the hook will install it.**
 
@@ -93,10 +90,10 @@ Two common customization keys for the `phylum` hook are `files` and `args`:
 
 ### File Control
 
-The `files` key in the hook configuration file is the way to ensure the hook only runs when the specified
-lockfile has changed, saving execution time.
+The `files` key in the hook configuration file is the way to ensure the hook only runs when specified
+lockfiles have changed, saving execution time.
 
-The value for the `files` key is a [Python regular expression][re] and are matched with `re.search`.
+The value for the `files` key is a [Python regular expression][re] and is matched with `re.search`.
 
 [re]: https://docs.python.org/3/library/re.html#regular-expression-syntax
 
@@ -110,8 +107,20 @@ The value for the `files` key is a [Python regular expression][re] and are match
         files: ^poetry\.lock$
 
         # Specify `requirements-*.txt` files
-        # NOTE: An explicit lockfile should still be specified in the `args` key
+        # NOTE: Explicit lockfiles should still be specified in the `args` key
         files: ^requirements-.*\.txt$
+
+        # Specify both `package-lock.json` and `poetry.lock` on one line
+        files: ^(package-lock\.json|poetry\.lock)$
+
+        # Specify multiple files using the inline `re.VERBOSE` flag `(?x)`
+        files: |
+            (?x)^(
+                package-lock\.json|
+                poetry\.lock|
+                requirements-.*\.txt|
+                path/to/lock\.file
+            )$
 ```
 
 ### Argument Control
@@ -145,6 +154,13 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # they can be named differently and may or may not contain strict dependencies.
         # In these cases, it is best to specify an explicit lockfile path.
         args: [--lockfile=requirements-prod.txt]
+
+        # Specify multiple explicit lockfile paths
+        args:
+          - --lockfile=requirements-prod.txt
+          - --lockfile=package-lock.json
+          - --lockfile=poetry.lock
+          - --lockfile=path/to/lock.file
 
         # Thresholds for the five risk domains may be set at the Phylum project level.
         # They can be set differently for the hook.

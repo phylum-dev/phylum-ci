@@ -14,7 +14,7 @@ Full documentation can be found there or by viewing the [Phylum Analyze PR actio
 
 The Phylum Analyze PR action is a [Docker container action][container_action].
 This has the advantage of ensuring everything needed to work with Phylum for analyzing a PR
-for dependencies in a lockfile is self contained and known to function as a single unit.
+for dependencies in lockfiles is self contained and known to function as a single unit.
 There are some disadvantages and some users may prefer a different solution.
 
 [marketplace]: https://github.com/marketplace/actions/phylum-analyze-pr

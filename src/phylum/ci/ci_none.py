@@ -5,6 +5,7 @@ This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
 import argparse
+import re
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -12,7 +13,7 @@ from typing import Optional
 from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.git import git_curent_branch_name, git_hash_object, git_remote
+from phylum.ci.git import git_curent_branch_name, git_remote
 
 
 class CINone(CIBase):
@@ -40,27 +41,27 @@ class CINone(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         current_branch = git_curent_branch_name()
-        lockfile_hash_object = git_hash_object(self.lockfile)
-        label = f"{self.ci_platform_name}_{current_branch}_{lockfile_hash_object[:7]}"
-        label = label.replace(" ", "-")
+        label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
+        label = re.sub(r"\s+", "-", label)
         return label
 
     @cached_property
-    def common_lockfile_ancestor_commit(self) -> Optional[str]:
-        """Find the common lockfile ancestor commit."""
+    def common_ancestor_commit(self) -> Optional[str]:
+        """Find the common ancestor commit."""
         remote = git_remote()
         cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/HEAD"]
         try:
-            common_ancestor_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:
-            print(f" [!] The common lockfile ancestor commit could not be found: {err}")
+            print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")
             print(f" [!] stderr:\n{err.stderr}")
-            common_ancestor_commit = None
-        return common_ancestor_commit
+            common_commit = None
+        return common_commit
 
-    def _is_lockfile_changed(self, lockfile: Path) -> bool:
-        """Predicate for detecting if the given lockfile has changed.
+    @property
+    def is_any_lockfile_changed(self) -> bool:
+        """Predicate for detecting if any lockfile has changed.
 
         For the case of operating outside of a CI platform, some assumptions are made:
           * There is only one remote configured for the repository
@@ -73,13 +74,5 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        # `--exit-code` will make git exit with with 1 if there were differences while 0 means no differences.
-        # Any other exit code is an error and a reason to re-raise.
-        cmd = ["git", "diff", "--exit-code", "--quiet", f"refs/remotes/{remote}/HEAD...", "--", str(lockfile.resolve())]
-        ret = subprocess.run(cmd, check=False)
-        if ret.returncode == 0:
-            return False
-        if ret.returncode == 1:
-            return True
-        ret.check_returncode()
-        return False  # unreachable code but this makes mypy happy
+        self.update_lockfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)

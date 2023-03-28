@@ -40,7 +40,7 @@ approach, an option is exposed to optionally publish the built package to the
 environment. For example using `pipx` to run a specific developmental release version:
 
 ```sh
-pipx run -i https://test.pypi.org/simple/ --spec "phylum==0.2.0.dev19" --pip-args="--extra-index-url=https://pypi.org/simple/" phylum-init -h
+pipx run -i https://test.pypi.org/simple/ --spec "phylum==0.24.2.dev183" --pip-args="--extra-index-url=https://pypi.org/simple/" phylum-init -h
 ```
 
 ### Release workflow
