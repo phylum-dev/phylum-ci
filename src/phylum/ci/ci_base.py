@@ -133,8 +133,7 @@ class CIBase(ABC):
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
-                print(f" [!] Provided lockfile does not exist: {provided_lockfile}")
-                continue
+                raise SystemExit(f" [!] Provided lockfile does not exist: {provided_lockfile}")
             if not provided_lockfile.stat().st_size:
                 print(f" [!] Provided lockfile is an empty file: {provided_lockfile}")
                 continue
