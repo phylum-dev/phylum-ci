@@ -143,7 +143,10 @@ class CIAzure(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         if is_in_pr():
-            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
+            # This variable is only populated for PRs from GitHub which have a different PR ID and PR number
+            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
+            if pr_number is None:
+                pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
             pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref")
             ref_prefix = "refs/heads/"
             # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
