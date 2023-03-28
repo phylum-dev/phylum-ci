@@ -105,8 +105,8 @@ class CIBitbucket(CIBase):
         """Get a custom label for use when submitting jobs with `phylum analyze`."""
         if is_in_pr():
             pr_id = os.getenv("BITBUCKET_PR_ID", "unknown-ID")
-            pr_title = os.getenv("BITBUCKET_BRANCH", "unknown-branch")
-            label = f"{self.ci_platform_name}_PR#{pr_id}_{pr_title}"
+            pr_src_branch = os.getenv("BITBUCKET_BRANCH", "unknown-branch")
+            label = f"{self.ci_platform_name}_PR#{pr_id}_{pr_src_branch}"
         else:
             current_branch = os.getenv("BITBUCKET_BRANCH", "unknown-branch")
             label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
