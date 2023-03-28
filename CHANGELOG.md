@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.25.0 (2023-03-28)
+### Feature
+* Allow `.phylum_project` file to be optional ([#209](https://github.com/phylum-dev/phylum-ci/issues/209)) ([`7092c93`](https://github.com/phylum-dev/phylum-ci/commit/7092c9359c5e8e11d0b7785d2eed276c6ee9c608))
+
+### Breaking
+* CLI installs prior to v4.5.0 are no longer supported. A Phylum CLI version with ability to specify multiple lockfiles is required. ([`7092c93`](https://github.com/phylum-dev/phylum-ci/commit/7092c9359c5e8e11d0b7785d2eed276c6ee9c608))
+
+### Documentation
+* Fix support link ([#210](https://github.com/phylum-dev/phylum-ci/issues/210)) ([`ba0240e`](https://github.com/phylum-dev/phylum-ci/commit/ba0240e03f0b929a83da74b0ea8e898cedf62bad))
+
 ## v0.24.1 (2023-02-14)
 ### Fix
 * Duplicate PR comments are possible ([#199](https://github.com/phylum-dev/phylum-ci/issues/199)) ([`d660406`](https://github.com/phylum-dev/phylum-ci/commit/d6604066da7acbd1a05a132c7c3456d7395aadbb))
