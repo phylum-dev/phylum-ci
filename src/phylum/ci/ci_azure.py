@@ -22,11 +22,10 @@ import shlex
 import subprocess
 import urllib.parse
 from argparse import Namespace
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from typing import Optional
 
 import requests
-from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment

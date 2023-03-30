@@ -15,10 +15,10 @@ import os
 import re
 import subprocess
 from argparse import Namespace
+from functools import cached_property
 from typing import Optional
 
 import requests
-from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.constants import PHYLUM_HEADER

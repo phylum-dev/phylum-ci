@@ -12,10 +12,9 @@ import argparse
 import re
 import subprocess
 import sys
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
-
-from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name

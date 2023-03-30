@@ -13,11 +13,11 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
 import pathspec
-from backports.cached_property import cached_property
 from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
