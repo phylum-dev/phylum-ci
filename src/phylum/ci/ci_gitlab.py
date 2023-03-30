@@ -127,8 +127,7 @@ class CIGitLab(CIBase):
         # This is a best effort attempt since it is finding the merge base between the current commit
         # and the default branch instead of finding the exact commit from which the branch was created.
         cmd = ["git", "merge-base", src_branch, default_branch]
-        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [*] Finding common ancestor commit with command: {shell_escaped_cmd}")
+        print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:

@@ -79,8 +79,7 @@ def get_phylum_analysis(ci_env: CIBase) -> dict:
     cmd.extend(["--verbose", "--json"])
     cmd.extend(str(lockfile.path) for lockfile in ci_env.lockfiles)
 
-    shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-    print(f" [*] Performing analysis with command: {shell_escaped_cmd}")
+    print(f" [*] Performing analysis with command: {shlex.join(cmd)}")
     try:
         analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
     except subprocess.CalledProcessError as err:

@@ -391,8 +391,7 @@ class CIBase(ABC):
         elif ret.returncode == 14:
             print(f" [-] Project {self.phylum_project} already exists. Continuing with it ...")
         else:
-            shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-            print(f" [!] There was a problem creating the project with command: {shell_escaped_cmd}")
+            print(f" [!] There was a problem creating the project with command: {shlex.join(cmd)}")
             ret.check_returncode()
 
     def post_output(self) -> None:
