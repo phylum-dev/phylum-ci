@@ -25,7 +25,7 @@ repos:
     rev: 01cee377ba3a5264c7fbe7b6beae7b575f764dc3  # frozen: v3.3.1
     hooks:
       - id: pyupgrade
-        args: [--py37-plus]
+        args: [--py38-plus]
 
   # NOTE: don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`

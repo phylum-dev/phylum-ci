@@ -22,11 +22,10 @@ import shlex
 import subprocess
 import urllib.parse
 from argparse import Namespace
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from typing import Optional
 
 import requests
-from backports.cached_property import cached_property
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
@@ -221,8 +220,7 @@ class CIAzure(CIBase):
                 tgt_branch = f"{new_ref_prefix}{tgt_branch}"
 
         cmd = ["git", "merge-base", src_branch, tgt_branch]
-        shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-        print(f" [*] Finding common ancestor commit with command: {shell_escaped_cmd}")
+        print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
         except subprocess.CalledProcessError as err:

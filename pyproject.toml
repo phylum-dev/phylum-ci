@@ -26,7 +26,6 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Software Development :: Quality Assurance",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -46,17 +45,13 @@ phylum-init = "phylum.init.cli:main"
 phylum-ci = "phylum.ci.cli:script_main"
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.12"
+python = ">=3.8,<3.12"
 requests = "*"
 cryptography = "*"
 packaging = "*"
 "ruamel.yaml" = "*"
 connect-markdown-renderer = "*"
 pathspec = "*"
-# TODO: Remove these deps when Python 3.7 support is removed: importlib-metadata and backports-cached-property
-#       https://github.com/phylum-dev/phylum-ci/issues/18
-importlib-metadata = {version = "*", python = "<3.8"}
-backports-cached-property = "*"
 
 [tool.poetry.group.test]
 optional = true

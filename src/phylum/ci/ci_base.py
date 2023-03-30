@@ -13,11 +13,11 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
 import pathspec
-from backports.cached_property import cached_property
 from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
@@ -391,8 +391,7 @@ class CIBase(ABC):
         elif ret.returncode == 14:
             print(f" [-] Project {self.phylum_project} already exists. Continuing with it ...")
         else:
-            shell_escaped_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-            print(f" [!] There was a problem creating the project with command: {shell_escaped_cmd}")
+            print(f" [!] There was a problem creating the project with command: {shlex.join(cmd)}")
             ret.check_returncode()
 
     def post_output(self) -> None:
