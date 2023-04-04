@@ -252,7 +252,7 @@ def main(args: Optional[Sequence[str]] = None) -> int:
         parsed_args.version = version_check(parsed_args.version)
     else:
         print(" [+] Phylum CLI version not specified")
-        parsed_args.version = default_phylum_cli_version()
+        parsed_args.version = version_check(default_phylum_cli_version())
     print(f" [*] Using Phylum CLI version: {parsed_args.version}")
 
     # Detect which CI environment, if any, we are in
