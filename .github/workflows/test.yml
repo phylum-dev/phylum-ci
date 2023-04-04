@@ -45,6 +45,11 @@ jobs:
           poetry install --verbose --no-root --sync --with qa
 
       - name: Run tox via poetry
+        env:
+          # Skip the `phylum-ci` pre-commit hook since:
+          #   * The current GitHub integration expects to *only* be run in a PR context
+          #   * The `phylum-ci` action will already be run for pull request triggers
+          SKIP: phylum-ci
         run: poetry run tox run -e qa
 
   test-matrix:
