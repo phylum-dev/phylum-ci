@@ -76,6 +76,7 @@ optional = true
 
 [tool.poetry.group.qa.dependencies]
 types-requests = "*"
+pre-commit = "*"
 
 [tool.black]
 line-length = 120

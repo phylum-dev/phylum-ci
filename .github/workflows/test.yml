@@ -10,7 +10,43 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
+  QA:
+    name: Quality Assurance
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
+        python-version: ["3.11"]
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up Python
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install the project with poetry
+        run: |
+          poetry env use python${{ matrix.python-version }}
+          poetry lock --check
+          poetry install --verbose --no-root --sync --with qa
+
+      - name: Run tox via poetry
+        run: poetry run tox run -e qa
+
   test-matrix:
     name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -18,9 +54,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-    defaults:
-      run:
-        shell: bash
     steps:
       - name: Checkout the repo
         uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
@@ -55,9 +88,6 @@ jobs:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
         python-version: ["3.11"]
-    defaults:
-      run:
-        shell: bash
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -123,18 +153,16 @@ jobs:
   # the repo settings without needing to update those settings everytime the test jobs are updated.
   test-rollup:
     name: Test rollup
-    if: always()
-    needs: [test-matrix, docker]
     runs-on: ubuntu-latest
+    if: always()
+    needs: [QA, test-matrix, docker]
     steps:
       - name: Check for test jobs failure
-        if: (needs.test-matrix.result != 'success') || (needs.docker.result != 'success')
-        shell: bash
+        if: (needs.QA.result != 'success') || (needs.test-matrix.result != 'success') || (needs.docker.result != 'success')
         run: |
-          echo "One or more test matrix jobs was/were not successful"
+          echo "At least one test job was not successful"
           exit 1
 
       - name: Confirm test jobs success
-        if: (needs.test-matrix.result == 'success') && (needs.docker.result == 'success')
-        shell: bash
-        run: echo "All test matrix jobs were successful"
+        if: (needs.QA.result == 'success') && (needs.test-matrix.result == 'success') && (needs.docker.result == 'success')
+        run: echo "All test jobs were successful"

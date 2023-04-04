@@ -140,9 +140,10 @@ Here's how to set up `phylum-ci` for local development.
     # Install the main dependencies only:
     poetry install --sync
 
-    # Alternatively, specific dependency groups can be installed at the same time.
-    # It makes sense to add the "test" group now if new code is going to be added and tested:
-    poetry install --sync --with test
+    # Alternatively, specific dependency groups can be installed at the
+    # same time. It makes sense to add the "test" and "qa" groups now
+    # if new code is going to be added and tested:
+    poetry install --sync --with test,qa
     ```
 
 6. Create a branch for local development:
@@ -180,12 +181,13 @@ Here's how to set up `phylum-ci` for local development.
     phylum analyze poetry.lock
     ```
 
-8. When you're done making changes, check that your changes pass the tests:
+8. When you're done making changes, check that your changes pass QA and the tests:
 
     ```sh
-    # Ensure the "test" dependency group is installed, if not done previously
-    poetry install --sync --with test
-    poetry run tox
+    # Ensure the "test" and "qa" dependency groups are installed, if not done previously
+    poetry install --sync --with test,qa
+    poetry run tox run -e qa
+    poetry run tox run-parallel
     ```
 
 9. Commit your changes and push your branch to GitHub:
@@ -232,16 +234,16 @@ interact with `pytest` by passing additional positional arguments:
 ```sh
 # passing additional options to pytest requires using the double dash
 # escape twice, once for escaping `poetry` and again for escaping `tox`
-poetry run -- tox -e py310 -- --help
+poetry run -- tox run -e py310 -- --help
 
-# run a specific test module across all test environments
-poetry run -- tox -- tests/unit/test_package_metadata.py
+# run a specific test module across all test environments in parallel
+poetry run -- tox run-parallel -- tests/unit/test_package_metadata.py
 
 # run a specific test module across a specific test environment
-poetry run -- tox -e py39 -- tests/unit/test_package_metadata.py
+poetry run -- tox run -e py39 -- tests/unit/test_package_metadata.py
 
 # run a specific test function within a test module, in a specific test environment
-poetry run -- tox -e py310 -- tests/unit/test_package_metadata.py::test_python_version
+poetry run -- tox run -e py310 -- tests/unit/test_package_metadata.py::test_python_version
 ```
 
 To run a script entry point with the local checkout of the code (in develop mode), use `poetry`:
