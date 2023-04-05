@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.26.0 (2023-04-05)
+### Feature
+* Detect SPDX formatted SBOM files ([#220](https://github.com/phylum-dev/phylum-ci/issues/220)) ([`8325cc3`](https://github.com/phylum-dev/phylum-ci/commit/8325cc392ef41026d9c43a059cb6d92e4ddc4d7b))
+
+### Breaking
+* Support for Python 3.7 was removed due to its imminent end of life ([`1b65787`](https://github.com/phylum-dev/phylum-ci/commit/1b65787d98f6e97cf16d81aa5c2a91e8bb8896a8))
+
 ## v0.25.0 (2023-03-28)
 ### Feature
 * Allow `.phylum_project` file to be optional ([#209](https://github.com/phylum-dev/phylum-ci/issues/209)) ([`7092c93`](https://github.com/phylum-dev/phylum-ci/commit/7092c9359c5e8e11d0b7785d2eed276c6ee9c608))
