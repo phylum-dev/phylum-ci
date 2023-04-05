@@ -52,6 +52,11 @@ SUPPORTED_LOCKFILES = {
     "go.sum": "go",
     # Rust
     "Cargo.lock": "cargo",
+    # SBOM
+    "*.spdx.json": "spdx",
+    "*.spdx.yaml": "spdx",
+    "*.spdx.yml": "spdx",
+    "*.spdx": "spdx",
 }
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
