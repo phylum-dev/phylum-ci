@@ -12,7 +12,7 @@ PHYLUM_HEADER = "# Phylum OSS Supply Chain Risk Analysis"
 
 SUCCESS_DETAILS = "The Phylum risk analysis is complete and did not identify any issues."
 
-# Expandable HTML providing information on why there was a failure
+# Background text providing information on why there was a failure
 FAILURE_DETAILS = """
         This repository analyzes risk of new dependencies with Phylum. An administrator
         of this repository has set score requirements for Phylum's five risk domains.
