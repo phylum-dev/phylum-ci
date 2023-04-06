@@ -115,7 +115,7 @@ class CIAzure(CIBase):
         self.triggering_repo = os.getenv("BUILD_REPOSITORY_PROVIDER", "unknown")
         print(f" [+] Triggering repository: {self.triggering_repo}")
         # "TfsGit" is the legacy name for "Azure Repos Git"
-        if self.triggering_repo not in ["TfsGit", "GitHub"]:
+        if self.triggering_repo not in ("TfsGit", "GitHub"):
             raise SystemExit(f" [!] Triggering repository `{self.triggering_repo}` not supported")
 
         azure_token = os.getenv("AZURE_TOKEN", "")

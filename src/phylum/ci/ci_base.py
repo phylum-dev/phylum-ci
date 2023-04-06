@@ -246,7 +246,7 @@ class CIBase(ABC):
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
             raise SystemExit(" [!] A Phylum API key is required to continue.")
 
-        print(f" [+] Using Phylum CLI instance: {cli_version} at {str(cli_path)}")
+        print(f" [+] Using Phylum CLI instance: {cli_version} at {cli_path}")
         return cli_path
 
     @property
