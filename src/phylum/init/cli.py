@@ -203,8 +203,7 @@ def save_file_from_url(url: str, path: Path) -> None:
     print("Done")
 
     print(f" [*] Saving {url} file to {path} ...", end="")
-    with open(path, "wb") as f:
-        f.write(req.content)
+    path.write_bytes(req.content)
     print("Done")
 
 
