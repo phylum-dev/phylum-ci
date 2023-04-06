@@ -31,7 +31,7 @@ repos:
     rev: 2c336ac3638c1bccb6e138816826f4a7066ef5e6  # frozen: v1.15.0
     hooks:
       - id: refurb
-        args: [--format, github]
+        args: [--python-version, "3.8", --format, github]
 
   # NOTE: don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`
