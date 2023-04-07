@@ -363,7 +363,7 @@ def main(args=None):
         args.version = version_check(args.version)
     else:
         print(" [+] Phylum CLI version not specified")
-        args.version = default_phylum_cli_version()
+        args.version = version_check(default_phylum_cli_version())
     print(f" [*] Using Phylum CLI version: {args.version}")
 
     if args.list_releases:
