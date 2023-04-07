@@ -177,7 +177,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
     threshold_group.add_argument(
         "--vul-threshold",
         type=threshold_check,
-        help="(v)ulnerability risk score threshold value.",
+        help="vulnerability risk score threshold value.",
     )
     threshold_group.add_argument(
         "-m",
