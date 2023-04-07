@@ -18,7 +18,7 @@ from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
-from phylum.constants import TOKEN_ENVVAR_NAME
+from phylum.constants import HELP_MSG_API_URI, HELP_MSG_TARGET, HELP_MSG_TOKEN, HELP_MSG_VERSION
 from phylum.init.cli import default_phylum_cli_version, get_target_triple, version_check
 
 
@@ -150,11 +150,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-k",
         "--phylum-token",
         dest="token",
-        help=f"""Phylum user token. Can also specify this option's value by setting the `{TOKEN_ENVVAR_NAME}`
-            environment variable. The value specified with this option takes precedence when both are provided.
-            Leave this option and it's related environment variable unspecified to either (1) use an existing token
-            already set in the Phylum config file or (2) to manually populate the token with a `phylum auth login` or
-            `phylum auth register` command after install.""",
+        help=HELP_MSG_TOKEN,
     )
     analysis_group.add_argument(
         "-p",
@@ -179,10 +175,10 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             detail: https://docs.phylum.io/docs/phylum-package-score#risk-domains""",
     )
     threshold_group.add_argument(
-        "-u",
+        "-v",
         "--vul-threshold",
         type=threshold_check,
-        help="v(u)lnerability risk score threshold value.",
+        help="(v)ulnerability risk score threshold value.",
     )
     threshold_group.add_argument(
         "-m",
@@ -220,15 +216,19 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "--phylum-release",
         dest="version",
         # NOTE: `default` and `type` values are not used here in an effort to minimize rate limited GitHub API calls.
-        help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
-            with or without the leading `v`. Default behavior is to use the installed version and fall back to `latest`
-            when no CLI is already installed.""",
+        help=HELP_MSG_VERSION,
     )
     cli_group.add_argument(
         "-t",
         "--target",
         default=get_target_triple(),
-        help="The target platform type where the CLI will be installed.",
+        help=HELP_MSG_TARGET,
+    )
+    cli_group.add_argument(
+        "-u",
+        "--api-uri",
+        dest="uri",
+        help=HELP_MSG_API_URI,
     )
     cli_group.add_argument(
         "-i",

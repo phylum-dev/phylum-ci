@@ -19,6 +19,11 @@ from ruamel.yaml import YAML
 
 from phylum import __version__
 from phylum.constants import (
+    API_URI_ENVVAR_NAME,
+    HELP_MSG_API_URI,
+    HELP_MSG_TARGET,
+    HELP_MSG_TOKEN,
+    HELP_MSG_VERSION,
     MIN_CLI_VER_FOR_INSTALL,
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
@@ -268,26 +273,79 @@ def process_token_option(args):
         setup_token(token)
 
 
-def setup_token(token):
+def setup_token(token: str) -> None:
     """Setup the CLI credentials with a provided token."""
-    phylum_bin_path = get_expected_phylum_bin_path()
     phylum_settings_path = get_phylum_settings_path()
+    ensure_settings_file()
+    yaml = YAML()
+    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings.setdefault("auth_info", {})
+    settings["auth_info"]["offline_access"] = token
+    with phylum_settings_path.open("w", encoding="utf-8") as f:
+        yaml.dump(settings, f)
 
-    # The phylum CLI settings.yaml file won't exist upon initial install
-    # but running a command will trigger the CLI to generate it
+
+def ensure_settings_file() -> None:
+    """Ensure the Phylum CLI settings file exists."""
+    # The Phylum CLI `settings.yaml` file may not exist upon initial install. This can happen if the install did not
+    # include running any commands, like when using the `--global-install` method. The standard install method will run
+    # `extension install` commands to install all the default extensions. Running a command will trigger the CLI to
+    # generate the settings file.
+    phylum_settings_path = get_phylum_settings_path()
     if not phylum_settings_path.exists():
+        phylum_bin_path, _ = get_phylum_bin_path()
+        if phylum_bin_path is None:
+            raise SystemExit(" [!] Could not find the path to the Phylum CLI. Unable to ensure the settings file.")
         cmd = [str(phylum_bin_path), "version"]
         subprocess.run(cmd, check=True)
 
-    yaml = YAML()
-    settings_dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
-    settings_dict.setdefault("auth_info", {})
-    settings_dict["auth_info"]["offline_access"] = token
-    with open(phylum_settings_path, "w", encoding="utf-8") as f:
-        yaml.dump(settings_dict, f)
 
-    # Check that the token was setup correctly by using it to display the current auth status
-    cmd = [str(phylum_bin_path), "auth", "status"]
+def process_uri_option(args: argparse.Namespace) -> None:
+    """Process the Phylum API URI option as parsed from the arguments."""
+    phylum_settings_path = get_phylum_settings_path()
+
+    # The API URI option takes precedence over the Phylum API URI environment variable.
+    api_uri = os.getenv(API_URI_ENVVAR_NAME)
+    if args.uri is not None:
+        api_uri = args.uri
+
+    settings_file_existed = phylum_settings_path.exists()
+    ensure_settings_file()
+    yaml = YAML()
+    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    configured_uri = settings.get("connection", {}).get("uri")
+
+    if api_uri:
+        print(f" [+] Phylum API URI supplied as an option or `{API_URI_ENVVAR_NAME}` environment variable: {api_uri}")
+        if configured_uri != api_uri:
+            print(f" [*] Updating settings to use supplied Phylum API URI: {api_uri} ...")
+            settings.setdefault("connection", {})
+            settings["connection"]["uri"] = api_uri
+            with phylum_settings_path.open("w", encoding="utf-8") as f:
+                yaml.dump(settings, f)
+        else:
+            print(" [+] Supplied API URI matches existing settings value")
+    else:
+        print(f" [+] Phylum API URI NOT supplied as an option or `{API_URI_ENVVAR_NAME}` environment variable")
+        if settings_file_existed:
+            print(f" [-] The value in the existing settings file will be used: {configured_uri}")
+        else:
+            print(f" [-] The CLI will use the PRODUCTION instance: {configured_uri}")
+
+
+def confirm_setup() -> None:
+    """Check to ensure everything is working."""
+    phylum_bin_path, _ = get_phylum_bin_path()
+
+    if is_token_set(get_phylum_settings_path()):
+        # Check that the token and API URI were setup correctly by using them to display the current auth status
+        cmd = [str(phylum_bin_path), "auth", "status"]
+        subprocess.run(cmd, check=True)
+    else:
+        print(" [!] Existing token not found. Can't confirm setup.")
+
+    # Print the help message to aid log review
+    cmd = [str(phylum_bin_path), "--help"]
     subprocess.run(cmd, check=True)
 
 
@@ -310,15 +368,13 @@ def get_args(args=None):
         "--phylum-release",
         dest="version",
         # NOTE: `default` and `type` values are not used here in an effort to minimize rate limited GitHub API calls.
-        help="""The version of the Phylum CLI to install. Can be specified as `latest` or a specific tagged release,
-            with or without the leading `v`. Default behavior is to use the installed version and fall back to `latest`
-            when no CLI is already installed.""",
+        help=HELP_MSG_VERSION,
     )
     parser.add_argument(
         "-t",
         "--target",
         default=get_target_triple(),
-        help="The target platform type where the CLI will be installed.",
+        help=HELP_MSG_TARGET,
     )
     parser.add_argument(
         "-g",
@@ -332,11 +388,13 @@ def get_args(args=None):
         "-k",
         "--phylum-token",
         dest="token",
-        help=f"""Phylum user token. Can also specify this option's value by setting the `{TOKEN_ENVVAR_NAME}`
-            environment variable. The value specified with this option takes precedence when both are provided.
-            Leave this option and it's related environment variable unspecified to either (1) use an existing token
-            already set in the Phylum config file or (2) to manually populate the token with a `phylum auth login` or
-            `phylum auth register` command after install.""",
+        help=HELP_MSG_TOKEN,
+    )
+    parser.add_argument(
+        "-u",
+        "--api-uri",
+        dest="uri",
+        help=HELP_MSG_API_URI,
     )
 
     list_group = parser.add_mutually_exclusive_group()
@@ -417,12 +475,9 @@ def main(args=None):
             cmd = ["sh", "install.sh"]
         subprocess.run(cmd, check=True, cwd=extracted_dir)
 
+    process_uri_option(args)
     process_token_option(args)
-
-    # Check to ensure everything is working
-    phylum_bin_path, _ = get_phylum_bin_path()
-    cmd = [str(phylum_bin_path), "--help"]
-    subprocess.run(cmd, check=True)
+    confirm_setup()
 
     return 0
 
