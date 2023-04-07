@@ -25,7 +25,13 @@
 #
 # Another build arg is exposed to optionally specify the Phylum CLI version to install:
 #
-# $ docker build --tag phylum-ci --build-arg CLI_VER=v3.8.0 .
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v4.8.0 .
+#
+# The PHYLUM_API_URI build arg is exposed to optionally specify the URI of a Phylum API
+# instance to use:
+#
+# $ export PHYLUM_API_URI=https://api.staging.phylum.io
+# $ docker build --tag phylum-ci --build-arg PHYLUM_API_URI .
 #
 # Another build arg is exposed to optionally specify a GitHub Personal Access Token (PAT):
 #
@@ -113,6 +119,10 @@ FROM python:3.11-slim-bullseye
 # Values should be provided in a format acceptable to the `phylum-init` script.
 # When not defined, the value will default to `latest`.
 ARG CLI_VER
+
+# PHYLUM_API_URI is an optional build argument that can be used to specify
+# the URI of a Phylum API instance to use.
+ARG PHYLUM_API_URI
 
 # GITHUB_TOKEN is an optional build argument that can be used to provide a
 # GitHub Personal Access Token (PAT) in order to make authenticated requests

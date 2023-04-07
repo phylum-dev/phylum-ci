@@ -216,6 +216,7 @@ class CIBase(ABC):
             "--phylum-release", specified_version,
             "--target", self.args.target,
             "--phylum-token", self.args.token,
+            "--api-uri", self.args.uri,
         ]
         # fmt: on
         cli_path, cli_version = get_phylum_bin_path()
