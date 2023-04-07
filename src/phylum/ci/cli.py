@@ -175,7 +175,6 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
             detail: https://docs.phylum.io/docs/phylum-package-score#risk-domains""",
     )
     threshold_group.add_argument(
-        "-v",
         "--vul-threshold",
         type=threshold_check,
         help="(v)ulnerability risk score threshold value.",
