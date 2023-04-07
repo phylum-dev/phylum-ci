@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.27.0 (2023-04-07)
+### Feature
+* Provide ability to specify Phylum API URI ([#222](https://github.com/phylum-dev/phylum-ci/issues/222)) ([`80a54db`](https://github.com/phylum-dev/phylum-ci/commit/80a54dbeac19f8e9c411fcff86b9966d3bdd80a8))
+
+### Breaking
+* The short option `-u` for `--vul-threshold` was removed. ([`80a54db`](https://github.com/phylum-dev/phylum-ci/commit/80a54dbeac19f8e9c411fcff86b9966d3bdd80a8))
+
 ## v0.26.0 (2023-04-05)
 ### Feature
 * Detect SPDX formatted SBOM files ([#220](https://github.com/phylum-dev/phylum-ci/issues/220)) ([`8325cc3`](https://github.com/phylum-dev/phylum-ci/commit/8325cc392ef41026d9c43a059cb6d92e4ddc4d7b))
