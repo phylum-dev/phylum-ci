@@ -18,9 +18,8 @@ from typing import Optional
 import requests
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.constants import PHYLUM_HEADER
 from phylum.ci.git import git_default_branch_name, git_remote
-from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 
 @lru_cache(maxsize=1)
@@ -195,7 +194,7 @@ class CIGitLab(CIBase):
         for mr_note in mr_notes:
             if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
                 print(" [+] The most recently posted Phylum merge request note was found.")
-                if mr_note.get("body", "") == self.analysis_output:
+                if mr_note.get("body", "") == self.analysis_report:
                     print(" [+] It contains the same content as the current analysis. Nothing to do.")
                     return
                 print(" [+] It does not contain the same content as the current analysis.")
@@ -203,7 +202,7 @@ class CIGitLab(CIBase):
 
         # If we got here, then the most recent Phylum MR note does not match the current analysis output or
         # there were no Phylum MR notes. Either way, create a new MR note.
-        data = {"body": self.analysis_output}
+        data = {"body": self.analysis_report}
         print(f" [*] Creating new merge request note with POST URL: {url} ...")
         response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
         response.raise_for_status()

@@ -19,7 +19,8 @@ from ruamel.yaml import YAML
 
 from phylum import __version__
 from phylum.constants import (
-    API_URI_ENVVAR_NAME,
+    ENVVAR_NAME_API_URI,
+    ENVVAR_NAME_TOKEN,
     HELP_MSG_API_URI,
     HELP_MSG_TARGET,
     HELP_MSG_TOKEN,
@@ -28,7 +29,6 @@ from phylum.constants import (
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
     SUPPORTED_PLATFORMS,
-    TOKEN_ENVVAR_NAME,
 )
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
@@ -248,12 +248,12 @@ def process_token_option(args):
     phylum_settings_path = get_phylum_settings_path()
 
     # The token option takes precedence over the Phylum API key environment variable.
-    token = os.getenv(TOKEN_ENVVAR_NAME)
+    token = os.getenv(ENVVAR_NAME_TOKEN)
     if args.token is not None:
         token = args.token
 
     if token:
-        print(f" [+] Phylum token supplied as an option or `{TOKEN_ENVVAR_NAME}` environment variable")
+        print(f" [+] Phylum token supplied as an option or `{ENVVAR_NAME_TOKEN}` environment variable")
         if is_token_set(phylum_settings_path):
             print(" [+] An existing token is already set")
             if is_token_set(phylum_settings_path, token=token):
@@ -263,7 +263,7 @@ def process_token_option(args):
         else:
             print(" [+] No existing token exists. Supplied token will be used.")
     else:
-        print(f" [+] Phylum token NOT supplied as option or `{TOKEN_ENVVAR_NAME}` environment variable")
+        print(f" [+] Phylum token NOT supplied as option or `{ENVVAR_NAME_TOKEN}` environment variable")
         if is_token_set(phylum_settings_path):
             print(" [+] Existing token found. It will be used without modification.")
         else:
@@ -305,7 +305,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
     phylum_settings_path = get_phylum_settings_path()
 
     # The API URI option takes precedence over the Phylum API URI environment variable.
-    api_uri = os.getenv(API_URI_ENVVAR_NAME)
+    api_uri = os.getenv(ENVVAR_NAME_API_URI)
     if args.uri is not None:
         api_uri = args.uri
 
@@ -316,7 +316,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
     configured_uri = settings.get("connection", {}).get("uri")
 
     if api_uri:
-        print(f" [+] Phylum API URI supplied as an option or `{API_URI_ENVVAR_NAME}` environment variable: {api_uri}")
+        print(f" [+] Phylum API URI supplied as an option or `{ENVVAR_NAME_API_URI}` environment variable: {api_uri}")
         if configured_uri != api_uri:
             print(f" [*] Updating settings to use supplied Phylum API URI: {api_uri} ...")
             settings.setdefault("connection", {})
@@ -326,7 +326,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
         else:
             print(" [+] Supplied API URI matches existing settings value")
     else:
-        print(f" [+] Phylum API URI NOT supplied as an option or `{API_URI_ENVVAR_NAME}` environment variable")
+        print(f" [+] Phylum API URI NOT supplied as an option or `{ENVVAR_NAME_API_URI}` environment variable")
         if settings_file_existed:
             print(f" [-] The value in the existing settings file will be used: {configured_uri}")
         else:
@@ -416,6 +416,8 @@ def main(args=None):
     """Main entrypoint."""
     args = get_args(args=args)
 
+    # Perform version check and normalization here so as to minimize GitHub API calls when
+    # showing the help message but still bail early when the version provided is invalid
     if args.version:
         print(f" [+] Phylum CLI version was specified as: {args.version}")
         args.version = version_check(args.version)
