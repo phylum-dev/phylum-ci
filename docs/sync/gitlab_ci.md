@@ -8,33 +8,19 @@ hidden: false
 ## Overview
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from
-lockfiles. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR) pipeline. For
-MR pipelines, analyzed dependencies will include any that are added/modified in the MR. For branch pipelines, the
-analyzed dependencies will be determined by comparing lockfiles in the branch to the default branch. **All**
-dependencies will be analyzed when the branch pipeline is run on the default branch.
+lockfiles. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR) pipeline.
+
+For MR pipelines, analyzed dependencies will include any that are added/modified in the MR.
+
+For branch pipelines, the analyzed dependencies will be determined by comparing lockfiles in the branch to the
+default branch. **All** dependencies will be analyzed when the branch pipeline is run on the default branch.
 
 The results will be provided in the pipeline logs and provided as a note (comment) on the MR. The CI job will
-return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the project risk
-thresholds for any of the five Phylum risk domains:
-
-* Vulnerability (aka `vul`)
-* Malicious Code (aka `mal`)
-* Engineering (aka `eng`)
-* License (aka `lic`)
-* Author (aka `aut`)
-
-See [Phylum Risk Domains documentation][risk_domains] for more detail.
-
-**NOTE**: It is not enough to have the total project threshold set. Individual risk domain threshold values must be
-set, either in the UI or with `phylum-ci` options, in order to enable analysis results for CI. Otherwise, the risk
-domain is considered disabled and the threshold value used will be zero (0).
+return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the established policy.
 
 There will be no note if no dependencies were added or modified for a given MR.
 If one or more dependencies are still processing (no results available), then the note will make that clear and
-the CI job will only fail if dependencies that have _completed analysis results_ do not meet the specified project
-risk thresholds.
-
-[risk_domains]: https://docs.phylum.io/docs/phylum-package-score#risk-domains
+the CI job will only fail if dependencies that have _completed analysis results_ do not meet the active policy.
 
 ## Prerequisites
 
@@ -247,13 +233,13 @@ view the [script options output][script_options] for the latest release.
   # NOTE: These are examples. Only one script entry line for `phylum-ci` is expected.
   script:
     # Use the defaults for all the arguments.
-    # The default behavior is to only analyze newly added dependencies against
-    # the risk domain threshold levels set at the Phylum project level.
+    # The default behavior is to only analyze newly added dependencies
+    # against the active policy set at the Phylum project level.
     - phylum-ci
 
     # Consider all dependencies in analysis results instead of just the newly added ones.
     # The default is to only analyze newly added dependencies, which can be useful for
-    # existing code bases that may not meet established project risk thresholds yet,
+    # existing code bases that may not meet established policy rules yet,
     # but don't want to make things worse. Specifying `--all-deps` can be useful for
     # casting the widest net for strict adherence to Quality Assurance (QA) standards.
     - phylum-ci --all-deps
@@ -266,32 +252,18 @@ view the [script options output][script_options] for the latest release.
     # Specify multiple explicit lockfile paths
     - phylum-ci --lockfile requirements-prod.txt path/to/lock.file
 
-    # Thresholds for the five risk domains may be set at the Phylum project level.
-    # They can be set differently for CI environments to "fail the build."
-    # Long commands: https://docs.gitlab.com/ee/ci/yaml/script.html#split-long-commands
-    - |
-      phylum-ci \
-        --vul-threshold 60 \
-        --mal-threshold 60 \
-        --eng-threshold 70 \
-        --lic-threshold 90 \
-        --aut-threshold 80
-
     # Ensure the latest Phylum CLI is installed.
     - phylum-ci --force-install
 
     # Install a specific version of the Phylum CLI.
-    - phylum-ci --phylum-release 3.8.0 --force-install
+    - phylum-ci --phylum-release 4.8.0 --force-install
 
     # Mix and match for your specific use case.
+    # Long commands: https://docs.gitlab.com/ee/ci/yaml/script.html#split-long-commands
     - |
       phylum-ci \
-        --vul-threshold 60 \
-        --mal-threshold 60 \
-        --eng-threshold 70 \
-        --lic-threshold 90 \
-        --aut-threshold 80 \
-        --lockfile requirements-prod.txt \
+        --lockfile requirements-dev.txt \
+        --lockfile requirements-prod.txt path/to/lock.file \
         --all-deps
 ```
 
