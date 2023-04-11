@@ -280,7 +280,7 @@ view the [script options output][script_options] for the latest release.
       - script: phylum-ci --force-install
 
       # Install a specific version of the Phylum CLI.
-      - script: phylum-ci --phylum-release 3.10.0 --force-install
+      - script: phylum-ci --phylum-release 4.8.0 --force-install
 
       # Mix and match for your specific use case.
       - script: |
