@@ -23,7 +23,7 @@ class JobPolicyEvalResult:
     """Class for keeping track of the result when evaluating a policy for a job."""
 
     is_failure: bool
-    is_complete: bool
+    incomplete_count: int
     output: str
     report: str
 

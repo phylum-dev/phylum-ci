@@ -420,7 +420,7 @@ class CIBase(ABC):
 
         returncode = ReturnCode.SUCCESS
         # The logic below would make for a good match statement, which was introduced in Python 3.10
-        if analysis.is_complete:
+        if analysis.incomplete_count == 0:
             if analysis.is_failure:
                 print(" [!] The analysis is complete and there were failures")
                 returncode = ReturnCode.FAILURE
