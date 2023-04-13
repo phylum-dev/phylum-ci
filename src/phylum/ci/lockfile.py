@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import List, Optional, TypeVar
 
@@ -73,7 +74,20 @@ class Lockfile:
         """
         return self._common_ancestor_commit
 
-    @property
+    @cached_property
+    def base_deps(self) -> Packages:
+        """Get the dependencies from the base iteration of the lockfile and return them in sorted order.
+
+        The base iteration is determined by the common ancestor commit.
+        """
+        prev_lockfile_object = self.previous_lockfile_object()
+        if not prev_lockfile_object:
+            print(f" [+] No previous lockfile object found for `{self!r}`. Assuming no base dependencies.")
+            return []
+        prev_lockfile_packages = sorted(set(self.get_previous_lockfile_packages(prev_lockfile_object)))
+        return prev_lockfile_packages
+
+    @cached_property
     def new_deps(self) -> Packages:
         """Get the new dependencies added to the lockfile and return them in sorted order."""
         # Only consider newly added dependencies
@@ -101,6 +115,7 @@ class Lockfile:
         print(f" [+] New dependencies in `{self!r}`: {new_deps_list}")
         return new_deps_list
 
+    @lru_cache(maxsize=1)
     def current_lockfile_packages(self) -> Packages:
         """Get the current lockfile packages."""
         try:
@@ -115,6 +130,7 @@ class Lockfile:
         curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return curr_lockfile_packages
 
+    @lru_cache(maxsize=1)
     def previous_lockfile_object(self) -> Optional[str]:
         """Get the previous git object for the lockfile.
 
@@ -135,6 +151,7 @@ class Lockfile:
             prev_lockfile_object = None
         return prev_lockfile_object
 
+    @lru_cache(maxsize=1)
     def get_previous_lockfile_packages(self, prev_lockfile_object: str) -> Packages:
         """Get the previous lockfile packages from the corresponding git object and return them."""
         with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:

@@ -9,30 +9,17 @@ hidden: false
 
 [pre-commit] is a framework for managing and maintaining multi-language Git pre-commit hooks.
 
-[pre-commit]: https://pre-commit.com/
-
 Phylum is available as a pre-commit hook.
 
 Once configured for a repository, the git `pre-commit` integration will provide analysis of project dependencies
 from a lockfile during a commit containing that lockfile. The hook will fail and provide a report if any of the
-newly added/modified dependencies from the commit fail to meet the project risk thresholds for any of the five
-Phylum risk domains:
-
-* Vulnerability (aka `vul`)
-* Malicious Code (aka `mal`)
-* Engineering (aka `eng`)
-* License (aka `lic`)
-* Author (aka `aut`)
-
-See [Phylum Risk Domains documentation](https://docs.phylum.io/docs/phylum-package-score#risk-domains) for more detail.
-
-**NOTE**: It is not enough to have the total project threshold set. Individual risk domain threshold values
-must be set, either in the Phylum web UI or with `phylum-ci` options, in order to enable analysis results.
-Otherwise, the risk domain is considered disabled and the threshold value used will be zero (0).
+newly added/modified dependencies from the commit fail to meet the established policy.
 
 The hook will be skipped if no dependencies were added or modified for a given commit.
 If one or more dependencies are still processing (no results available), then the hook will only fail if
-dependencies that have _completed analysis results_ do not meet the specified project risk thresholds.
+dependencies that have _completed analysis results_ do not meet the active policy.
+
+[pre-commit]: https://pre-commit.com/
 
 ## Prerequisites
 
@@ -138,14 +125,14 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # NOTE: These are examples. Only one `args` key for the hook is expected
 
         # Use the defaults for all the arguments.
-        # The default behavior is to only analyze newly added dependencies against
-        # the risk domain threshold levels set at the Phylum project level.
+        # The default behavior is to only analyze newly added dependencies
+        # against the active policy set at the Phylum project level.
         # The key can be removed if the defaults are used.
         args: []
 
         # Consider all dependencies in analysis results instead of just the newly added ones.
         # The default is to only analyze newly added dependencies, which can be useful for
-        # existing code bases that may not meet established project risk thresholds yet,
+        # existing code bases that may not meet established policy rules yet,
         # but don't want to make things worse. Specifying `--all-deps` can be useful for
         # casting the widest net for strict adherence to Quality Assurance (QA) standards.
         args: [--all-deps]
@@ -162,28 +149,15 @@ with `--help` output as specified in the [Usage section of the top-level README.
           - --lockfile=poetry.lock
           - --lockfile=path/to/lock.file
 
-        # Thresholds for the five risk domains may be set at the Phylum project level.
-        # They can be set differently for the hook.
-        args:
-          - --vul-threshold=60
-          - --mal-threshold=60
-          - --eng-threshold=70
-          - --lic-threshold=90
-          - --aut-threshold=80
-
         # Ensure the latest Phylum CLI is installed.
         args: [--force-install]
 
         # Install a specific version of the Phylum CLI.
-        args: [--phylum-release=3.8.0, --force-install]
+        args: [--phylum-release=4.8.0, --force-install]
 
         # Mix and match for your specific use case.
         args:
-          - --vul-threshold=60
-          - --mal-threshold=60
-          - --eng-threshold=70
-          - --lic-threshold=90
-          - --aut-threshold=80
           - --lockfile=requirements-prod.txt
+          - --lockfile=path/to/lock.file
           - --all-deps
 ```

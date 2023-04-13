@@ -1,10 +1,7 @@
 """Console script for phylum-ci."""
 import argparse
-import json
 import os
 import pathlib
-import shlex
-import subprocess
 import sys
 from typing import List, Optional, Sequence, Tuple
 
@@ -70,43 +67,6 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     return ci_env
 
 
-def get_phylum_analysis(ci_env: CIBase) -> dict:
-    """Analyze a project's lockfile(s) from a given CI environment with the phylum CLI and return the analysis."""
-    # Build up the analyze command based on the provided inputs
-    cmd = [str(ci_env.cli_path), "analyze", "--label", ci_env.phylum_label, "--project", ci_env.phylum_project]
-    if ci_env.phylum_group:
-        cmd.extend(["--group", ci_env.phylum_group])
-    cmd.extend(["--verbose", "--json"])
-    cmd.extend(str(lockfile.path) for lockfile in ci_env.lockfiles)
-
-    print(f" [*] Performing analysis with command: {shlex.join(cmd)}")
-    try:
-        analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
-    except subprocess.CalledProcessError as err:
-        # The Phylum project can set the CLI to "fail the build" if threshold requirements are not met.
-        # This causes the return code to be 100 and lands us here. Check for this case to proceed.
-        if err.returncode == 100:
-            analysis_result = err.stdout
-        else:
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
-            raise SystemExit(f" [!] {err}") from err
-    analysis = json.loads(analysis_result)
-    return analysis
-
-
-def threshold_check(threshold_in: str) -> int:
-    """Check a given threshold for validity and return it as an int."""
-    msg = "threshold must be an integer between 0 and 100, inclusive"
-    try:
-        threshold_out = int(threshold_in)
-    except ValueError as err:
-        raise argparse.ArgumentTypeError(msg) from err
-    if threshold_out not in range(101):
-        raise argparse.ArgumentTypeError(msg)
-    return threshold_out
-
-
 def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, List[str]]:
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
@@ -163,45 +123,6 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-g",
         "--group",
         help="Optional group name, which will be the owner of the project. Only used when a project is also specified.",
-    )
-
-    threshold_group = parser.add_argument_group(
-        title="Risk Domain Threshold Options",
-        description="""Thresholds for the five risk domains may already be set at the Phylum project level.
-            They can be set differently here for CI environments to "fail the build."
-            The default is to use the project level setting unless overridden by a value specified in this group.
-            Values must be an integer between 0 and 100, inclusive. Setting the value to zero (0) has the
-            effect of disabling analysis against that risk domain. See "Phylum Risk Domains" documentation for more
-            detail: https://docs.phylum.io/docs/phylum-package-score#risk-domains""",
-    )
-    threshold_group.add_argument(
-        "--vul-threshold",
-        type=threshold_check,
-        help="vulnerability risk score threshold value.",
-    )
-    threshold_group.add_argument(
-        "-m",
-        "--mal-threshold",
-        type=threshold_check,
-        help="(m)alicious Code risk score threshold value.",
-    )
-    threshold_group.add_argument(
-        "-e",
-        "--eng-threshold",
-        type=threshold_check,
-        help="(e)ngineering risk score threshold value.",
-    )
-    threshold_group.add_argument(
-        "-c",
-        "--lic-threshold",
-        type=threshold_check,
-        help="li(c)ense risk score threshold value.",
-    )
-    threshold_group.add_argument(
-        "-o",
-        "--aut-threshold",
-        type=threshold_check,
-        help="auth(o)r risk score threshold value.",
     )
 
     cli_group = parser.add_argument_group(
@@ -271,11 +192,8 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Generate a label to use for analysis and report it
     print(f" [+] Label to use for analysis: {ci_env.phylum_label}")
 
-    # Analyze current project lockfile(s) with phylum CLI
-    analysis = get_phylum_analysis(ci_env)
-
-    # Review analysis results to determine the overall state
-    return_code = ci_env.analyze(analysis)
+    # Analyze current project lockfile(s) with phylum CLI and review analysis results to determine the overall state
+    return_code = ci_env.analyze()
     print(f" [-] Return code: {return_code}")
 
     # Output the results of the analysis

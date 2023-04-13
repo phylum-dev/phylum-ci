@@ -4,12 +4,13 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
+import json
 import os
 import shlex
 import shutil
 import subprocess
+import tempfile
 import textwrap
-import urllib.parse
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
@@ -22,17 +23,10 @@ from connect.utils.terminal.markdown import render
 from packaging.version import Version
 from ruamel.yaml import YAML
 
-from phylum.ci.common import IssueEntry, PackageDescriptor, Packages, ProjectThresholdInfo, ReturnCode, RiskDomain
-from phylum.ci.constants import (
-    FAILED_COMMENT,
-    INCOMPLETE_COMMENT_TEMPLATE,
-    INCOMPLETE_WITH_FAILURE_COMMENT_TEMPLATE,
-    PROJECT_THRESHOLD_OPTIONS,
-    SUCCESS_COMMENT,
-)
+from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, ReturnCode
 from phylum.ci.git import git_hash_object, git_repo_name
 from phylum.ci.lockfile import Lockfile, Lockfiles
-from phylum.constants import MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES, TOKEN_ENVVAR_NAME
+from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
 
@@ -66,18 +60,14 @@ class CIBase(ABC):
         self._check_prerequisites()
         print(" [+] All pre-requisites met")
 
-        self.gbl_failed = False
-        self.gbl_incomplete = False
-        self.incomplete_pkgs: Packages = []
-        self._analysis_output = "No analysis output yet"
+        self._analysis_report = "No analysis output yet"
         self.ci_platform_name = "Unknown"
-        self._project_id = "00000000-0000-0000-0000-000000000000"
 
         # The token option takes precedence over the Phylum API key environment variable.
-        token = os.getenv(TOKEN_ENVVAR_NAME)
+        token = os.getenv(ENVVAR_NAME_TOKEN)
         if args.token is not None:
             token = args.token
-            os.environ[TOKEN_ENVVAR_NAME] = args.token
+            os.environ[ENVVAR_NAME_TOKEN] = args.token
         self._args.token = token
 
         self.ensure_project_exists()
@@ -251,32 +241,9 @@ class CIBase(ABC):
         return cli_path
 
     @property
-    def project_id(self) -> str:
-        """Get the GUID for the project."""
-        return self._project_id
-
-    @cached_property
-    def project_url(self) -> str:
-        """Construct a project URL and return it.
-
-        The project URL is used to access a particular project in the web UI, by label, and optionally with a group.
-        """
-        query = {"label": self.phylum_label}
-        if self.phylum_group:
-            query["group"] = self.phylum_group
-        query_params = urllib.parse.urlencode(query, safe="/", quote_via=urllib.parse.quote)
-        project_url = f"https://app.phylum.io/projects/{self.project_id}?{query_params}"
-        return project_url
-
-    @property
-    def project_url_md(self) -> str:
-        """Construct a markdown link for viewing the project in the Phylum UI."""
-        return f"\n[View this project in the Phylum UI]({self.project_url})"
-
-    @property
-    def analysis_output(self) -> str:
-        """Get the output from the overall analysis, in markdown format."""
-        return self._analysis_output
+    def analysis_report(self) -> str:
+        """Get the report from the overall analysis, in markdown format."""
+        return self._analysis_report
 
     @property
     @abstractmethod
@@ -401,26 +368,22 @@ class CIBase(ABC):
         Each implementation that offers analysis output in the form of comments on a pull/merge request should
         ensure those comments are unique and not added multiple times as the review changes but no lockfile does.
         """
-        # Pull out the project URL link, which doesn't render well
-        output = self.analysis_output.replace(self.project_url_md, "")
-
         # Post the markdown output, rendered for terminal/log output
-        print(f" [+] Analysis output:\n{render(output)}")
+        print(f" [+] Analysis output:\n{render(self.analysis_report)}")
 
-        # Post the project URL link separately
-        print(f"View this project in the Phylum UI: {self.project_url}\n")
-
-    def analyze(self, analysis: dict) -> ReturnCode:
+    def analyze(self) -> ReturnCode:
         """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
-        self._project_id = analysis.get("project", "00000000-0000-0000-0000-000000000000")
-        print(f" [+] Project ID: {self.project_id}")
+        # Build up the analyze command based on the provided inputs
+        cmd = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
+        if self.phylum_group:
+            cmd.extend(["--group", self.phylum_group])
+        cmd.extend(["--verbose", "--json"])
 
         if self.all_deps:
             print(" [+] Considering all current dependencies ...")
-            pkgs = analysis.get("packages", [])
-            packages = sorted([PackageDescriptor(pkg.get("name"), pkg.get("version"), pkg.get("type")) for pkg in pkgs])
-            print(f" [+] {len(packages)} unique current dependencies")
-            risk_data = self.parse_risk_data(analysis, packages)
+            base_pkgs = []
+            total_packages = {pkg for lockfile in self.lockfiles for pkg in lockfile.current_lockfile_packages()}
+            print(f" [+] {len(total_packages)} unique current dependencies")
         else:
             print(" [+] Only considering newly added dependencies ...")
             # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is necessary
@@ -428,160 +391,55 @@ class CIBase(ABC):
             # the `is_any_lockfile_changed` property will ensure this happens.
             if self.force_analysis and self.is_any_lockfile_changed:
                 print(" [-] Updated each lockfile's change status")
-            packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
-            print(f" [+] {len(packages)} unique newly added dependencies")
-            risk_data = self.parse_risk_data(analysis, packages)
+            base_pkgs = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.base_deps})
+            new_packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
+            print(f" [+] {len(new_packages)} unique newly added dependencies")
+
+        with tempfile.NamedTemporaryFile(mode="w+", prefix="base_", suffix=".json") as base_fd:
+            json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
+            base_fd.flush()
+
+            cmd.extend(["--base", base_fd.name])
+            cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
+
+            print(f" [*] Performing analysis with command: {shlex.join(cmd)}")
+            try:
+                analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+            except subprocess.CalledProcessError as err:
+                # The Phylum project will fail analysis if the configured policy criteria are not met.
+                # This causes the return code to be 100 and lands us here. Check for this case to proceed.
+                if err.returncode == 100:
+                    analysis_result = err.stdout
+                else:
+                    print(f" [!] stdout:\n{err.stdout}")
+                    print(f" [!] stderr:\n{err.stderr}")
+                    raise SystemExit(f" [!] {err}") from err
+
+        analysis = JobPolicyEvalResult(**json.loads(analysis_result))
+        self._analysis_report = analysis.report
 
         returncode = ReturnCode.SUCCESS
-        output = ""
-        if self.gbl_failed and not self.gbl_incomplete:
-            print(" [!] The analysis is complete and there were failures")
-            returncode = ReturnCode.FAILURE
-            output = FAILED_COMMENT
-            for line in risk_data:
-                output += line
-
-        if self.gbl_incomplete:
-            incomplete_pkg_count = len(self.incomplete_pkgs)
-            print(f" [+] {incomplete_pkg_count} packages were incomplete in the analysis results")
-            if self.gbl_failed:
+        # The logic below would make for a good match statement, which was introduced in Python 3.10
+        if analysis.incomplete_count == 0:
+            if analysis.is_failure:
+                print(" [!] The analysis is complete and there were failures")
+                returncode = ReturnCode.FAILURE
+            else:
+                print(" [+] The analysis is complete and there were NO failures")
+                returncode = ReturnCode.SUCCESS
+        else:
+            if analysis.is_failure:
                 print(" [!] There were failures in one or more completed packages")
                 returncode = ReturnCode.FAILURE_INCOMPLETE
-                output = INCOMPLETE_WITH_FAILURE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
-                for line in risk_data:
-                    output += line
             else:
                 print(" [+] There were no failures in the packages that have completed so far")
                 returncode = ReturnCode.INCOMPLETE
-                output = INCOMPLETE_COMMENT_TEMPLATE.substitute(count=incomplete_pkg_count)
-
-        if not self.gbl_failed and not self.gbl_incomplete:
-            print(" [+] The analysis is complete and there were NO failures")
-            returncode = ReturnCode.SUCCESS
-            output = SUCCESS_COMMENT
-
-        output += self.project_url_md
-        self._analysis_output = output
 
         return returncode
-
-    def parse_risk_data(self, analysis_results: dict, packages: Packages) -> List[str]:
-        """Parse risk packages from a Phylum analysis.
-
-        Packages that are in a completed analysis state will be included in the risk score report.
-        Packages that have not completed analysis will be included with other incomplete packages
-        and the overall PR will be allowed to pass, but with a note about re-running again later.
-        """
-        analysis_pkgs = analysis_results.get("packages", [])
-        project_thresholds = analysis_results.get("thresholds", {})
-        risk_scores = []
-        for package in packages:
-            for phylum_pkg in analysis_pkgs:
-                if phylum_pkg.get("name") == package.name and phylum_pkg.get("version") == package.version:
-                    if phylum_pkg.get("status") == "complete":
-                        risk_score = self.check_risk_scores(phylum_pkg, project_thresholds)
-                        if risk_score:
-                            risk_scores.append(risk_score)
-                    elif phylum_pkg.get("status") == "incomplete":
-                        self.incomplete_pkgs.append(package)
-                        self.gbl_incomplete = True
-
-        return risk_scores
-
-    def check_risk_scores(self, package_result: dict, project_thresholds: dict) -> Optional[str]:
-        """Check risk scores of a package against project or user-provided thresholds.
-
-        Thresholds provided via the corresponding option will take precedence over the project defined threshold value.
-        If a package has a risk score below the threshold, set the fail flag and generate the markdown output.
-        Return None when the package meets or exceeds all threshold values.
-        """
-        failed_flag = False
-        risk_vectors = package_result.get("riskVectors", {})
-        issue_flags: List = []
-
-        fail_string = f"\n### Package: `{package_result.get('name')}@{package_result.get('version')}` failed.\n"
-        fail_string += "|Risk Domain|Identified Score|Requirement|Requirement Source|\n"
-        fail_string += "|-----------|----------------|-----------|------------------|\n"
-
-        for threshold_option, risk_domain in PROJECT_THRESHOLD_OPTIONS.items():
-            pti = self._get_project_threshold_info(project_thresholds, threshold_option)
-            # The `RiskDomain` dataclass and this logic can be simplified once the API standardizes the use of names
-            # so that risk domains are referenced with the same name everywhere (e.g., malicious_code/malicious):
-            # https://github.com/phylum-dev/api/issues/499
-            vul = None
-            potential_names = {risk_domain.package_name, risk_domain.project_name}
-            for potential_name in potential_names:
-                vul = risk_vectors.get(potential_name)
-                if vul is not None:
-                    break
-            vul = vul if vul is not None else 1.0
-            if vul < pti.threshold:
-                failed_flag = True
-                issue_flags.extend(potential_names)
-                fail_string += f"|{risk_domain.output_name}|{vul*100:.0f}|{pti.threshold*100:.0f}|{pti.req_src}|\n"
-
-        fail_string += "\n"
-        fail_string += "#### Issues Summary\n"
-        fail_string += "|Risk Domain|Risk Level|Title|\n"
-        fail_string += "|-----------|----------|-----|\n"
-
-        issue_list = build_issues_list(package_result, issue_flags)
-        for issue in issue_list:
-            fail_string += f"|{issue.domain}|{issue.severity}|{issue.title}|\n"
-
-        if failed_flag:
-            self.gbl_failed = True
-            return fail_string
-        return None
-
-    def _get_project_threshold_info(self, project_thresholds: dict, threshold_type: str) -> ProjectThresholdInfo:
-        """Determine the project threshold info in effect for a given threshold type.
-
-        Thresholds for the five risk domains can be set individually in several ways.
-        They can be set at the Phylum project level from either the Phylum CLI or the web UI.
-        They can be set by `phylum-ci` options (e.g., `--vul-threshold`), which are distinguished by `threshold_type`.
-        The default is to use the project level setting unless overridden by a value specified by a `phylum-ci` option.
-        A default secure value will be used when neither of these sources are used to set the value.
-        """
-        threshold = getattr(self.args, threshold_type, None)
-        req_src = "phylum-ci option"
-        if threshold is None:
-            risk_domain: RiskDomain = PROJECT_THRESHOLD_OPTIONS.get(threshold_type, RiskDomain("", "", ""))
-            threshold = project_thresholds.get(risk_domain.project_name)
-            req_src = "project per-axis threshold"
-            if threshold is None:
-                threshold = 1.0
-                req_src = "N/A (fail safe)"
-
-            total_threshold = project_thresholds.get("total", 0.0)
-            if threshold < total_threshold:
-                threshold = total_threshold
-                req_src = "project total threshold"
-        else:
-            # The project risk threshold values returned by the analysis are normalized to [0.0, 1.0].
-            # They are converted internally like this because it is more natural to ask users for input
-            # as an integer in the range of [0, 100].
-            threshold /= 100
-        pti = ProjectThresholdInfo(threshold=threshold, req_src=req_src)
-        return pti
 
 
 # Type alias
 CIEnvs = List[CIBase]
-
-
-def build_issues_list(package_result: dict, issue_flags: List[str]) -> List[IssueEntry]:
-    """Build a list of issues from a given package's result object and return it."""
-    issues = []
-    pkg_issues = package_result.get("issues", [])
-    for flag in issue_flags:
-        for pkg_issue in pkg_issues:
-            if flag == pkg_issue.get("domain"):
-                severity = pkg_issue.get("severity")
-                domain = pkg_issue.get("domain")
-                title = pkg_issue.get("title")
-                issues.append(IssueEntry(severity, domain, title))
-    return sorted(issues)
 
 
 def detect_lockfiles() -> List[Path]:

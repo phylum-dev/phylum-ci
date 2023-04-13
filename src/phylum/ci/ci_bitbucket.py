@@ -28,9 +28,8 @@ from typing import Optional
 import requests
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.constants import PHYLUM_HEADER
 from phylum.ci.git import git_default_branch_name, git_remote
-from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 BITBUCKET_TOK_ERR_MSG = """
 A Bitbucket access token with API access is required to use the API (e.g., to post comments).
@@ -258,7 +257,7 @@ class CIBitbucket(CIBase):
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.
             print(" [+] The most recently posted Phylum pull request comment was found.")
             pr_comment = pr_comments.get("values")[0]
-            if pr_comment.get("content", {}).get("raw", "") == self.analysis_output:
+            if pr_comment.get("content", {}).get("raw", "") == self.analysis_report:
                 print(" [+] It contains the same content as the current analysis. Nothing to do.")
                 return
             print(" [+] It does not contain the same content as the current analysis.")
@@ -267,7 +266,7 @@ class CIBitbucket(CIBase):
 
         # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
         # there were no Phylum PR comments. Either way, create a new PR comment.
-        data = {"content": {"raw": self.analysis_output}}
+        data = {"content": {"raw": self.analysis_report}}
         headers["Content-Type"] = "application/json"
         print(f" [*] Creating new pull request comment with POST URL: {url} ...")
         response = requests.post(url, json=data, headers=headers, timeout=REQ_TIMEOUT)

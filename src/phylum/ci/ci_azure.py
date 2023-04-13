@@ -29,9 +29,8 @@ import requests
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
-from phylum.ci.constants import PHYLUM_HEADER
 from phylum.ci.git import git_default_branch_name, git_remote
-from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 
 AZURE_PAT_ERR_MSG = """
 An Azure DevOps token with API access is required to use the API (e.g., to post comments).
@@ -264,7 +263,7 @@ class CIAzure(CIBase):
             return
 
         if self.triggering_repo == "TfsGit":
-            post_azure_comment(self.azure_token, self.analysis_output)
+            post_azure_comment(self.azure_token, self.analysis_report)
         elif self.triggering_repo == "GitHub":
             github_api_root_url = "https://api.github.com"
 
@@ -280,7 +279,7 @@ class CIAzure(CIBase):
             pr_comments_api_endpoint = f"/repos/{owner_repo}/issues/{pr_number}/comments"
             comments_url = f"{github_api_root_url}{pr_comments_api_endpoint}"
 
-            post_github_comment(comments_url, self.github_token, self.analysis_output)
+            post_github_comment(comments_url, self.github_token, self.analysis_report)
 
 
 def post_azure_comment(azure_token: str, comment: str) -> None:

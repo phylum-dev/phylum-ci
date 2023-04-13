@@ -21,8 +21,7 @@ from typing import Optional
 import requests
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.constants import PHYLUM_HEADER
-from phylum.constants import REQ_TIMEOUT
+from phylum.constants import PHYLUM_HEADER, REQ_TIMEOUT
 from phylum.github import get_headers, github_request
 
 PAT_ERR_MSG = """
@@ -141,7 +140,7 @@ class CIGitHub(CIBase):
         if comments_url is None:
             raise SystemExit(" [!] The API for posting a GitHub comment was not found.")
 
-        post_github_comment(comments_url, self.github_token, self.analysis_output)
+        post_github_comment(comments_url, self.github_token, self.analysis_report)
 
 
 def post_github_comment(comments_url: str, github_token: str, comment: str) -> None:
