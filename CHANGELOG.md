@@ -10,6 +10,14 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.28.0 (2023-04-13)
+### Feature
+* Switch to policy based operation ([#226](https://github.com/phylum-dev/phylum-ci/issues/226)) ([`ed3532e`](https://github.com/phylum-dev/phylum-ci/commit/ed3532ecc26da657b1a4ae50c65d3f669a2276c7))
+
+### Breaking
+* The risk domain threshold options have been removed. ([`ed3532e`](https://github.com/phylum-dev/phylum-ci/commit/ed3532ecc26da657b1a4ae50c65d3f669a2276c7))
+* CLI installs prior to v5.0.0 are no longer supported. A Phylum CLI version with ability to return policy results and specify the `--base` option in the `analyze` command is required. ([`ed3532e`](https://github.com/phylum-dev/phylum-ci/commit/ed3532ecc26da657b1a4ae50c65d3f669a2276c7))
+
 ## v0.27.0 (2023-04-07)
 ### Feature
 * Provide ability to specify Phylum API URI ([#222](https://github.com/phylum-dev/phylum-ci/issues/222)) ([`80a54db`](https://github.com/phylum-dev/phylum-ci/commit/80a54dbeac19f8e9c411fcff86b9966d3bdd80a8))
