@@ -50,8 +50,8 @@ requests = "*"
 cryptography = "*"
 packaging = "*"
 "ruamel.yaml" = "*"
-connect-markdown-renderer = "*"
 pathspec = "*"
+rich = "*"
 
 [tool.poetry.group.test]
 optional = true

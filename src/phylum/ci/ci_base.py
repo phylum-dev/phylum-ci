@@ -19,13 +19,14 @@ from pathlib import Path
 from typing import List, Optional
 
 import pathspec
-from connect.utils.terminal.markdown import render
 from packaging.version import Version
+from rich.markdown import Markdown
 from ruamel.yaml import YAML
 
 from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, ReturnCode
 from phylum.ci.git import git_hash_object, git_repo_name
 from phylum.ci.lockfile import Lockfile, Lockfiles
+from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
@@ -369,7 +370,9 @@ class CIBase(ABC):
         ensure those comments are unique and not added multiple times as the review changes but no lockfile does.
         """
         # Post the markdown output, rendered for terminal/log output
-        print(f" [+] Analysis output:\n{render(self.analysis_report)}")
+        print(" [+] Analysis output:\n")
+        report_md = Markdown(self.analysis_report, hyperlinks=False)
+        console.print(report_md, soft_wrap=True)
 
     def analyze(self) -> ReturnCode:
         """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
