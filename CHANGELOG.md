@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.28.1 (2023-04-14)
+### Fix
+* Link to Phylum UI project clipped in logs ([#227](https://github.com/phylum-dev/phylum-ci/issues/227)) ([`8d2e91e`](https://github.com/phylum-dev/phylum-ci/commit/8d2e91e0223045525c68d899df63fd75b20c10ba))
+
 ## v0.28.0 (2023-04-13)
 ### Feature
 * Switch to policy based operation ([#226](https://github.com/phylum-dev/phylum-ci/issues/226)) ([`ed3532e`](https://github.com/phylum-dev/phylum-ci/commit/ed3532ecc26da657b1a4ae50c65d3f669a2276c7))
