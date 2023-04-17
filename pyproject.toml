@@ -82,6 +82,9 @@ tox = "*"
 [tool.black]
 line-length = 120
 
+[tool.vulture]
+paths = ["src", "tests"]
+
 [tool.semantic_release]
 # Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
 branch = "main"
