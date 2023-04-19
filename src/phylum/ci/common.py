@@ -24,7 +24,7 @@ class JobPolicyEvalResult:
 
     is_failure: bool
     incomplete_count: int
-    output: str
+    output: str  # noqa: F841 ; unused attribute, but kept to maintain consistency with the corresponding Phylum type
     report: str
 
 
