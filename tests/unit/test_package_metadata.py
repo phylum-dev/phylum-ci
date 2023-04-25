@@ -2,6 +2,7 @@
 
 import sys
 
+from packaging.requirements import Requirement
 from packaging.version import Version
 
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
@@ -45,3 +46,23 @@ def test_package_description():
     """Ensure the package description is traced through from the pyproject definition."""
     expected_pkg_desc = PYPROJECT.get("tool", {}).get("poetry", {}).get("description", "")
     assert expected_pkg_desc == PKG_SUMMARY, "The package description should be defined in pyproject.toml only"
+
+
+def test_build_system():
+    """Ensure the PEP 517/518 build system has not changed without explicit review.
+
+    Arbitrary code execution can occur when building/installing packages from source distributions. This test guards
+    against changes to the established/vetted build system. There may be legitimate times to change the build system
+    requirements and/or backend, but those changes will be more apparent in code reviews since this test will also have
+    to change. Changes to the values in the `pyproject.toml` file may be subtle and go unnoticed. In the worst case, it
+    is possible for the values to be changed to malicious entries that seek to cause harm in CI systems.
+    """
+    expected_build_requirement = "poetry-core"
+    expected_build_backend = "poetry.core.masonry.api"
+
+    requires = PYPROJECT.get("build-system", {}).get("requires", [])
+    assert len(requires) == 1, "There should be only one build system requirement"
+    req = Requirement(requires[0])
+    assert expected_build_requirement == req.name, "This package uses `poetry-core` for building"
+    build_backend = PYPROJECT.get("build-system", {}).get("build-backend")
+    assert expected_build_backend == build_backend, "Be wary if the build backend changes"
