@@ -2,4 +2,4 @@
 
 # Override the default detection of `poetry.lock` by `linguist` as
 # a "generated" file so that it will not be collapsed in a GitHub PR
-poetry.lock -linguist-generated
+poetry.lock linguist-generated=false
