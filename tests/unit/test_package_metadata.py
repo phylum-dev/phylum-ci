@@ -57,6 +57,7 @@ def test_build_system():
     to change. Changes to the values in the `pyproject.toml` file may be subtle and go unnoticed. In the worst case, it
     is possible for the values to be changed to malicious entries that seek to cause harm in CI systems.
     """
+    # NOTE: Changes to these values should be inspected closely!
     expected_build_requirement = "poetry-core"
     expected_build_backend = "poetry.core.masonry.api"
 
