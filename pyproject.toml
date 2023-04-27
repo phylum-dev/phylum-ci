@@ -86,6 +86,10 @@ line-length = 120
 [tool.vulture]
 paths = ["src", "tests"]
 
+[tool.refurb]
+python_version = "3.8"
+format = "github"
+
 [tool.semantic_release]
 # Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
 branch = "main"

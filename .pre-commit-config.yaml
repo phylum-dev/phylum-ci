@@ -31,7 +31,6 @@ repos:
     rev: 7fb404137a6dbb8c7b346ffd904db5c17b1c24ed  # frozen: v1.16.0
     hooks:
       - id: refurb
-        args: [--python-version, "3.8", --format, github]
 
   - repo: https://github.com/jendrikseipp/vulture
     rev: f7a85d47ad6da8cf1d408b737a0a0b396aa5d300  # frozen: v2.7
