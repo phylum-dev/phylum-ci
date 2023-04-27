@@ -936,17 +936,6 @@ pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
 
 [[package]]
-name = "purposefully-malicious"
-version = "1.0.1"
-description = "Demonstrates what a malicious PyPI package could do to you :O"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "purposefully-malicious-1.0.1.tar.gz", hash = "sha256:2bf0bee5c919f6092bdf4db27c1b8e371565dce8923e404872dd60c1851d8d7c"},
-]
-
-[[package]]
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
@@ -1323,7 +1312,6 @@ files = [
 certifi = ">=2017.4.17"
 charset-normalizer = ">=2,<4"
 idna = ">=2.5,<4"
-purposefully-malicious = ">=1.0.1"
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
