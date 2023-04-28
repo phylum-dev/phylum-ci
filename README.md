@@ -9,6 +9,7 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
 [![Downloads](https://pepy.tech/badge/phylum/month)][downloads]
+[![Discord](https://img.shields.io/discord/1070071012353376387?logo=discord)][discord_invite]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
 
@@ -19,6 +20,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [downloads]: https://pepy.tech/project/phylum
+[discord_invite]: https://discord.gg/Fe6pr5eW6p
 
 ## Installation and usage
 

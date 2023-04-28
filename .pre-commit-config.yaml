@@ -22,21 +22,32 @@ repos:
       - id: black
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: 01cee377ba3a5264c7fbe7b6beae7b575f764dc3  # frozen: v3.3.1
+    rev: 7c551d39dfa69851607d85392ffa296568e92436  # frozen: v3.3.2
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
 
   - repo: https://github.com/dosisod/refurb
-    rev: 2c336ac3638c1bccb6e138816826f4a7066ef5e6  # frozen: v1.15.0
+    rev: 7fb404137a6dbb8c7b346ffd904db5c17b1c24ed  # frozen: v1.16.0
     hooks:
       - id: refurb
-        args: [--python-version, "3.8", --format, github]
 
   - repo: https://github.com/jendrikseipp/vulture
     rev: f7a85d47ad6da8cf1d408b737a0a0b396aa5d300  # frozen: v2.7
     hooks:
       - id: vulture
+
+  - repo: https://github.com/python-poetry/poetry
+    # NOTE: The autoupdated/frozen version here may not always be the latest version:
+    # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
+    rev: 7fe4678f92dcab48a35169db6567cbb3f5a7e3ef  # frozen: 1.4.0
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
+        args: [--check]
+      # The `--check` option is the only one that will run when the `--no-update` option is also provided
+      - id: poetry-lock
+        args: [--no-update]
 
   # NOTE: don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`
