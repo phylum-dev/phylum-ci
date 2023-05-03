@@ -1,7 +1,7 @@
 """Provide common data structures for the package."""
 import dataclasses
-import json
 from enum import IntEnum
+import json
 from typing import List
 
 
@@ -11,7 +11,7 @@ class PackageDescriptor:
 
     name: str
     version: str
-    type: str
+    type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
 
 
 # Type alias
@@ -24,7 +24,7 @@ class JobPolicyEvalResult:
 
     is_failure: bool
     incomplete_count: int
-    output: str  # noqa: F841 ; unused attribute, but kept to maintain consistency with the corresponding Phylum type
+    output: str
     report: str
 
 
@@ -41,7 +41,7 @@ class ReturnCode(IntEnum):
 class DataclassJSONEncoder(json.JSONEncoder):
     """Custom JSON Encoder class that is able to serialize dataclass objects."""
 
-    def default(self, o):
+    def default(self, o):  # noqa: D102 ; the parent's docstring is better here
         if dataclasses.is_dataclass(o):
             return dataclasses.asdict(o)
         return super().default(o)

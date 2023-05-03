@@ -8,6 +8,7 @@
 [![GitHub Workflow Status (branch)][workflow_shield]][workflow_test]
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
 [![Downloads](https://pepy.tech/badge/phylum/month)][downloads]
 [![Discord](https://img.shields.io/discord/1070071012353376387?logo=discord)][discord_invite]
 
@@ -19,6 +20,7 @@ Utilities for integrating Phylum into CI pipelines (and beyond)
 [workflow_test]: https://github.com/phylum-dev/phylum-ci/actions/workflows/test.yml
 [CoC]: https://github.com/phylum-dev/phylum-ci/blob/main/CODE_OF_CONDUCT.md
 [pre-commit]: https://github.com/pre-commit/pre-commit
+[black]: https://github.com/psf/black
 [downloads]: https://pepy.tech/project/phylum
 [discord_invite]: https://discord.gg/Fe6pr5eW6p
 

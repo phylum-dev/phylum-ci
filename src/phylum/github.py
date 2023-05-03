@@ -75,29 +75,28 @@ def github_request(
         rate_limit_reset_header = int(time.mktime(time.localtime()) + seconds_in_hour)
     reset_time = time.asctime(time.localtime(rate_limit_reset_header))
 
-    if resp.status_code == requests.codes.forbidden:
-        # There are several reasons why a 403 status code (FORBIDDEN) could be returned:
-        #   * API rate limit exceeded
-        #   * API secondary rate limit exceeded
-        #   * Failed login limit exceeded
-        #   * Requests with no `User-Agent` header
-        # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api
-
-        # The most likely reason is that the rate limit has been exceeded so check for that.
-        # The other possible forbidden cases are not common enough to check for here.
-        # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
-        if rate_limit_remaining == "0":
-            msg = textwrap.dedent(
-                f"""\
-                [!] GitHub API rate limit of {rate_limit} requests/hour was exceeded for URL: {api_url}
-                    The current time is:  {current_time}
-                    Rate limit resets at: {reset_time}
-                    Options include waiting to try again after the rate limit resets or to make authenticated
-                    requests by providing a GitHub token in the `GITHUB_TOKEN` environment variable. Reference:
-                    {PAT_REF}
-                """
-            )
-            raise SystemExit(msg)
+    # There are several reasons why a 403 status code (FORBIDDEN) could be returned:
+    #   * API rate limit exceeded
+    #   * API secondary rate limit exceeded
+    #   * Failed login limit exceeded
+    #   * Requests with no `User-Agent` header
+    # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api
+    #
+    # The most likely reason is that the rate limit has been exceeded so check for that.
+    # The other possible forbidden cases are not common enough to check for here.
+    # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
+    if resp.status_code == requests.codes.forbidden and rate_limit_remaining == "0":
+        msg = textwrap.dedent(
+            f"""\
+            [!] GitHub API rate limit of {rate_limit} requests/hour was exceeded for URL: {api_url}
+                The current time is:  {current_time}
+                Rate limit resets at: {reset_time}
+                Options include waiting to try again after the rate limit resets or to make authenticated
+                requests by providing a GitHub token in the `GITHUB_TOKEN` environment variable. Reference:
+                {PAT_REF}
+            """  # noqa: COM812 ; FP due to multiline string in function call
+        )
+        raise SystemExit(msg)
 
     # TODO: Make this a debug level log output statement
     #       https://github.com/phylum-dev/phylum-ci/issues/23
@@ -112,7 +111,7 @@ def github_request(
             [!] A bad request was made to the GitHub API:
                 {err}
                 Response text: {resp.text.strip()}
-            """
+            """  # noqa: COM812 ; FP due to multiline string in function call
         )
         raise SystemExit(msg) from err
 

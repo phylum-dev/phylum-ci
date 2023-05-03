@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-import pytest
 from dulwich import porcelain
+import pytest
 
 from phylum.ci.git import git_repo_name
 
@@ -16,7 +16,7 @@ CLONED_LOCAL_REPO_NAMES = [
 
 # Names of a git repository that will be initialized locally
 # Separate lists are used because cloned local repos with a name ending in `.git` are not supported
-INITIALIZED_LOCAL_REPO_NAMES = CLONED_LOCAL_REPO_NAMES + ["local_repo.git"]
+INITIALIZED_LOCAL_REPO_NAMES = [*CLONED_LOCAL_REPO_NAMES, "local_repo.git"]
 
 
 @pytest.mark.parametrize("repo_name", INITIALIZED_LOCAL_REPO_NAMES)

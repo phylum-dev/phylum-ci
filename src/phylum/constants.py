@@ -65,7 +65,7 @@ PHYLUM_USER_AGENT = f"phylum-ci/{__version__}"
 # Environment variable name to hold the Phylum CLI token used to access the backend API.
 # The API token can also be set via the environment variable `PHYLUM_API_KEY`, which will take precedence over
 # the `offline_access` parameter in the `settings.yaml` file.
-ENVVAR_NAME_TOKEN = "PHYLUM_API_KEY"  # nosec ; this is NOT a hard-coded password
+ENVVAR_NAME_TOKEN = "PHYLUM_API_KEY"  # noqa: S105 ; this is NOT a hard-coded password
 
 # Environment variable name to hold the URI of the Phylum API instance used to access the backend API.
 ENVVAR_NAME_API_URI = "PHYLUM_API_URI"

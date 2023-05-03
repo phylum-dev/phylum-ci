@@ -3,13 +3,13 @@
 A Phylum project can consist of multiple lockfiles.
 This class represents a single lockfile.
 """
+from functools import cached_property, lru_cache
 import json
+from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import textwrap
-from functools import cached_property, lru_cache
-from pathlib import Path
 from typing import List, Optional, TypeVar
 
 from phylum.ci.common import PackageDescriptor, Packages
@@ -36,14 +36,14 @@ class Lockfile:
         """Return a debug printable string representation of the `Lockfile` object."""
         # NOTE: Any change from this format should be made carefully as caller's
         #       may be relying on `repr(lockfile)` to provide the relative path.
-        #       Example: print(f"Relative path to lockfile: `{lockfile!r}`")
+        #       Example: print(f"Relative path to lockfile: `{lockfile!r}`")    # noqa: ERA001 ; commented code intended
         return str(self.path.relative_to(Path.cwd()))
 
     def __str__(self) -> str:
         """Return the nicely printable string representation of the `Lockfile` object."""
         # NOTE: Any change from this format should be made carefully as caller's
         #       may be relying on `str(lockfile)` to provide the path.
-        #       Example: print(f"Path to lockfile: `{lockfile}`")
+        #       Example: print(f"Path to lockfile: `{lockfile}`")   # noqa: ERA001 ; commented code intended
         return str(self.path)
 
     def __lt__(self: Self, other: Self) -> bool:
@@ -120,7 +120,7 @@ class Lockfile:
         """Get the current lockfile packages."""
         try:
             cmd = [str(self.cli_path), "parse", str(self.path)]
-            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
             print(f" [!] stdout:\n{err.stdout}")
@@ -141,7 +141,12 @@ class Lockfile:
         try:
             # Use the `repr` form to get the relative path to the lockfile
             cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
-            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            prev_lockfile_object = subprocess.run(
+                cmd,  # noqa: S603
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
@@ -157,7 +162,12 @@ class Lockfile:
         with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
             try:
                 cmd = ["git", "cat-file", "blob", prev_lockfile_object]
-                prev_lockfile_contents = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+                prev_lockfile_contents = subprocess.run(
+                    cmd,  # noqa: S603
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
                 prev_lockfile_fd.write(prev_lockfile_contents)
                 prev_lockfile_fd.flush()
             except subprocess.CalledProcessError as err:
@@ -168,7 +178,12 @@ class Lockfile:
                 return []
             try:
                 cmd = [str(self.cli_path), "parse", prev_lockfile_fd.name]
-                parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+                parse_result = subprocess.run(
+                    cmd,  # noqa: S603
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
             except subprocess.CalledProcessError as err:
                 print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
                 print(f" [!] stdout:\n{err.stdout}")
@@ -178,7 +193,7 @@ class Lockfile:
                     [!] Due to error, assuming no previous lockfile packages.
                         Please report this as a bug if you believe `{self!r}`
                         is a valid lockfile at revision `{self.common_ancestor_commit}`.
-                    """
+                    """  # noqa: COM812 ; FP due to multiline string in function call
                 )
                 print(msg)
                 return []

@@ -44,7 +44,7 @@ PHYLUM_RSA_PUBKEY = bytes(
         CPPnPlCwuCIyUPezCP5XYczuHfaWeuwArlwdJFSUpMTc+SqO6REKgL9yvpqsO5Ia
         sQIDAQAB
         -----END PUBLIC KEY-----
-        """
+        """  # noqa: COM812 ; FP due to multiline string in function call
     ),
     encoding="ASCII",
 )

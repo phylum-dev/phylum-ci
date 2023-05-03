@@ -10,12 +10,13 @@ GitHub References:
   * https://docs.github.com/en/rest/pulls/comments
   * https://docs.github.com/en/rest/guides/working-with-comments#pull-request-comments
 """
-import json
-import os
-import re
-import subprocess
 from argparse import Namespace
 from functools import cached_property
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
 from typing import Optional
 
 import requests
@@ -42,13 +43,13 @@ See the GitHub Token Documentation for more info:
 class CIGitHub(CIBase):
     """Provide methods for a GitHub Actions environment."""
 
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         # This is the recommended workaround for container actions, to avoid the `unsafe repository` error.
         # It is added before super().__init__(args) so that lockfile change detection will be set properly.
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
         cmd = ["git", "config", "--global", "--add", "safe.directory", github_workspace]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # noqa: S603
 
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
@@ -76,10 +77,11 @@ class CIGitHub(CIBase):
         # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
         if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
             raise SystemExit(" [!] The workflow event must be `pull_request`")
-        github_event_path = os.getenv("GITHUB_EVENT_PATH")
-        if github_event_path is None:
+        github_event_path_envvar = os.getenv("GITHUB_EVENT_PATH")
+        if github_event_path_envvar is None:
             raise SystemExit(" [!] Could not read the `GITHUB_EVENT_PATH` environment variable")
-        with open(github_event_path, encoding="utf-8") as f:
+        github_event_path = Path(github_event_path_envvar)
+        with github_event_path.open(encoding="utf-8") as f:
             pr_event = json.load(f)
         self._pr_event = pr_event
 

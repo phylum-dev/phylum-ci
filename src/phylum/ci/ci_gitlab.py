@@ -7,12 +7,12 @@ GitLab References:
   * https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html
   * https://docs.gitlab.com/ee/api/notes.html#merge-requests
 """
+from argparse import Namespace
+from functools import cached_property, lru_cache
 import os
 import re
 import shlex
 import subprocess
-from argparse import Namespace
-from functools import cached_property, lru_cache
 from typing import Optional
 
 import requests
@@ -44,7 +44,7 @@ def is_in_mr() -> bool:
 class CIGitLab(CIBase):
     """Provide methods for a GitLab CI environment."""
 
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         super().__init__(args)
         self.ci_platform_name = "GitLab CI"
         if is_in_mr():
@@ -128,7 +128,7 @@ class CIGitLab(CIBase):
         cmd = ["git", "merge-base", src_branch, default_branch]
         print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             ref_url = "https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"
             print(f" [!] The common ancestor commit could not be found: {err}")

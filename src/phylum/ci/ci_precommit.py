@@ -9,11 +9,11 @@ References:
   * https://pre-commit.com/index.html#arguments-pattern-in-hooks
 """
 import argparse
+from functools import cached_property
+from pathlib import Path
 import re
 import subprocess
 import sys
-from functools import cached_property
-from pathlib import Path
 from typing import List, Optional
 
 from phylum.ci.ci_base import CIBase
@@ -23,7 +23,8 @@ from phylum.ci.git import git_curent_branch_name
 class CIPreCommit(CIBase):
     """Provide methods for operating within a pre-commit hook."""
 
-    def __init__(self, args: argparse.Namespace, remainder: List[str]) -> None:
+    def __init__(self, args: argparse.Namespace, remainder: List[str]) -> None:  # noqa: D107
+        # The base __init__ docstring is better here
         self.extra_args = remainder
         super().__init__(args)
         self.ci_platform_name = "pre-commit"
@@ -37,7 +38,8 @@ class CIPreCommit(CIBase):
         super()._check_prerequisites()
 
         cmd = ["git", "diff", "--cached", "--name-only"]
-        staged_files = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip().split("\n")
+        output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        staged_files = output.strip().split("\n")
         extra_arg_paths = [Path(extra_arg).resolve() for extra_arg in self.extra_args]
 
         print(" [*] Checking extra args for valid pre-commit scenarios ...")
@@ -87,7 +89,7 @@ class CIPreCommit(CIBase):
         """Find the common ancestor commit."""
         cmd = ["git", "rev-parse", "--verify", "HEAD"]
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")

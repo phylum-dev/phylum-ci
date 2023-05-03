@@ -15,15 +15,15 @@ Azure References:
   * https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/list
   * https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/create
 """
+from argparse import Namespace
 import base64
+from functools import cached_property, lru_cache
 import os
 import re
 import shlex
 import subprocess
+from typing import Optional, Tuple
 import urllib.parse
-from argparse import Namespace
-from functools import cached_property, lru_cache
-from typing import Optional
 
 import requests
 
@@ -84,7 +84,7 @@ def is_in_pr() -> bool:
 class CIAzure(CIBase):
     """Provide methods for an Azure Pipelines CI environment."""
 
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         super().__init__(args)
         self.ci_platform_name = "Azure Pipelines"
         if is_in_pr():
@@ -164,17 +164,7 @@ class CIAzure(CIBase):
         remote = git_remote()
 
         if is_in_pr():
-            # There is no single predefined variable available to provide the PR base SHA.
-            # Instead, it can be determined with a `git merge-base` command, like is done for the CINone implementation.
-            # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/variables
-            src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
-            tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
-            if not src_branch:
-                raise SystemExit(" [!] The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
-            if not tgt_branch:
-                raise SystemExit(" [!] The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
-            print(f" [+] SYSTEM_PULLREQUEST_SOURCEBRANCH: {src_branch}")
-            print(f" [+] SYSTEM_PULLREQUEST_TARGETBRANCH: {tgt_branch}")
+            src_branch, tgt_branch = get_pr_branches()
         else:
             # Assume the working context is within a CI triggered build environment when not in a PR.
 
@@ -221,7 +211,7 @@ class CIAzure(CIBase):
         cmd = ["git", "merge-base", src_branch, tgt_branch]
         print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
             print(f" [!] The common ancestor commit could not be found: {err}")
@@ -280,6 +270,22 @@ class CIAzure(CIBase):
             comments_url = f"{github_api_root_url}{pr_comments_api_endpoint}"
 
             post_github_comment(comments_url, self.github_token, self.analysis_report)
+
+
+def get_pr_branches() -> Tuple[str, str]:
+    """Get the source and destination branches when in a PR context and return them as a tuple."""
+    # There is no single predefined variable available to provide the PR base SHA.
+    # Instead, it can be determined with a `git merge-base` command, like is done for the CINone implementation.
+    # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/variables
+    src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
+    tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
+    if not src_branch:
+        raise SystemExit(" [!] The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
+    if not tgt_branch:
+        raise SystemExit(" [!] The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
+    print(f" [+] SYSTEM_PULLREQUEST_SOURCEBRANCH: {src_branch}")
+    print(f" [+] SYSTEM_PULLREQUEST_TARGETBRANCH: {tgt_branch}")
+    return src_branch, tgt_branch
 
 
 def post_azure_comment(azure_token: str, comment: str) -> None:
@@ -366,7 +372,7 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
                 "parentCommentId": 0,
                 "content": comment,
                 "commentType": "text",
-            }
+            },
         ],
         "status": "active",
     }

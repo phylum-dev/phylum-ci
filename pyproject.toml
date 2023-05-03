@@ -90,6 +90,53 @@ paths = ["src", "tests"]
 python_version = "3.8"
 format = "github"
 
+[tool.ruff]
+# Reference: https://beta.ruff.rs/docs/settings
+line-length = 120
+target-version = "py38"
+force-exclude = true
+src = ["src", "tests"]
+select = [
+    # Using `ALL` has the risk that new rules may be enabled when `ruff` is updated but updates are
+    # automated, with a PR that includes enforced QA checks, to weekly dependency and pre-commit hook bumps.
+    "ALL"
+]
+ignore = [
+    # Reference: https://beta.ruff.rs/docs/rules/
+    #
+    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Prefer D211.
+    "D203", # one-blank-line-before-class
+    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Prefer D212.
+    "D213", # multi-line-summary-second-line
+    # Cached instance methods are okay in this project b/c instances are short lived and won't lead to memory leaks.
+    "B019", # cached-instance-method
+    # Assigning to a variable before a return statement is more readable and useful for debugging
+    "RET504",   # unnecessary-assign
+    # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
+    "ANN",  # flake8-annotations
+    "TCH",  # flake8-type-checking
+    # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/47
+    "EM",   # flake8-errmsg
+    "TRY",  # tryceratops
+    # This ignore will be removed during https://github.com/phylum-dev/phylum-ci/issues/23
+    "T20",  # flake8-print
+]
+
+[tool.ruff.per-file-ignores]
+"test_*.py" = [
+    # It is expected to use `assert` statements in `pytest` test code
+    "S101", # assert
+    # `subprocess` input is controlled in test code
+    "S603", # subprocess-without-shell-equals-true
+]
+
+[tool.ruff.isort]
+force-sort-within-sections = true
+
+[tool.ruff.pydocstyle]
+# Use PEP-257 style docstrings
+convention = "pep257"
+
 [tool.semantic_release]
 # Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
 branch = "main"
