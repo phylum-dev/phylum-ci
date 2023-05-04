@@ -213,6 +213,12 @@ The pull request should work for Python 3.8, 3.9, 3.10, and 3.11.
 Check <https://github.com/phylum-dev/phylum-ci/actions> and make sure that the tests
 pass for all supported Python versions.
 
+To ensure quality assurance (QA), a series of checks are performed in a `qa` test.
+This test essentially runs the `pre-commit` hooks to ensure proper formatting and linting over the repo.
+Sometimes it is necessary to bypass these checks (e.g., via `# noqa` directives). These exceptions should
+be rare and include a reason in the comment for the exclusion. Create a new issue and reference that, when
+more detail is needed or the exclusion is meant to be temporary.
+
 The [Semantic Pull Requests](https://github.com/apps/semantic-pull-requests) GitHub app is in use for this repository
 as a means to ensure each PR that gets merged back to the `main` branch adheres to the
 [conventional commit](https://www.conventionalcommits.org) strategy. This means that either the PR title (when

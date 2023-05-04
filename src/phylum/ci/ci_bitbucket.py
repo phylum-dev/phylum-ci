@@ -16,14 +16,14 @@ Bitbucket References:
   * https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/
   * https://developer.atlassian.com/cloud/bitbucket/rest/intro/#pullrequest
 """
+from argparse import Namespace
+from functools import cached_property, lru_cache
 import os
 import re
 import shlex
 import subprocess
-import urllib.parse
-from argparse import Namespace
-from functools import cached_property, lru_cache
 from typing import Optional
+import urllib.parse
 
 import requests
 
@@ -61,7 +61,7 @@ def is_in_pr() -> bool:
 class CIBitbucket(CIBase):
     """Provide methods for a Bitbucket Pipelines environment."""
 
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         super().__init__(args)
         self.ci_platform_name = "Bitbucket Pipelines"
         if is_in_pr():
@@ -167,7 +167,7 @@ class CIBitbucket(CIBase):
         cmd = ["git", "merge-base", src_branch, tgt_branch]
         print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             ref_url = "https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"
             print(f" [!] The common ancestor commit could not be found: {err}")

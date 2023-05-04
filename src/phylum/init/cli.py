@@ -1,20 +1,20 @@
 """Console script for phylum-init."""
 import argparse
+from functools import lru_cache
 import os
 import pathlib
+from pathlib import Path
 import platform
 import shutil
 import subprocess
 import sys
 import tempfile
-import zipfile
-from functools import lru_cache
-from pathlib import Path
 from typing import List, Optional, Tuple
+import zipfile
 
-import requests
 from packaging.utils import canonicalize_version
 from packaging.version import InvalidVersion, Version
+import requests
 from ruamel.yaml import YAML
 
 from phylum import __version__
@@ -58,7 +58,7 @@ def get_expected_phylum_bin_path():
 def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
     cmd = [str(cli_path), "--version"]
-    version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()
+    version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()  # noqa: S603
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     prefix = "phylum "
@@ -236,9 +236,8 @@ def is_token_set(phylum_settings_path, token=None):
 
     if configured_token is None:
         return False
-    if token is not None:
-        if token != configured_token:
-            return False
+    if token is not None and token != configured_token:
+        return False
 
     return True
 
@@ -274,7 +273,7 @@ def process_token_option(args):
 
 
 def setup_token(token: str) -> None:
-    """Setup the CLI credentials with a provided token."""
+    """Configure the CLI credentials with a provided token."""
     phylum_settings_path = get_phylum_settings_path()
     ensure_settings_file()
     yaml = YAML()
@@ -297,7 +296,7 @@ def ensure_settings_file() -> None:
         if phylum_bin_path is None:
             raise SystemExit(" [!] Could not find the path to the Phylum CLI. Unable to ensure the settings file.")
         cmd = [str(phylum_bin_path), "version"]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # noqa: S603
 
 
 def process_uri_option(args: argparse.Namespace) -> None:
@@ -340,13 +339,13 @@ def confirm_setup() -> None:
     if is_token_set(get_phylum_settings_path()):
         # Check that the token and API URI were setup correctly by using them to display the current auth status
         cmd = [str(phylum_bin_path), "auth", "status"]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # noqa: S603
     else:
         print(" [!] Existing token not found. Can't confirm setup.")
 
     # Print the help message to aid log review
     cmd = [str(phylum_bin_path), "--help"]
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # noqa: S603
 
 
 def get_args(args=None):
@@ -413,7 +412,7 @@ def get_args(args=None):
 
 
 def main(args=None):
-    """Main entrypoint."""
+    """Provide the main entrypoint."""
     args = get_args(args=args)
 
     # Perform version check and normalization here so as to minimize GitHub API calls when
@@ -475,7 +474,7 @@ def main(args=None):
             cmd = ["install", "-m", "0755", "phylum", "/usr/local/bin/phylum"]
         else:
             cmd = ["sh", "install.sh"]
-        subprocess.run(cmd, check=True, cwd=extracted_dir)
+        subprocess.run(cmd, check=True, cwd=extracted_dir)  # noqa: S603
 
     process_uri_option(args)
     process_token_option(args)

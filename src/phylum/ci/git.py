@@ -1,8 +1,7 @@
 """Provide common git functions."""
 
-import os
-import subprocess
 from pathlib import Path
+import subprocess
 from typing import List, Optional
 
 
@@ -26,8 +25,8 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
     This function is limited in that it will only work when there is a single remote defined.
     A RuntimeError exception will be raised when there is not exactly one remote.
     """
-    cmd = git_base_cmd(git_c_path) + ["remote"]
-    remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()
+    cmd = [*git_base_cmd(git_c_path), "remote"]
+    remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()  # noqa: S603
     if not remotes:
         raise RuntimeError("No git remotes configured")
     if len(remotes) > 1:
@@ -47,9 +46,9 @@ def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     print(" [*] Automatically setting the remote HEAD ref ...")
-    cmd = base_cmd + ["remote", "set-head", remote, "--auto"]
+    cmd = [*base_cmd, "remote", "set-head", remote, "--auto"]
     try:
-        subprocess.run(cmd, check=True, capture_output=True)
+        subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603
     except subprocess.CalledProcessError as err:
         print(f" [!] Setting the remote HEAD failed: {err}")
         print(f" [!] stdout:\n{err.stdout}")
@@ -68,15 +67,25 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     prefix = f"refs/remotes/{remote}/"
-    cmd = base_cmd + ["symbolic-ref", f"{prefix}HEAD"]
+    cmd = [*base_cmd, "symbolic-ref", f"{prefix}HEAD"]
     try:
-        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+        default_branch_name = subprocess.run(
+            cmd,  # noqa: S603
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
     except subprocess.CalledProcessError:
         # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
         # the except block, is due to wanting to minimize calling commands that require git credentials.
         print(" [!] Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
         git_set_remote_head(remote)
-        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+        default_branch_name = subprocess.run(
+            cmd,  # noqa: S603
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout.strip()
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     if default_branch_name.startswith(prefix):
@@ -94,8 +103,8 @@ def git_curent_branch_name(git_c_path: Optional[Path] = None) -> str:
     path instead of the current working directory, which is the default when not provided.
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
-    cmd = base_cmd + ["branch", "--show-current"]
-    current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+    cmd = [*base_cmd, "branch", "--show-current"]
+    current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
     return current_branch
 
 
@@ -107,8 +116,8 @@ def git_hash_object(object_path: Path, git_c_path: Optional[Path] = None) -> str
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-    cmd = base_cmd + ["hash-object", str(object_path)]
-    hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+    cmd = [*base_cmd, "hash-object", str(object_path)]
+    hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
     return hash_object
 
 
@@ -133,16 +142,17 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
     try:
         remote = git_remote(git_c_path=git_c_path)
         is_remote_defined = True
-        cmd = base_cmd + ["remote", "get-url", remote]
+        cmd = [*base_cmd, "remote", "get-url", remote]
     except RuntimeError as err:
         print(f" [!] {err}. Will get the repo name from the local repository instead.")
         is_remote_defined = False
-        cmd = base_cmd + ["rev-parse", "--show-toplevel"]
+        cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
 
-    full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()
+    full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
 
-    repo_name = os.path.basename(full_repo_name)
+    full_repo_path = Path(full_repo_name)
+    repo_name = full_repo_path.name
     if is_remote_defined and repo_name.endswith(".git"):
-        repo_name, _ = os.path.splitext(repo_name)
+        repo_name = full_repo_path.stem
 
     return repo_name

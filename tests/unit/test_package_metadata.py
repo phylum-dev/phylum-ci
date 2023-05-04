@@ -6,8 +6,7 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
-
-from ..constants import PYPROJECT
+from tests.constants import PYPROJECT
 
 
 def test_project_version():
@@ -21,7 +20,8 @@ def test_python_version():
     """Ensure the python version used to test is a supported version."""
     supported_minor_versions = (8, 9, 10, 11)
     python_version = sys.version_info
-    assert python_version.major == 3, "Only Python 3 is supported"
+    acceptable_python_major_version = 3
+    assert python_version.major == acceptable_python_major_version, "Only Python 3 is supported"
     assert python_version.minor in supported_minor_versions, "Attempting to run unsupported Python version"
 
 

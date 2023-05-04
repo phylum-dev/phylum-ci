@@ -4,22 +4,22 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
+from abc import ABC, abstractmethod
+from argparse import Namespace
+from collections import OrderedDict
+from functools import cached_property
 import json
 import os
+from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import tempfile
 import textwrap
-from abc import ABC, abstractmethod
-from argparse import Namespace
-from collections import OrderedDict
-from functools import cached_property
-from pathlib import Path
 from typing import List, Optional
 
-import pathspec
 from packaging.version import Version
+import pathspec
 from rich.markdown import Markdown
 from ruamel.yaml import YAML
 
@@ -131,7 +131,7 @@ class CIBase(ABC):
             cmd = [str(self.cli_path), "parse", str(provided_lockfile)]
             # stdout and stderr are piped to DEVNULL because we only care about the return code.
             # pylint: disable-next=subprocess-run-check ; we want return code here and don't want to raise when non-zero
-            if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode):
+            if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode):  # noqa: S603
                 print(f" [!] Provided lockfile failed to parse as a known lockfile type: {provided_lockfile}")
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
@@ -235,7 +235,7 @@ class CIBase(ABC):
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
         cmd = [str(cli_path), "auth", "token"]
         # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
-        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):
+        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603
             raise SystemExit(" [!] A Phylum API key is required to continue.")
 
         print(f" [+] Using Phylum CLI instance: {cli_version} at {cli_path}")
@@ -256,7 +256,7 @@ class CIBase(ABC):
           * Start the label with the `self.ci_platform_name`
           * Replace all runs of whitespace characters with a single `-` character
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def lockfile_hash_object(self) -> str:
@@ -285,7 +285,7 @@ class CIBase(ABC):
         When found, it should be returned as a string of the SHA1 sum representing the commit.
         When it can't be found (or there is an error), `None` should be returned.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -294,7 +294,7 @@ class CIBase(ABC):
 
         Implementations should return `True` if any lockfile has changed and `False` otherwise.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def update_lockfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
         """Update each lockfile's change status.
@@ -308,7 +308,7 @@ class CIBase(ABC):
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
             cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(lockfile.path)]
-            ret = subprocess.run(cmd, check=False)
+            ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
                 print(f" [-] The lockfile `{lockfile!r}` has not changed")
                 lockfile.is_lockfile_changed = False
@@ -349,15 +349,16 @@ class CIBase(ABC):
         if self.phylum_group:
             print(f" [-] Using Phylum group: {self.phylum_group}")
             cmd = [str(self.cli_path), "project", "create", "--group", self.phylum_group, self.phylum_project]
-        ret = subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        ret = subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
         # The Phylum CLI will return a unique error code of 14 when a project that already
         # exists is attempted to be created. This situation is recognized and allowed to happen
         # since it means the project exists as expected. Any other exit code is an error.
+        cli_exit_code_project_already_exists = 14
         if ret.returncode == 0:
             print(f" [-] Project {self.phylum_project} created successfully.")
             if self._project_file_already_existed:
                 print(f" [!] Overwrote previous `.phylum_project` file found at: {self._phylum_project_file}")
-        elif ret.returncode == 14:
+        elif ret.returncode == cli_exit_code_project_already_exists:
             print(f" [-] Project {self.phylum_project} already exists. Continuing with it ...")
         else:
             print(f" [!] There was a problem creating the project with command: {shlex.join(cmd)}")
@@ -407,11 +408,12 @@ class CIBase(ABC):
 
             print(f" [*] Performing analysis with command: {shlex.join(cmd)}")
             try:
-                analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
+                analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
             except subprocess.CalledProcessError as err:
                 # The Phylum project will fail analysis if the configured policy criteria are not met.
                 # This causes the return code to be 100 and lands us here. Check for this case to proceed.
-                if err.returncode == 100:
+                cli_exit_code_failed_policy = 100
+                if err.returncode == cli_exit_code_failed_policy:
                     analysis_result = err.stdout
                 else:
                     print(f" [!] stdout:\n{err.stdout}")
@@ -430,13 +432,12 @@ class CIBase(ABC):
             else:
                 print(" [+] The analysis is complete and there were NO failures")
                 returncode = ReturnCode.SUCCESS
+        elif analysis.is_failure:
+            print(" [!] There were failures in one or more completed packages")
+            returncode = ReturnCode.FAILURE_INCOMPLETE
         else:
-            if analysis.is_failure:
-                print(" [!] There were failures in one or more completed packages")
-                returncode = ReturnCode.FAILURE_INCOMPLETE
-            else:
-                print(" [+] There were no failures in the packages that have completed so far")
-                returncode = ReturnCode.INCOMPLETE
+            print(" [+] There were no failures in the packages that have completed so far")
+            returncode = ReturnCode.INCOMPLETE
 
         return returncode
 

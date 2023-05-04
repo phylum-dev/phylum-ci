@@ -162,7 +162,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
 
 
 def main(args: Optional[Sequence[str]] = None) -> int:
-    """Main entrypoint."""
+    """Provide the main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
 
     # Perform version check and normalization here so as to minimize GitHub API calls when
@@ -182,12 +182,11 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     print(f" [+] lockfile(s) in use: {ci_env.lockfiles}")
     if ci_env.force_analysis:
         print(" [+] Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
+    elif ci_env.is_any_lockfile_changed:
+        print(" [+] A lockfile has changed. Proceeding with analysis ...")
     else:
-        if ci_env.is_any_lockfile_changed:
-            print(" [+] A lockfile has changed. Proceeding with analysis ...")
-        else:
-            print(" [+] No lockfile has changed. Nothing to do.")
-            return 0
+        print(" [+] No lockfile has changed. Nothing to do.")
+        return 0
 
     # Generate a label to use for analysis and report it
     print(f" [+] Label to use for analysis: {ci_env.phylum_label}")

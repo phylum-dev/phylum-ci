@@ -5,10 +5,10 @@ This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
 import argparse
-import re
-import subprocess
 from functools import cached_property
 from pathlib import Path
+import re
+import subprocess
 from typing import Optional
 
 from phylum.ci.ci_base import CIBase
@@ -18,7 +18,7 @@ from phylum.ci.git import git_curent_branch_name, git_remote
 class CINone(CIBase):
     """Provide methods for operating outside of a known CI environment."""
 
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(self, args: argparse.Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         super().__init__(args)
         self.ci_platform_name = "No CI"
 
@@ -50,7 +50,7 @@ class CINone(CIBase):
         remote = git_remote()
         cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/HEAD"]
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             print(f" [!] The common ancestor commit could not be found: {err}")
             print(f" [!] stdout:\n{err.stdout}")
