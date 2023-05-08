@@ -1447,7 +1447,7 @@ files = [
 docutils = "*"
 
 [[package]]
-name = "ruamel-yaml"
+name = "ruamel.yaml"
 version = "0.17.24"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
 category = "main"
