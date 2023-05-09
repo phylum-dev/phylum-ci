@@ -18,7 +18,7 @@ name: Release
 
 concurrency: Production
 
-on:  # yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
     inputs:
       prerelease:

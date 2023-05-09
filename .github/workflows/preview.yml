@@ -4,7 +4,7 @@
 ---
 name: Preview
 
-on:  # yamllint disable-line rule:truthy
+on:
   # Allow running this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:

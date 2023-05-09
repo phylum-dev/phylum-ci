@@ -4,7 +4,7 @@
 ---
 name: Update Deps
 
-on:  # yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   # Run every Monday at 1435 UTC
   schedule:

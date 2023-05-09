@@ -2,7 +2,7 @@
 # in this repository with Phylum during pull requests.
 ---
 name: Phylum_analyze
-on: pull_request  # yamllint disable-line rule:truthy
+on: pull_request
 jobs:
   Analyze_PR_with_Phylum:
     name: Analyze PR with phylum

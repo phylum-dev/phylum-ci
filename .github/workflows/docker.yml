@@ -27,7 +27,7 @@ name: Build and push images
 
 concurrency: Production
 
-on:  # yamllint disable-line rule:truthy
+on:
   repository_dispatch:
     types: [build-push-docker-images]
 
