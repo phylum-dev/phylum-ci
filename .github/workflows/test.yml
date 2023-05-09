@@ -2,7 +2,7 @@
 ---
 name: Test
 
-on:
+on:  # yamllint disable-line rule:truthy
   # Allow running this workflow manually from the Actions tab
   workflow_dispatch:
   pull_request:
@@ -168,11 +168,17 @@ jobs:
     needs: [QA, test-matrix, docker]
     steps:
       - name: Check for test jobs failure
-        if: (needs.QA.result != 'success') || (needs.test-matrix.result != 'success') || (needs.docker.result != 'success')
+        if: >
+          (needs.QA.result != 'success')
+          || (needs.test-matrix.result != 'success')
+          || (needs.docker.result != 'success')
         run: |
           echo "At least one test job was not successful"
           exit 1
 
       - name: Confirm test jobs success
-        if: (needs.QA.result == 'success') && (needs.test-matrix.result == 'success') && (needs.docker.result == 'success')
+        if: >
+          (needs.QA.result == 'success')
+          && (needs.test-matrix.result == 'success')
+          && (needs.docker.result == 'success')
         run: echo "All test jobs were successful"

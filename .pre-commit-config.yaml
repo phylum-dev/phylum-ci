@@ -36,6 +36,11 @@ repos:
     hooks:
       - id: vulture
 
+  - repo: https://github.com/adrienverge/yamllint
+    rev: 98f2281f56be5503f3851e74556e1122fc18b2a8  # frozen: v1.31.0
+    hooks:
+      - id: yamllint
+
   - repo: https://github.com/python-poetry/poetry
     # NOTE: The autoupdated/frozen version here may not always be the latest version:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
