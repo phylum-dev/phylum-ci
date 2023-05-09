@@ -1,0 +1,15 @@
+# Configuration file for `yamllint`
+# Reference: <https://yamllint.readthedocs.io/en/stable/index.html>
+---
+
+extends: default
+
+rules:
+  line-length:
+    max: 120
+  comments:
+    # The `pre-commit autoupdate --freeze` command only uses one space between the `rev` hash and version comment
+    min-spaces-from-content: 1
+  truthy:
+    # This is primarily to allow for GitHub Action workflows, which requires the `on:` key in each workflow
+    check-keys: false
