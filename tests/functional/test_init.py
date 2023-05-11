@@ -1,11 +1,15 @@
 """"Test the phylum-init command line interface (CLI)."""
+import logging
 from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 from phylum import __version__
 from phylum.init import SCRIPT_NAME, sig
-from phylum.init.cli import save_file_from_url
+from phylum.init.cli import get_args, save_file_from_url
+from phylum.logger import LOG, set_logger_level
 from tests.constants import PYPROJECT
 
 
@@ -46,3 +50,24 @@ def test_phylum_pubkey_is_constant(tmp_path):
     downloaded_key_path: Path = tmp_path / "signing-key.pub"
     save_file_from_url(phylum_pubkey_url, downloaded_key_path)
     assert downloaded_key_path.read_bytes() == sig.PHYLUM_RSA_PUBKEY, "The key should not be changing"
+
+
+@pytest.mark.parametrize(
+    ("supplied_args", "expected_level"),
+    [
+        ([], logging.WARNING),
+        (["-v"], logging.INFO),
+        (["-vv"], logging.DEBUG),
+        (["-vvv"], logging.DEBUG),
+        (["-vvvv"], logging.DEBUG),
+        (["-q"], logging.ERROR),
+        (["-qq"], logging.CRITICAL),
+        (["-qqq"], logging.CRITICAL),
+    ],
+)
+@pytest.mark.usefixtures("_log")
+def test_log_verbosity_set_correctly(supplied_args, expected_level):
+    """Ensure the log verbosity options are handled correctly."""
+    args = get_args(supplied_args)
+    set_logger_level(args.verbose - args.quiet)
+    assert LOG.getEffectiveLevel() == expected_level

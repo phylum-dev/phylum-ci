@@ -85,6 +85,8 @@ line-length = 120
 
 [tool.vulture]
 paths = ["src", "tests"]
+# Vulture doesn't understand pytest's fixture machinery
+exclude = ["conftest.py"]
 
 [tool.refurb]
 python_version = "3.8"

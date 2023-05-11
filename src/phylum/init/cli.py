@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 import zipfile
 
 from packaging.utils import canonicalize_version
@@ -33,6 +33,7 @@ from phylum.constants import (
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
+from phylum.logger import LOG, set_logger_level
 
 
 def get_phylum_settings_path():
@@ -193,6 +194,18 @@ def version_check(version: str) -> str:
     return version
 
 
+def process_version(version: str) -> str:
+    """Process the version argument and return it."""
+    if version:
+        LOG.debug("Phylum CLI version was specified as: %s", version)
+        version = version_check(version)
+    else:
+        LOG.debug("Phylum CLI version not specified")
+        version = version_check(default_phylum_cli_version())
+    LOG.info("Using Phylum CLI version: %s", version)
+    return version
+
+
 def get_target_triple() -> str:
     """Get the "target triple" from the current system and return it."""
     arch = SUPPORTED_ARCHES.get(platform.uname().machine.lower(), "unknown")
@@ -348,7 +361,7 @@ def confirm_setup() -> None:
     subprocess.run(cmd, check=True)  # noqa: S603
 
 
-def get_args(args=None):
+def get_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
     """Get the arguments from the command line or input parameter, parse and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
@@ -362,6 +375,24 @@ def get_args(args=None):
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",
     )
+
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        # TODO: change this text to -vvv when `trace` level is added
+        help="Increase output verbosity (the maximum is -vv)",
+    )
+    log_group.add_argument(
+        "-q",
+        "--quiet",
+        action="count",
+        default=0,
+        help="Decrease output verbosity (the maximum is -qq)",
+    )
+
     parser.add_argument(
         "-r",
         "--phylum-release",
@@ -414,16 +445,11 @@ def get_args(args=None):
 def main(args=None):
     """Provide the main entrypoint."""
     args = get_args(args=args)
+    set_logger_level(args.verbose - args.quiet)
 
-    # Perform version check and normalization here so as to minimize GitHub API calls when
-    # showing the help message but still bail early when the version provided is invalid
-    if args.version:
-        print(f" [+] Phylum CLI version was specified as: {args.version}")
-        args.version = version_check(args.version)
-    else:
-        print(" [+] Phylum CLI version not specified")
-        args.version = version_check(default_phylum_cli_version())
-    print(f" [*] Using Phylum CLI version: {args.version}")
+    # Perform version check and normalization separately from the argument parsing so as to minimize GitHub
+    # API calls when showing the help message but still bail early when the version provided is invalid.
+    args.version = process_version(args.version)
 
     if args.list_releases:
         print(" [*] Looking up supported releases ...")
