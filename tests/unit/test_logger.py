@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from phylum.logger import LOG, set_logger_level
+from phylum.logger import LOG, LOGGING_TRACE_LEVEL, set_logger_level
 
 
 @pytest.mark.parametrize(
@@ -12,8 +12,8 @@ from phylum.logger import LOG, set_logger_level
         (0, logging.WARNING),
         (1, logging.INFO),
         (2, logging.DEBUG),
-        (3, logging.DEBUG),
-        (4, logging.DEBUG),
+        (3, LOGGING_TRACE_LEVEL),
+        (4, LOGGING_TRACE_LEVEL),
         (-1, logging.ERROR),
         (-2, logging.CRITICAL),
         (-3, logging.CRITICAL),

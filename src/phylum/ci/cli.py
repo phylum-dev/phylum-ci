@@ -89,8 +89,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "--verbose",
         action="count",
         default=0,
-        # TODO: change this text to -vvv when `trace` level is added
-        help="Increase output verbosity (the maximum is -vv)",
+        help="Increase output verbosity (the maximum is -vvv)",
     )
     log_group.add_argument(
         "-q",

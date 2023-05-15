@@ -8,7 +8,7 @@ import pytest
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
 from phylum.ci.cli import get_args
-from phylum.logger import LOG, set_logger_level
+from phylum.logger import LOG, LOGGING_TRACE_LEVEL, set_logger_level
 from tests.constants import PYPROJECT
 
 
@@ -49,8 +49,8 @@ def test_version_option():
         ([], logging.WARNING),
         (["-v"], logging.INFO),
         (["-vv"], logging.DEBUG),
-        (["-vvv"], logging.DEBUG),
-        (["-vvvv"], logging.DEBUG),
+        (["-vvv"], LOGGING_TRACE_LEVEL),
+        (["-vvvv"], LOGGING_TRACE_LEVEL),
         (["-q"], logging.ERROR),
         (["-qq"], logging.CRITICAL),
         (["-qqq"], logging.CRITICAL),

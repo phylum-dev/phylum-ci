@@ -3,8 +3,10 @@
 The `rich` library is used here for excellent control over the console.
 Reference: https://rich.readthedocs.io/en/latest/index.html
 """
+from typing import Mapping, Union
 
 from rich.console import Console
+from rich.style import Style
 from rich.theme import Theme
 
 # Create a custom Phylum theme by setting unique style values for a subset of the markdown styles that `rich` supports.
@@ -15,7 +17,9 @@ from rich.theme import Theme
 # References:
 #   * https://rich.readthedocs.io/en/latest/style.html
 #   * https://rich.readthedocs.io/en/latest/appendix/colors.html
-PHYLUM_STYLES = {
+PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
+    # Styles that have been added to the default:
+    "logging.level.trace": Style(dim=True),
     # Styles that have been modified from the default:
     "markdown.code": "bold reverse",
     "markdown.h1.border": "dodger_blue2",

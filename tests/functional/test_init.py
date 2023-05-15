@@ -9,7 +9,7 @@ import pytest
 from phylum import __version__
 from phylum.init import SCRIPT_NAME, sig
 from phylum.init.cli import get_args, save_file_from_url
-from phylum.logger import LOG, set_logger_level
+from phylum.logger import LOG, LOGGING_TRACE_LEVEL, set_logger_level
 from tests.constants import PYPROJECT
 
 
@@ -58,8 +58,8 @@ def test_phylum_pubkey_is_constant(tmp_path):
         ([], logging.WARNING),
         (["-v"], logging.INFO),
         (["-vv"], logging.DEBUG),
-        (["-vvv"], logging.DEBUG),
-        (["-vvvv"], logging.DEBUG),
+        (["-vvv"], LOGGING_TRACE_LEVEL),
+        (["-vvvv"], LOGGING_TRACE_LEVEL),
         (["-q"], logging.ERROR),
         (["-qq"], logging.CRITICAL),
         (["-qqq"], logging.CRITICAL),
