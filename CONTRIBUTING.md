@@ -24,6 +24,7 @@ Please use the bug report template which should remind you to include:
 * Additional context
   * Your operating system name and version
   * Any details about your local setup that might be helpful in troubleshooting
+  * Output from the highest verbosity setting
 
 ### Fix Bugs
 
@@ -272,4 +273,16 @@ poetry run phylum-ci --force-analysis --all-deps
 
 # short form options
 poetry run phylum-ci -fa
+```
+
+To get more output and insight into the execution of the scripts, use the `--verbose`/`-v` flag multiple times.
+The highest verbosity level, `-vvv`, can be used to get trace level output. This can be useful for troubleshooting
+or to capture the full output for submission of a bug.
+
+```sh
+# running during development
+poetry run phylum-ci -vvv <options>
+
+# running a released version
+phylum-ci -vvv <options>
 ```

@@ -137,6 +137,9 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # casting the widest net for strict adherence to Quality Assurance (QA) standards.
         args: [--all-deps]
 
+        # Provide debug level output
+        args: [-vv]
+
         # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
         # they can be named differently and may or may not contain strict dependencies.
         # In these cases, it is best to specify an explicit lockfile path.
@@ -157,6 +160,7 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
         # Mix and match for your specific use case.
         args:
+          - -vv
           - --lockfile=requirements-prod.txt
           - --lockfile=path/to/lock.file
           - --all-deps

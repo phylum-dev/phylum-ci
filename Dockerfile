@@ -144,7 +144,7 @@ RUN set -eux; \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends git; \
     chmod +x ${PHYLUM_VENV}/bin/entrypoint.sh; \
-    phylum-init --phylum-release ${CLI_VER:-latest} --global-install; \
+    phylum-init -vvv --phylum-release ${CLI_VER:-latest} --global-install; \
     apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*; \
     find / -type f -name '*.pyc' -delete
