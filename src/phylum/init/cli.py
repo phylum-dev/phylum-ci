@@ -1,6 +1,7 @@
 """Console script for phylum-init."""
 import argparse
 from functools import lru_cache
+import itertools
 import os
 import pathlib
 from pathlib import Path
@@ -119,18 +120,27 @@ def get_latest_version() -> str:
 
 @lru_cache(maxsize=1)
 def supported_releases() -> List[str]:
-    """Get the most recent supported releases programmatically and return them."""
+    """Get the most recent supported releases programmatically and return them in sorted order, latest first."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#list-releases
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases"
     query_params = {"per_page": 100}
+    LOG.debug("Minimum supported Phylum CLI version required for install: %s", MIN_CLI_VER_FOR_INSTALL)
 
     req_json = github_request(github_api_url, params=query_params)
 
-    # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
-    # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
-    releases = [rel.get("tag_name") for rel in req_json if is_supported_version(rel.get("tag_name", "0.0.0"))]
+    cli_releases = {}
+    for rel in req_json:
+        # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
+        # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
+        rel_ver = rel.get("tag_name", "0.0.0")
+        try:
+            cli_releases[rel_ver] = Version(canonicalize_version(rel_ver))
+        except InvalidVersion as err:
+            raise SystemExit(f" [!] An invalid version was provided: {rel_ver}") from err
+    sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=lambda x: x[1], reverse=True)]
+    releases = itertools.takewhile(is_supported_version, sorted_cli_releases)
 
-    return releases
+    return list(releases)
 
 
 def is_supported_version(version: str) -> bool:
