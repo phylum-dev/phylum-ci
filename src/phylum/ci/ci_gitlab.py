@@ -13,6 +13,7 @@ import os
 import re
 import shlex
 import subprocess
+import textwrap
 from typing import Optional
 
 import requests
@@ -20,6 +21,8 @@ import requests
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.exceptions import pprint_subprocess_error
+from phylum.logger import LOG
 
 
 @lru_cache(maxsize=1)
@@ -48,9 +51,9 @@ class CIGitLab(CIBase):
         super().__init__(args)
         self.ci_platform_name = "GitLab CI"
         if is_in_mr():
-            print(" [-] Pipeline context: merge request pipeline")
+            LOG.debug("Pipeline context: merge request pipeline")
         else:
-            print(" [-] Pipeline context: branch pipeline")
+            LOG.debug("Pipeline context: branch pipeline")
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
@@ -65,14 +68,14 @@ class CIGitLab(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         if os.getenv("GITLAB_CI") != "true":
-            raise SystemExit(" [!] Must be working within the GitLab CI environment")
+            raise SystemExit("Must be working within the GitLab CI environment")
 
         # A GitLab token with API access is required to use the API (e.g., to post notes/comments).
         # This can be a personal, project, or group access token...and possibly some other types as well.
         # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
         gitlab_token = os.getenv("GITLAB_TOKEN", "")
         if not gitlab_token and is_in_mr():
-            raise SystemExit(" [!] A GitLab token with API access must be set at `GITLAB_TOKEN`")
+            raise SystemExit("A GitLab token with API access must be set at `GITLAB_TOKEN`")
         self._gitlab_token = gitlab_token
 
     @property
@@ -108,7 +111,7 @@ class CIGitLab(CIBase):
 
         src_branch_name = os.getenv("CI_COMMIT_BRANCH")
         if not src_branch_name:
-            raise SystemExit(" [!] The CI_COMMIT_BRANCH environment variable must exist and be set")
+            raise SystemExit("The CI_COMMIT_BRANCH environment variable must exist and be set")
         src_branch = f"refs/remotes/{remote}/{src_branch_name}"
 
         # The default branch name is used instead of `HEAD` because of a GitLab runner bug where HEAD is not available:
@@ -119,22 +122,23 @@ class CIGitLab(CIBase):
         default_branch = f"refs/remotes/{remote}/{default_branch_name}"
 
         if src_branch == default_branch:
-            print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+            LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
             self._force_analysis = True
             self._all_deps = True
 
         # This is a best effort attempt since it is finding the merge base between the current commit
         # and the default branch instead of finding the exact commit from which the branch was created.
         cmd = ["git", "merge-base", src_branch, default_branch]
-        print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
+        LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            ref_url = "https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"
-            print(f" [!] The common ancestor commit could not be found: {err}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
-            print(f" [!] Ensure the git strategy is set to `clone` for repo checkouts: {ref_url}")
+            msg = """\
+                The common ancestor commit could not be found.
+                Ensure the git strategy is set to `clone` for repo checkouts:
+                https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
+            pprint_subprocess_error(err)
+            LOG.warning(textwrap.dedent(msg))
             common_commit = None
 
         return common_commit
@@ -143,15 +147,15 @@ class CIGitLab(CIBase):
     def is_any_lockfile_changed(self) -> bool:
         """Predicate for detecting if any lockfile has changed."""
         diff_base_sha = self.common_ancestor_commit
-        print(f" [+] The common ancestor commit: {diff_base_sha}")
+        LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
         err_msg = """\
-            [!] Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history.
-                Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
+            Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history.
+            Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
         self.update_lockfiles_change_status(diff_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
@@ -180,29 +184,29 @@ class CIGitLab(CIBase):
             "PRIVATE-TOKEN": self.gitlab_token,
         }
 
-        print(f" [*] Getting all current merge request notes with GET URL: {url} ...")
+        LOG.info("Getting all current merge request notes with GET URL: %s ...", url)
         req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
         mr_notes = req.json()
 
-        print(" [*] Checking existing merge request notes for existing content to avoid duplication ...")
+        LOG.info("Checking existing merge request notes for existing content to avoid duplication ...")
         if not mr_notes:
-            print(" [+] No existing merge request notes found.")
+            LOG.debug("No existing merge request notes found.")
         # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
         #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
         #       We only care about the most recent Phylum note.
         for mr_note in mr_notes:
             if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                print(" [+] The most recently posted Phylum merge request note was found.")
+                LOG.debug("The most recently posted Phylum merge request note was found.")
                 if mr_note.get("body", "") == self.analysis_report:
-                    print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                    LOG.debug("It contains the same content as the current analysis. Nothing to do.")
                     return
-                print(" [+] It does not contain the same content as the current analysis.")
+                LOG.debug("It does not contain the same content as the current analysis.")
                 break
 
         # If we got here, then the most recent Phylum MR note does not match the current analysis output or
         # there were no Phylum MR notes. Either way, create a new MR note.
         data = {"body": self.analysis_report}
-        print(f" [*] Creating new merge request note with POST URL: {url} ...")
+        LOG.info("Creating new merge request note with POST URL: %s ...", url)
         response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
         response.raise_for_status()

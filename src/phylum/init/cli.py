@@ -96,9 +96,9 @@ def default_phylum_cli_version() -> str:
     """
     _, installed_cli_version = get_phylum_bin_path()
     if installed_cli_version is None:
-        print(" [+] No installed Phylum CLI found")
+        LOG.debug("No installed Phylum CLI found")
         return "latest"
-    print(f" [+] Found installed Phylum CLI version: {installed_cli_version}")
+    LOG.debug("Found installed Phylum CLI version: %s", installed_cli_version)
     return installed_cli_version
 
 
@@ -113,7 +113,7 @@ def get_latest_version() -> str:
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
     latest_version = req_json.get("tag_name")
     if not latest_version:
-        raise SystemExit(f" [!] The `tag_name` entry was not available or not set when querying: {github_api_url}")
+        raise SystemExit(f"The `tag_name` entry was not available or not set when querying: {github_api_url}")
 
     return latest_version
 
@@ -136,7 +136,7 @@ def supported_releases() -> List[str]:
         try:
             cli_releases[rel_ver] = Version(canonicalize_version(rel_ver))
         except InvalidVersion as err:
-            raise SystemExit(f" [!] An invalid version was provided: {rel_ver}") from err
+            raise SystemExit(f"An invalid version was provided: {rel_ver}") from err
     sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=lambda x: x[1], reverse=True)]
     releases = itertools.takewhile(is_supported_version, sorted_cli_releases)
 
@@ -149,7 +149,7 @@ def is_supported_version(version: str) -> bool:
         provided_version = Version(canonicalize_version(version))
         min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
     except InvalidVersion as err:
-        raise SystemExit(f" [!] An invalid version was provided: {version}") from err
+        raise SystemExit(f"An invalid version was provided: {version}") from err
 
     return provided_version >= min_supported_version
 
@@ -168,7 +168,7 @@ def supported_targets(release_tag: str) -> List[str]:
       * https://rust-lang.github.io/rfcs/0131-target-specification.html
     """
     if release_tag not in supported_releases():
-        raise SystemExit(f" [!] Unsupported version: {release_tag}")
+        raise SystemExit(f"Unsupported version: {release_tag}")
 
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
@@ -199,7 +199,7 @@ def version_check(version: str) -> str:
     supported_versions = supported_releases()
     if version not in supported_versions:
         releases = ", ".join(supported_versions)
-        raise SystemExit(f" [!] Specified Phylum CLI version must be from a supported release: {releases}")
+        raise SystemExit(f"Specified Phylum CLI version must be from a supported release: {releases}")
 
     return version
 
@@ -225,14 +225,11 @@ def get_target_triple() -> str:
 
 def save_file_from_url(url: str, path: Path) -> None:
     """Save a file from a given URL to a local file path, in binary mode."""
-    print(f" [*] Getting {url} file ...", end="")
+    LOG.info("Getting %s file ...", url)
     req = requests.get(url, timeout=REQ_TIMEOUT)
     req.raise_for_status()
-    print("Done")
-
-    print(f" [*] Saving {url} file to {path} ...", end="")
+    LOG.info("Saving %s file to %s ...", url, path)
     path.write_bytes(req.content)
-    print("Done")
 
 
 def get_archive_url(tag_name: str, archive_name: str) -> str:
@@ -275,21 +272,21 @@ def process_token_option(args):
         token = args.token
 
     if token:
-        print(f" [+] Phylum token supplied as an option or `{ENVVAR_NAME_TOKEN}` environment variable")
+        LOG.info("Phylum token supplied as an option or `%s` environment variable", ENVVAR_NAME_TOKEN)
         if is_token_set(phylum_settings_path):
-            print(" [+] An existing token is already set")
+            LOG.info("An existing token is already set")
             if is_token_set(phylum_settings_path, token=token):
-                print(" [+] Supplied token matches existing token")
+                LOG.info("Supplied token matches existing token")
             else:
-                print(" [!] Supplied token will be used to overwrite the existing token")
+                LOG.warning("Supplied token will be used to overwrite the existing token")
         else:
-            print(" [+] No existing token exists. Supplied token will be used.")
+            LOG.info("No existing token exists. Supplied token will be used.")
     else:
-        print(f" [+] Phylum token NOT supplied as option or `{ENVVAR_NAME_TOKEN}` environment variable")
+        LOG.info("Phylum token NOT supplied as option or `%s` environment variable", ENVVAR_NAME_TOKEN)
         if is_token_set(phylum_settings_path):
-            print(" [+] Existing token found. It will be used without modification.")
+            LOG.info("Existing token found. It will be used without modification.")
         else:
-            print(" [!] Existing token not found. Use `phylum auth login` or `phylum auth register` command to set it.")
+            LOG.warning("No existing token found. Use `phylum auth login` or `phylum auth register` command to set it.")
 
     if token and not is_token_set(phylum_settings_path, token=token):
         setup_token(token)
@@ -317,7 +314,7 @@ def ensure_settings_file() -> None:
     if not phylum_settings_path.exists():
         phylum_bin_path, _ = get_phylum_bin_path()
         if phylum_bin_path is None:
-            raise SystemExit(" [!] Could not find the path to the Phylum CLI. Unable to ensure the settings file.")
+            raise SystemExit("Could not find the path to the Phylum CLI. Unable to ensure the settings file.")
         cmd = [str(phylum_bin_path), "version"]
         subprocess.run(cmd, check=True)  # noqa: S603
 
@@ -338,21 +335,21 @@ def process_uri_option(args: argparse.Namespace) -> None:
     configured_uri = settings.get("connection", {}).get("uri")
 
     if api_uri:
-        print(f" [+] Phylum API URI supplied as an option or `{ENVVAR_NAME_API_URI}` environment variable: {api_uri}")
+        LOG.info("Phylum API URI supplied as an option or `%s` environment variable: %s", ENVVAR_NAME_API_URI, api_uri)
         if configured_uri != api_uri:
-            print(f" [*] Updating settings to use supplied Phylum API URI: {api_uri} ...")
+            LOG.info("Updating settings to use supplied Phylum API URI: %s ...", api_uri)
             settings.setdefault("connection", {})
             settings["connection"]["uri"] = api_uri
             with phylum_settings_path.open("w", encoding="utf-8") as f:
                 yaml.dump(settings, f)
         else:
-            print(" [+] Supplied API URI matches existing settings value")
+            LOG.debug("Supplied API URI matches existing settings value")
     else:
-        print(f" [+] Phylum API URI NOT supplied as an option or `{ENVVAR_NAME_API_URI}` environment variable")
+        LOG.info("Phylum API URI NOT supplied as an option or `%s` environment variable", ENVVAR_NAME_API_URI)
         if settings_file_existed:
-            print(f" [-] The value in the existing settings file will be used: {configured_uri}")
+            LOG.debug("The value in the existing settings file will be used: %s", configured_uri)
         else:
-            print(f" [-] The CLI will use the PRODUCTION instance: {configured_uri}")
+            LOG.debug("The CLI will use the PRODUCTION instance: %s", configured_uri)
 
 
 def confirm_setup() -> None:
@@ -364,7 +361,7 @@ def confirm_setup() -> None:
         cmd = [str(phylum_bin_path), "auth", "status"]
         subprocess.run(cmd, check=True)  # noqa: S603
     else:
-        print(" [!] Existing token not found. Can't confirm setup.")
+        LOG.warning("Existing token not found. Can't confirm setup.")
 
     # Print the help message to aid log review
     cmd = [str(phylum_bin_path), "--help"]
@@ -461,22 +458,22 @@ def main(args=None):
     args.version = process_version(args.version)
 
     if args.list_releases:
-        print(" [*] Looking up supported releases ...")
+        LOG.info("Looking up supported releases ...")
         releases = ", ".join(supported_releases())
-        print(f" [=] Supported releases: {releases}")
+        LOG.warning("Supported releases: %s", releases)
         return 0
 
     tag_name = args.version
-    print(f" [*] Looking up supported targets for release {tag_name} ...")
+    LOG.info("Looking up supported targets for release %s ...", tag_name)
     supported_target_triples = supported_targets(tag_name)
     if args.list_targets:
         targets = ", ".join(supported_target_triples)
-        print(f" [=] Supported targets for release {tag_name}: {targets}")
+        LOG.warning("Supported targets for release %s: %s", tag_name, targets)
         return 0
 
     target_triple = args.target
     if target_triple not in supported_target_triples:
-        raise SystemExit(f" [!] The identified target triple `{target_triple}` is not supported for release {tag_name}")
+        raise SystemExit(f"The identified target triple `{target_triple}` is not supported for release {tag_name}")
 
     archive_name = f"phylum-{target_triple}.zip"
     sig_name = f"{archive_name}.signature"
@@ -495,7 +492,7 @@ def main(args=None):
 
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:
-                raise zipfile.BadZipFile(f" [!] There was a bad file in the zip archive {archive_name}")
+                raise zipfile.BadZipFile(f"There was a bad file in the zip archive {archive_name}")
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 

@@ -22,6 +22,7 @@ import os
 import re
 import shlex
 import subprocess
+import textwrap
 from typing import Optional, Tuple
 import urllib.parse
 
@@ -31,6 +32,8 @@ from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import post_github_comment
 from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.exceptions import pprint_subprocess_error
+from phylum.logger import LOG
 
 AZURE_PAT_ERR_MSG = """
 An Azure DevOps token with API access is required to use the API (e.g., to post comments).
@@ -88,11 +91,11 @@ class CIAzure(CIBase):
         super().__init__(args)
         self.ci_platform_name = "Azure Pipelines"
         if is_in_pr():
-            print(" [-] Pipeline context: PR trigger")
+            LOG.debug("Pipeline context: PR trigger")
         else:
             # There are other types of events that trigger pipelines, but only PR and CI triggers are supported.
             # Reference: https://learn.microsoft.com/azure/devops/pipelines/build/triggers
-            print(" [-] Pipeline context: CI trigger")
+            LOG.debug("Pipeline context: CI trigger")
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
@@ -109,22 +112,22 @@ class CIAzure(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://learn.microsoft.com/azure/devops/pipelines/build/variables
         if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI") is None:
-            raise SystemExit(" [!] Must be working within the Azure Pipelines environment")
+            raise SystemExit("Must be working within the Azure Pipelines environment")
 
         self.triggering_repo = os.getenv("BUILD_REPOSITORY_PROVIDER", "unknown")
-        print(f" [+] Triggering repository: {self.triggering_repo}")
+        LOG.debug("Triggering repository: %s", self.triggering_repo)
         # "TfsGit" is the legacy name for "Azure Repos Git"
         if self.triggering_repo not in ("TfsGit", "GitHub"):
-            raise SystemExit(f" [!] Triggering repository `{self.triggering_repo}` not supported")
+            raise SystemExit(f"Triggering repository `{self.triggering_repo}` not supported")
 
         azure_token = os.getenv("AZURE_TOKEN", "")
         if not azure_token and self.triggering_repo == "TfsGit" and is_in_pr():
-            raise SystemExit(f" [!] An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}")
+            raise SystemExit(f"An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}")
         self._azure_token = azure_token
 
         github_token = os.getenv("GITHUB_TOKEN", "")
         if not github_token and self.triggering_repo == "GitHub" and is_in_pr():
-            raise SystemExit(f" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}")
+            raise SystemExit(f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}")
         self._github_token = github_token
 
     @property
@@ -170,8 +173,8 @@ class CIAzure(CIBase):
 
             src_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "")
             if not src_branch:
-                raise SystemExit(" [!] The BUILD_SOURCEBRANCHNAME environment variable must exist and be set")
-            print(f" [+] BUILD_SOURCEBRANCHNAME: {src_branch}")
+                raise SystemExit("The BUILD_SOURCEBRANCHNAME environment variable must exist and be set")
+            LOG.debug("BUILD_SOURCEBRANCHNAME: %s", src_branch)
 
             # This is a best effort attempt since it is finding the merge base between the current commit
             # and the default branch instead of finding the exact commit from which the branch was created.
@@ -182,7 +185,7 @@ class CIAzure(CIBase):
             # commit. In this case, it is better to force analysis of the lockfile(s) and consider
             # *all* dependencies in analysis results instead of just the newly added ones.
             if src_branch == git_default_branch_name(remote):
-                print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+                LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
                 self._force_analysis = True
                 self._all_deps = True
 
@@ -209,15 +212,16 @@ class CIAzure(CIBase):
                 tgt_branch = f"{new_ref_prefix}{tgt_branch}"
 
         cmd = ["git", "merge-base", src_branch, tgt_branch]
-        print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
+        LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            ref_url = "https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"
-            print(f" [!] The common ancestor commit could not be found: {err}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
-            print(f" [!] Ensure shallow fetch is disabled for repo checkouts: {ref_url}")
+            msg = """\
+                The common ancestor commit could not be found.
+                Ensure shallow fetch is disabled for repo checkouts:
+                https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"""
+            pprint_subprocess_error(err)
+            LOG.warning(textwrap.dedent(msg))
             common_commit = None
 
         return common_commit
@@ -226,15 +230,15 @@ class CIAzure(CIBase):
     def is_any_lockfile_changed(self) -> bool:
         """Predicate for detecting if any lockfile has changed."""
         diff_base_sha = self.common_ancestor_commit
-        print(f" [+] The common ancestor commit: {diff_base_sha}")
+        LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
         err_msg = """\
-            [!] Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
-                Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
+            Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
+            Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
         self.update_lockfiles_change_status(diff_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
@@ -259,10 +263,10 @@ class CIAzure(CIBase):
 
             owner_repo = os.getenv("BUILD_REPOSITORY_NAME")
             if not owner_repo:
-                raise SystemExit(" [!] The GitHub owner and repository could not be found.")
+                raise SystemExit("The GitHub owner and repository could not be found.")
             pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
             if not pr_number:
-                raise SystemExit(" [!] The GitHub PR number could not be found.")
+                raise SystemExit("The GitHub PR number could not be found.")
 
             # API Reference: https://docs.github.com/en/rest/issues/comments
             # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
@@ -280,11 +284,11 @@ def get_pr_branches() -> Tuple[str, str]:
     src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
     tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
     if not src_branch:
-        raise SystemExit(" [!] The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
+        raise SystemExit("The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
     if not tgt_branch:
-        raise SystemExit(" [!] The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
-    print(f" [+] SYSTEM_PULLREQUEST_SOURCEBRANCH: {src_branch}")
-    print(f" [+] SYSTEM_PULLREQUEST_TARGETBRANCH: {tgt_branch}")
+        raise SystemExit("The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
+    LOG.debug("SYSTEM_PULLREQUEST_SOURCEBRANCH: %s", src_branch)
+    LOG.debug("SYSTEM_PULLREQUEST_TARGETBRANCH: %s", tgt_branch)
     return src_branch, tgt_branch
 
 
@@ -328,17 +332,17 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     }
 
     query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
-    print(f" [*] Getting list of all current PR threads with GET URL: {pr_threads_url}?{query_params_encoded} ...")
-    print(f" [-] The team project ID {team_project_id} maps to name: {team_project_name}")
+    LOG.info("Getting list of all current PR threads with GET URL: %s?%s ...", pr_threads_url, query_params_encoded)
+    LOG.debug("The team project ID %s maps to name: %s", team_project_id, team_project_name)
     resp = requests.get(pr_threads_url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()
     if resp.status_code != requests.codes.OK:
-        raise SystemExit(f" [!] Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}")
+        raise SystemExit(f"Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}")
     pr_threads = resp.json()
 
-    print(" [*] Checking pull request threads for existing comment content to avoid duplication ...")
+    LOG.info("Checking pull request threads for existing comment content to avoid duplication ...")
     pr_threads_count = pr_threads.get("count", 0)
-    print(f" [+] PR threads found: {pr_threads_count}")
+    LOG.debug("PR threads found: %s", pr_threads_count)
     if pr_threads_count:
         pr_threads = pr_threads.get("value", [])
         is_phylum_comment_found = False
@@ -352,17 +356,17 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
                 if thread_comment.get("id", 0) != 1:
                     continue
                 if thread_comment.get("content", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                    print(" [+] The most recently posted Phylum pull request comment was found.")
+                    LOG.debug("The most recently posted Phylum pull request comment was found.")
                     is_phylum_comment_found = True
                     if thread_comment.get("content", "") == comment:
-                        print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                        LOG.debug("It contains the same content as the current analysis. Nothing to do.")
                         return
-                    print(" [+] It does not contain the same content as the current analysis.")
+                    LOG.debug("It does not contain the same content as the current analysis.")
                     break
             if is_phylum_comment_found:
                 break
         if not is_phylum_comment_found:
-            print(" [+] No existing Phylum pull request comments found.")
+            LOG.debug("No existing Phylum pull request comments found.")
 
     # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
     # there were no Phylum PR comments. Either way, create a new PR comment.
@@ -376,6 +380,6 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
         ],
         "status": "active",
     }
-    print(f" [*] Creating new pull request thread with POST URL: {pr_threads_url}?{query_params_encoded} ...")
+    LOG.info("Creating new pull request thread with POST URL: %s?%s ...", pr_threads_url, query_params_encoded)
     resp = requests.post(pr_threads_url, params=query_params, json=req_body, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()

@@ -21,6 +21,9 @@ PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
     # Styles that have been added to the default:
     "logging.level.trace": Style(dim=True),
     # Styles that have been modified from the default:
+    "logging.level.debug": Style.null(),
+    "logging.level.info": Style(color="green"),
+    "logging.level.warning": Style(color="yellow"),
     "markdown.code": "bold reverse",
     "markdown.h1.border": "dodger_blue2",
     "markdown.h1": "dodger_blue2",
@@ -33,6 +36,7 @@ PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
     "markdown.item.bullet": "bold blue",
     "markdown.item.number": "bold blue",
     # The `rich` default styles:
+    "code": "bold reverse",
     "markdown.strong": "bold",
     "markdown.emph": "italic",
     "markdown.paragraph": "none",

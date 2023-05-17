@@ -7,6 +7,7 @@ from typing import Dict, Optional
 import requests
 
 from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.logger import LOG
 
 # GitHub API version to use when making requests to the REST API.
 # Reference: https://docs.github.com/rest/overview/api-versions
@@ -60,7 +61,7 @@ def github_request(
     """
     headers = get_headers(github_token=github_token)
 
-    print(f" [*] Making request to GitHub API URL: {api_url}")
+    LOG.debug("Making request to GitHub API URL: %s", api_url)
     resp = requests.get(api_url, headers=headers, params=params, timeout=timeout)
 
     # The returned headers of any GitHub API request can be viewed to see the current rate limit status.
@@ -70,7 +71,7 @@ def github_request(
     rate_limit_reset_header = int(resp.headers.get("x-ratelimit-reset", "0"))
     current_time = time.asctime(time.localtime())
     if not rate_limit_reset_header:
-        print(" [!] `x-ratelimit-reset` header not available; using 1 hour from current time instead")
+        LOG.warning("`x-ratelimit-reset` header not available; using 1 hour from current time instead")
         seconds_in_hour = 60 * 60
         rate_limit_reset_header = int(time.mktime(time.localtime()) + seconds_in_hour)
     reset_time = time.asctime(time.localtime(rate_limit_reset_header))
@@ -86,34 +87,26 @@ def github_request(
     # The other possible forbidden cases are not common enough to check for here.
     # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
     if resp.status_code == requests.codes.forbidden and rate_limit_remaining == "0":
-        msg = textwrap.dedent(
-            f"""\
-            [!] GitHub API rate limit of {rate_limit} requests/hour was exceeded for URL: {api_url}
-                The current time is:  {current_time}
-                Rate limit resets at: {reset_time}
-                Options include waiting to try again after the rate limit resets or to make authenticated
-                requests by providing a GitHub token in the `GITHUB_TOKEN` environment variable. Reference:
-                {PAT_REF}
-            """  # noqa: COM812 ; FP due to multiline string in function call
-        )
-        raise SystemExit(msg)
+        msg = f"""\
+            GitHub API rate limit of {rate_limit} requests/hour was exceeded for URL: {api_url}
+            The current time is:  {current_time}
+            Rate limit resets at: {reset_time}
+            Options include waiting to try again after the rate limit resets or to make authenticated
+            requests by providing a GitHub token in the `GITHUB_TOKEN` environment variable. Reference:
+            {PAT_REF}"""
+        raise SystemExit(textwrap.dedent(msg))
 
-    # TODO: Make this a debug level log output statement
-    #       https://github.com/phylum-dev/phylum-ci/issues/23
-    print(f" [+] {rate_limit_remaining} GitHub API requests remaining until window resets at: {reset_time}")
+    LOG.debug("%s GitHub API requests remaining until window resets at: %s", rate_limit_remaining, reset_time)
 
     # Wrap all other request failures in a detailed message and exit with that instead of a stack trace
     try:
         resp.raise_for_status()
     except requests.HTTPError as err:
-        msg = textwrap.dedent(
-            f"""\
-            [!] A bad request was made to the GitHub API:
-                {err}
-                Response text: {resp.text.strip()}
-            """  # noqa: COM812 ; FP due to multiline string in function call
-        )
-        raise SystemExit(msg) from err
+        msg = f"""\
+            A bad request was made to the GitHub API:
+            {err}
+            Response text: {resp.text.strip()}"""
+        raise SystemExit(textwrap.dedent(msg)) from err
 
     resp_json = resp.json()
 

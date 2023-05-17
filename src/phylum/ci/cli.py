@@ -29,40 +29,40 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
 
     # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":
-        print(" [+] CI environment detected: GitLab CI")
+        LOG.debug("CI environment detected: GitLab CI")
         ci_envs.append(CIGitLab(args))
 
     # Detect GitHub Actions
     if os.getenv("GITHUB_ACTIONS") == "true":
-        print(" [+] CI environment detected: GitHub Actions")
+        LOG.debug("CI environment detected: GitHub Actions")
         ci_envs.append(CIGitHub(args))
 
     # Detect Azure Pipelines
     if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"):
-        print(" [+] CI environment detected: Azure Pipelines")
+        LOG.debug("CI environment detected: Azure Pipelines")
         ci_envs.append(CIAzure(args))
 
     # Detect Bitbucket Pipelines
     if os.getenv("BITBUCKET_COMMIT"):
-        print(" [+] CI environment detected: Bitbucket Pipelines")
+        LOG.debug("CI environment detected: Bitbucket Pipelines")
         ci_envs.append(CIBitbucket(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,
     # via a pre-requisite check, to check the extra arguments for common/valid pre-commit usage patterns.
     if any(remainder):
-        print(" [+] Extra arguments provided. Assuming a Python `pre-commit` working environment.")
+        LOG.debug("Extra arguments provided. Assuming a Python `pre-commit` working environment.")
         ci_envs.append(CIPreCommit(args, remainder))
 
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
-        raise SystemExit(f" [!] Multiple CI environments detected: {ci_platform_names}")
+        raise SystemExit(f"Multiple CI environments detected: {ci_platform_names}")
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
         # Fallback to default local environment
         # This happens when the `phylum-ci` command is run directly, from the CLI, but not within a CI environment.
-        print(" [+] No CI environment detected")
+        LOG.debug("No CI environment detected")
         ci_env = CINone(args)
 
     return ci_env

@@ -4,6 +4,9 @@ from pathlib import Path
 import subprocess
 from typing import List, Optional
 
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
+from phylum.logger import LOG
+
 
 def git_base_cmd(git_c_path: Optional[Path] = None) -> List[str]:
     """Provide a normalized base command list for use in constructing git commands.
@@ -45,15 +48,13 @@ def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
     It assumes git credentials are available to run the command.
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
-    print(" [*] Automatically setting the remote HEAD ref ...")
+    LOG.info("Automatically setting the remote HEAD ref ...")
     cmd = [*base_cmd, "remote", "set-head", remote, "--auto"]
     try:
         subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603
     except subprocess.CalledProcessError as err:
-        print(f" [!] Setting the remote HEAD failed: {err}")
-        print(f" [!] stdout:\n{err.stdout}")
-        print(f" [!] stderr:\n{err.stderr}")
-        raise SystemExit(" [!] Ensure credentials are available to run git commands") from err
+        msg = "Setting the remote HEAD failed. Ensure credentials are available to run git commands."
+        raise PhylumCalledProcessError(err, msg=msg) from err
 
 
 def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> str:
@@ -75,23 +76,28 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
             text=True,
             capture_output=True,
         ).stdout.strip()
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as outer_err:
         # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
         # the except block, is due to wanting to minimize calling commands that require git credentials.
-        print(" [!] Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
+        pprint_subprocess_error(outer_err)
+        LOG.warning("Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
         git_set_remote_head(remote)
-        default_branch_name = subprocess.run(
-            cmd,  # noqa: S603
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout.strip()
+        try:
+            default_branch_name = subprocess.run(
+                cmd,  # noqa: S603
+                check=True,
+                text=True,
+                capture_output=True,
+            ).stdout.strip()
+        except subprocess.CalledProcessError as inner_err:
+            msg = "Failed to get the remote HEAD ref even after setting it."
+            raise PhylumCalledProcessError(inner_err, msg=msg) from outer_err
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     if default_branch_name.startswith(prefix):
         default_branch_name = default_branch_name.replace(prefix, "", 1)
 
-    print(f" [+] Default branch name: {default_branch_name}")
+    LOG.debug("Default branch name: %s", default_branch_name)
 
     return default_branch_name
 
@@ -144,7 +150,7 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
         is_remote_defined = True
         cmd = [*base_cmd, "remote", "get-url", remote]
     except RuntimeError as err:
-        print(f" [!] {err}. Will get the repo name from the local repository instead.")
+        LOG.warning("%s. Will get the repo name from the local repository instead.", err)
         is_remote_defined = False
         cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
 

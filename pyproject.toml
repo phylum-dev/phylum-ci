@@ -120,8 +120,6 @@ ignore = [
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/47
     "EM",   # flake8-errmsg
     "TRY",  # tryceratops
-    # This ignore will be removed during https://github.com/phylum-dev/phylum-ci/issues/23
-    "T20",  # flake8-print
 ]
 
 [tool.ruff.per-file-ignores]

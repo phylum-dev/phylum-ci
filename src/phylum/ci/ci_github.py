@@ -24,6 +24,7 @@ import requests
 from phylum.ci.ci_base import CIBase
 from phylum.constants import PHYLUM_HEADER, REQ_TIMEOUT
 from phylum.github import get_headers, github_request
+from phylum.logger import LOG
 
 PAT_ERR_MSG = """
 A GitHub token with API access is required to use the API (e.g., to post comments).
@@ -65,21 +66,21 @@ class CIGitHub(CIBase):
         super()._check_prerequisites()
 
         if os.getenv("GITHUB_ACTIONS") != "true":
-            raise SystemExit(" [!] Must be working within the GitHub Actions environment")
+            raise SystemExit("Must be working within the GitHub Actions environment")
 
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
-            raise SystemExit(f" [!] A GitHub token with API access must be set at `GITHUB_TOKEN`: {PAT_ERR_MSG}")
+            raise SystemExit(f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {PAT_ERR_MSG}")
         self._github_token = github_token
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
         # Instead, the full event webhook payload can be used to obtain the information. Reference:
         # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
         if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
-            raise SystemExit(" [!] The workflow event must be `pull_request`")
+            raise SystemExit("The workflow event must be `pull_request`")
         github_event_path_envvar = os.getenv("GITHUB_EVENT_PATH")
         if github_event_path_envvar is None:
-            raise SystemExit(" [!] Could not read the `GITHUB_EVENT_PATH` environment variable")
+            raise SystemExit("Could not read the `GITHUB_EVENT_PATH` environment variable")
         github_event_path = Path(github_event_path_envvar)
         with github_event_path.open(encoding="utf-8") as f:
             pr_event = json.load(f)
@@ -115,17 +116,17 @@ class CIGitHub(CIBase):
         pr_src_branch = os.getenv("GITHUB_HEAD_REF")
         pr_tgt_branch = os.getenv("GITHUB_BASE_REF")
         pr_base_sha = self.common_ancestor_commit
-        print(f" [+] GITHUB_HEAD_REF: {pr_src_branch}")
-        print(f" [+] GITHUB_BASE_REF: {pr_tgt_branch}")
-        print(f" [+] PR base SHA: {pr_base_sha}")
+        LOG.debug("GITHUB_HEAD_REF: %s", pr_src_branch)
+        LOG.debug("GITHUB_BASE_REF: %s", pr_tgt_branch)
+        LOG.debug("PR base SHA: %s", pr_base_sha)
 
         # Assume no change when there isn't enough information to tell
         if pr_base_sha is None:
             return False
 
         err_msg = """\
-            [!] Consider changing the `fetch-depth` input during checkout to fetch more branch history.
-                Reference: https://github.com/actions/checkout"""
+            Consider changing the `fetch-depth` input during checkout to fetch more branch history.
+            Reference: https://github.com/actions/checkout"""
         self.update_lockfiles_change_status(pr_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
@@ -140,7 +141,7 @@ class CIGitHub(CIBase):
 
         comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
         if comments_url is None:
-            raise SystemExit(" [!] The API for posting a GitHub comment was not found.")
+            raise SystemExit("The API for posting a GitHub comment was not found.")
 
         post_github_comment(comments_url, self.github_token, self.analysis_report)
 
@@ -156,28 +157,28 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     or if the most recently posted Phylum comment does not contain the same content.
     """
     query_params = {"per_page": 100}
-    print(f" [*] Getting all current pull request comments with GET URL: {comments_url} ...")
+    LOG.info("Getting all current pull request comments with GET URL: %s ...", comments_url)
     pr_comments = github_request(comments_url, params=query_params, github_token=github_token)
 
-    print(" [*] Checking pull request comments for existing content to avoid duplication ...")
+    LOG.info("Checking pull request comments for existing content to avoid duplication ...")
     if not pr_comments:
-        print(" [+] No existing pull request comments found.")
+        LOG.debug("No existing pull request comments found.")
     # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
     #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
     #       We only care about the most recent Phylum comment.
     for pr_comment in reversed(pr_comments):
         if pr_comment.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-            print(" [+] The most recently posted Phylum pull request comment was found.")
+            LOG.debug("The most recently posted Phylum pull request comment was found.")
             if pr_comment.get("body", "") == comment:
-                print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
                 return
-            print(" [+] It does not contain the same content as the current analysis.")
+            LOG.debug("It does not contain the same content as the current analysis.")
             break
 
     # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
     # there were no Phylum PR comments. Either way, create a new PR comment.
     headers = get_headers(github_token=github_token)
     body_params = {"body": comment}
-    print(f" [*] Creating new pull request comment with POST URL: {comments_url} ...")
+    LOG.info("Creating new pull request comment with POST URL: %s ...", comments_url)
     response = requests.post(comments_url, headers=headers, json=body_params, timeout=REQ_TIMEOUT)
     response.raise_for_status()

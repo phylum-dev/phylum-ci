@@ -6,6 +6,7 @@ from types import FunctionType, MethodType
 from typing import Callable, Dict, Optional
 
 from rich.logging import RichHandler
+import rich.traceback
 
 from phylum import PKG_NAME
 from phylum.console import console
@@ -15,13 +16,18 @@ LOG = logging.getLogger(PKG_NAME)
 # This is a custom logging level, defined relative to existing logging.DEBUG level to make type checkers happy.
 LOGGING_TRACE_LEVEL = logging.DEBUG - 5
 
-rich_handler = RichHandler(
+DEFAULT_RICH_HANDLER = RichHandler(
     console=console,
     show_time=False,
-    # TODO: show path, links, and level only for `trace` level?
+    show_level=False,
     show_path=False,
+    rich_tracebacks=True,
+    tracebacks_show_locals=False,
 )
-LOG.addHandler(rich_handler)
+LOG.addHandler(DEFAULT_RICH_HANDLER)
+
+# Install rich as the default traceback handler so that all uncaught exceptions will be rendered with highlighting
+rich.traceback.install(console=console, word_wrap=True, show_locals=True)
 
 
 # This function was adapted from:
@@ -51,6 +57,7 @@ def add_logging_level(level_name: str, level_num: int, method_name: Optional[str
 
     def for_logger_class(self, message, *args, **kwargs):
         if self.isEnabledFor(level_num):
+            # pylint: disable-next=protected-access ; this is the name used in the logging class
             self._log(level_num, message, args, **kwargs)
 
     def for_logging_module(message, *args, **kwargs):
@@ -93,7 +100,19 @@ def set_logger_level(level: int) -> None:
     level = min(max(level, min_level), max_level)
     logging_level = level_map.get(level, logging.NOTSET)
     if logging_level == LOGGING_TRACE_LEVEL:
+        # Show level, path, and links only for `trace` level
+        trace_rich_handler = RichHandler(
+            console=console,
+            show_time=False,
+            show_level=True,
+            show_path=True,
+            rich_tracebacks=True,
+            tracebacks_show_locals=True,
+        )
+        LOG.removeHandler(DEFAULT_RICH_HANDLER)
+        LOG.addHandler(trace_rich_handler)
         add_trace_logging()
+
     # Set the level _after_ adding trace logging to avoid tracing the tracing setup
     LOG.setLevel(logging_level)
     LOG.debug("Logging initialized to level %s (%s)", logging_level, logging.getLevelName(logging_level))

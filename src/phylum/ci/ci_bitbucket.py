@@ -22,6 +22,7 @@ import os
 import re
 import shlex
 import subprocess
+import textwrap
 from typing import Optional
 import urllib.parse
 
@@ -30,6 +31,8 @@ import requests
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
+from phylum.exceptions import pprint_subprocess_error
+from phylum.logger import LOG
 
 BITBUCKET_TOK_ERR_MSG = """
 A Bitbucket access token with API access is required to use the API (e.g., to post comments).
@@ -65,9 +68,9 @@ class CIBitbucket(CIBase):
         super().__init__(args)
         self.ci_platform_name = "Bitbucket Pipelines"
         if is_in_pr():
-            print(" [-] Pipeline context: pull request pipeline")
+            LOG.debug("Pipeline context: pull request pipeline")
         else:
-            print(" [-] Pipeline context: branch pipeline")
+            LOG.debug("Pipeline context: branch pipeline")
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
@@ -82,7 +85,7 @@ class CIBitbucket(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
         if os.getenv("BITBUCKET_COMMIT") is None:
-            raise SystemExit(" [!] Must be working within the Bitbucket Pipelines environment")
+            raise SystemExit("Must be working within the Bitbucket Pipelines environment")
 
         # A Bitbucket token with API access is required to use the API (e.g., to post comments).
         # This can be a repository, project, or workspace access token.
@@ -90,7 +93,7 @@ class CIBitbucket(CIBase):
         # https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens
         bitbucket_token = os.getenv("BITBUCKET_TOKEN", "")
         if not bitbucket_token and is_in_pr():
-            raise SystemExit(f" [!] A Bitbucket access token must be set at `BITBUCKET_TOKEN`: {BITBUCKET_TOK_ERR_MSG}")
+            raise SystemExit(f"A Bitbucket access token must be set at `BITBUCKET_TOKEN`: {BITBUCKET_TOK_ERR_MSG}")
         self._bitbucket_token = bitbucket_token
 
     @property
@@ -127,18 +130,18 @@ class CIBitbucket(CIBase):
             src_branch = os.getenv("BITBUCKET_BRANCH", "")
             tgt_branch = os.getenv("BITBUCKET_PR_DESTINATION_BRANCH", "")
             if not src_branch:
-                raise SystemExit(" [!] The BITBUCKET_BRANCH environment variable must exist and be set")
+                raise SystemExit("The BITBUCKET_BRANCH environment variable must exist and be set")
             if not tgt_branch:
-                raise SystemExit(" [!] The BITBUCKET_PR_DESTINATION_BRANCH environment variable must exist and be set")
-            print(f" [+] BITBUCKET_BRANCH: {src_branch}")
-            print(f" [+] BITBUCKET_PR_DESTINATION_BRANCH: {tgt_branch}")
+                raise SystemExit("The BITBUCKET_PR_DESTINATION_BRANCH environment variable must exist and be set")
+            LOG.debug("BITBUCKET_BRANCH: %s", src_branch)
+            LOG.debug("BITBUCKET_PR_DESTINATION_BRANCH: %s", tgt_branch)
         else:
             # Assume the working context is within a branch-based CI triggered
             # build environment when not in a PR (no tag or custom pipelines).
             src_branch = os.getenv("BITBUCKET_BRANCH", "")
             if not src_branch:
-                raise SystemExit(" [!] The BITBUCKET_BRANCH environment variable must exist and be set")
-            print(f" [+] BITBUCKET_BRANCH: {src_branch}")
+                raise SystemExit("The BITBUCKET_BRANCH environment variable must exist and be set")
+            LOG.debug("BITBUCKET_BRANCH: %s", src_branch)
 
             # This is a best effort attempt since it is finding the merge base between the current commit
             # and the default branch instead of finding the exact commit from which the branch was created.
@@ -149,7 +152,7 @@ class CIBitbucket(CIBase):
             # commit. In this case, it is better to force analysis of the lockfile(s) and consider
             # *all* dependencies in analysis results instead of just the newly added ones.
             if src_branch == git_default_branch_name(remote):
-                print(" [+] Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+                LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
                 self._force_analysis = True
                 self._all_deps = True
 
@@ -165,15 +168,16 @@ class CIBitbucket(CIBase):
             tgt_branch = f"{new_ref_prefix}{tgt_branch}"
 
         cmd = ["git", "merge-base", src_branch, tgt_branch]
-        print(f" [*] Finding common ancestor commit with command: {shlex.join(cmd)}")
+        LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            ref_url = "https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"
-            print(f" [!] The common ancestor commit could not be found: {err}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
-            print(f" [!] Ensure the git strategy is set to `full clone depth` for repo checkouts: {ref_url}")
+            msg = """\
+                The common ancestor commit could not be found.
+                Ensure the git strategy is set to `full clone depth` for repo checkouts:
+                https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""
+            pprint_subprocess_error(err)
+            LOG.warning(textwrap.dedent(msg))
             common_commit = None
 
         return common_commit
@@ -182,15 +186,15 @@ class CIBitbucket(CIBase):
     def is_any_lockfile_changed(self) -> bool:
         """Predicate for detecting if any lockfile has changed."""
         diff_base_sha = self.common_ancestor_commit
-        print(f" [+] The common ancestor commit: {diff_base_sha}")
+        LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
             return False
 
         err_msg = """\
-            [!] Consider changing the `clone depth` variable in CI settings to clone/fetch more branch history.
-                Reference: https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""
+            Consider changing the `clone depth` variable in CI settings to clone/fetch more branch history.
+            Reference: https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""
         self.update_lockfiles_change_status(diff_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
@@ -245,29 +249,29 @@ class CIBitbucket(CIBase):
         }
 
         query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
-        print(f" [*] Getting all current pull request comments with GET URL: {url}?{query_params_encoded} ...")
-        print(f" [-] The repository UUID {repo_uuid} maps to workspace and repository name: {repo_full_name}")
+        LOG.info("Getting all current pull request comments with GET URL: %s?%s ...", url, query_params_encoded)
+        LOG.debug("The repository UUID %s maps to workspace and repository name: %s", repo_uuid, repo_full_name)
         req = requests.get(url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
         pr_comments = req.json()
 
-        print(" [*] Checking existing pull request comments for existing content to avoid duplication ...")
+        LOG.info("Checking existing pull request comments for existing content to avoid duplication ...")
         if pr_comments.get("values"):
             # NOTE: The API call normally returns all the comments in chronological order. Query parameters are used to
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.
-            print(" [+] The most recently posted Phylum pull request comment was found.")
+            LOG.debug("The most recently posted Phylum pull request comment was found.")
             pr_comment = pr_comments.get("values")[0]
             if pr_comment.get("content", {}).get("raw", "") == self.analysis_report:
-                print(" [+] It contains the same content as the current analysis. Nothing to do.")
+                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
                 return
-            print(" [+] It does not contain the same content as the current analysis.")
+            LOG.debug("It does not contain the same content as the current analysis.")
         else:
-            print(" [+] No existing Phylum pull request comments found.")
+            LOG.debug("No existing Phylum pull request comments found.")
 
         # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
         # there were no Phylum PR comments. Either way, create a new PR comment.
         data = {"content": {"raw": self.analysis_report}}
         headers["Content-Type"] = "application/json"
-        print(f" [*] Creating new pull request comment with POST URL: {url} ...")
+        LOG.info("Creating new pull request comment with POST URL: %s ...", url)
         response = requests.post(url, json=data, headers=headers, timeout=REQ_TIMEOUT)
         response.raise_for_status()
