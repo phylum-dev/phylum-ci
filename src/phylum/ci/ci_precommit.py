@@ -18,7 +18,7 @@ from typing import List, Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name
-from phylum.exceptions import pprint_subprocess_error
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG
 
 
@@ -40,7 +40,11 @@ class CIPreCommit(CIBase):
         super()._check_prerequisites()
 
         cmd = ["git", "diff", "--cached", "--name-only"]
-        output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        try:
+            output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = "Getting the staged files from git failed."
+            raise PhylumCalledProcessError(err, msg) from err
         staged_files = output.strip().split("\n")
         extra_arg_paths = [Path(extra_arg).resolve() for extra_arg in self.extra_args]
 

@@ -26,7 +26,7 @@ class PhylumCalledProcessError(Exception):
         ```
         except subprocess.CalledProcessError as err:
             msg = "This is the best explanation of what went wrong and what to do about it."
-            raise PhylumCalledProcessError(err, msg=msg) from err
+            raise PhylumCalledProcessError(err, msg) from err
         ```
         """
         # TODO: figure out how to apply a theme to a panel (like how traceback does)

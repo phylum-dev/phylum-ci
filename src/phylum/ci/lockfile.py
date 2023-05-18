@@ -143,12 +143,8 @@ class Lockfile:
             # Use the `repr` form to get the relative path to the lockfile
             # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! cmd = ["git", "rev-parse", "--verify", f"HEAD:{self!r}"]
             cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
-            prev_lockfile_object = subprocess.run(
-                cmd,  # noqa: S603
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
+            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+            prev_lockfile_object = prev_lockfile_object.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             msg = """\

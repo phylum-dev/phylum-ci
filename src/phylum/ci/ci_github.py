@@ -17,12 +17,14 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import textwrap
 from typing import Optional
 
 import requests
 
 from phylum.ci.ci_base import CIBase
 from phylum.constants import PHYLUM_HEADER, REQ_TIMEOUT
+from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import get_headers, github_request
 from phylum.logger import LOG
 
@@ -50,7 +52,14 @@ class CIGitHub(CIBase):
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
         cmd = ["git", "config", "--global", "--add", "safe.directory", github_workspace]
-        subprocess.run(cmd, check=True)  # noqa: S603
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = f"""\
+                Adding the GitHub workspace `{github_workspace}` as a safe directory in the git config failed.
+                This is the recommended workaround for container actions, to avoid the `unsafe repository` error.
+                See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail."""
+            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"

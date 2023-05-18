@@ -379,7 +379,7 @@ class CIBase(ABC):
                     There was a problem creating the project.
                     A PRO account is needed to create a project with a group.
                     If the command was expected to succeed, please report this as a bug."""
-                raise PhylumCalledProcessError(err, msg=textwrap.dedent(msg)) from err
+                raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
     def post_output(self) -> None:
         """Post the output of the analysis as markdown rendered for output to the terminal/logs.
@@ -439,7 +439,7 @@ class CIBase(ABC):
                         There was a problem analyzing the project.
                         A PRO account is needed to use groups.
                         If the command was expected to succeed, please report this as a bug."""
-                    raise PhylumCalledProcessError(err, msg=textwrap.dedent(msg)) from err
+                    raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         analysis = JobPolicyEvalResult(**json.loads(analysis_result))
         self._analysis_report = analysis.report

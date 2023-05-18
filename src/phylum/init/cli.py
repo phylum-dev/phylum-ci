@@ -31,6 +31,7 @@ from phylum.constants import (
     SUPPORTED_ARCHES,
     SUPPORTED_PLATFORMS,
 )
+from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
@@ -60,7 +61,11 @@ def get_expected_phylum_bin_path():
 def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
     cmd = [str(cli_path), "--version"]
-    version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()  # noqa: S603
+    try:
+        version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error retrieving the Phylum CLI version"
+        raise PhylumCalledProcessError(err, msg) from err
 
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     prefix = "phylum "
@@ -316,12 +321,17 @@ def ensure_settings_file() -> None:
     # generate the settings file.
     phylum_settings_path = get_phylum_settings_path()
     if not phylum_settings_path.exists():
+        LOG.debug("Attempting to generate the Phylum CLI settings file ...")
         phylum_bin_path, _ = get_phylum_bin_path()
         if phylum_bin_path is None:
             msg = "Could not find the path to the Phylum CLI. Unable to ensure the settings file."
             raise SystemExit(msg)
         cmd = [str(phylum_bin_path), "version"]
-        subprocess.run(cmd, check=True)  # noqa: S603
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = "There was an error attempting to generate the Phylum CLI settings file"
+            raise PhylumCalledProcessError(err, msg) from err
 
 
 def process_uri_option(args: argparse.Namespace) -> None:
@@ -513,7 +523,11 @@ def main(args=None):
             cmd = ["install", "-m", "0755", "phylum", "/usr/local/bin/phylum"]
         else:
             cmd = ["sh", "install.sh"]
-        subprocess.run(cmd, check=True, cwd=extracted_dir)  # noqa: S603
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=extracted_dir)  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = "There was an error while trying to install the Phylum CLI"
+            raise PhylumCalledProcessError(err, msg) from err
 
     process_uri_option(args)
     process_token_option(args)
