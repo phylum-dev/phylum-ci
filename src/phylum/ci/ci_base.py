@@ -119,14 +119,16 @@ class CIBase(ABC):
                 LOG.debug("Valid detected lockfiles: %s", valid_lockfiles)
                 return valid_lockfiles
 
-        raise SystemExit("No valid lockfiles were detected. Consider specifying at least one with `--lockfile`.")
+        msg = "No valid lockfiles were detected. Consider specifying at least one with `--lockfile`."
+        raise SystemExit(msg)
 
     def filter_lockfiles(self, provided_lockfiles: List[Path]) -> Lockfiles:
         """Filter potential lockfiles and return the valid ones in sorted order."""
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
-                raise SystemExit(f"Provided lockfile does not exist: {provided_lockfile}")
+                msg = f"Provided lockfile does not exist: {provided_lockfile}"
+                raise SystemExit(msg)
             if not provided_lockfile.stat().st_size:
                 LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
                 continue
@@ -136,6 +138,7 @@ class CIBase(ABC):
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 LOG.warning("Provided lockfile failed to parse as a known lockfile type: %s", provided_lockfile)
+                # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (comment out the `continue`)
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
         return sorted(lockfiles)
@@ -227,19 +230,22 @@ class CIBase(ABC):
                 else:
                     LOG.debug("Attempting to use existing version ...")
                     if Version(str(cli_version)) < Version(MIN_CLI_VER_INSTALLED):
-                        raise SystemExit(f"The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}")
+                        msg = f"The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}"
+                        raise SystemExit(msg)
                     LOG.info("Version checks succeeded. Using existing version.")
 
         cli_path, cli_version = get_phylum_bin_path()
         if cli_path is None:
-            raise SystemExit("Failed to initialize the Phylum CLI")
+            msg = "Failed to initialize the Phylum CLI"
+            raise SystemExit(msg)
 
         # Exit condition: a Phylum API key should be in place or available at this point.
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
         cmd = [str(cli_path), "auth", "token"]
         # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603
-            raise SystemExit("A Phylum API key is required to continue.")
+            msg = "A Phylum API key is required to continue."
+            raise SystemExit(msg)
 
         LOG.info("Using Phylum CLI instance: %s at %s", cli_version, cli_path)
         return cli_path
@@ -314,6 +320,7 @@ class CIBase(ABC):
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
                 LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
+                # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (change to `True`)
                 lockfile.is_lockfile_changed = False
             elif ret.returncode == 1:
                 LOG.debug("The lockfile [code]%r[/] has changed", lockfile, extra={"markup": True})
@@ -334,12 +341,14 @@ class CIBase(ABC):
         LOG.info("Confirming pre-requisites ...")
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
-            raise SystemExit(f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}")
+            msg = f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}"
+            raise SystemExit(msg)
 
         if shutil.which("git"):
             LOG.debug("`git` binary found on the PATH")
         else:
-            raise SystemExit("`git` is required to be installed and available on the PATH")
+            msg = "`git` is required to be installed and available on the PATH"
+            raise SystemExit(msg)
 
     def ensure_project_exists(self) -> None:
         """Ensure a Phylum project is created and in place.
@@ -361,6 +370,7 @@ class CIBase(ABC):
             # The Phylum CLI will return a unique error code when a project that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
             # since it means the project exists as expected. Any other exit code is an error.
+            # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (change to `15`)
             cli_exit_code_project_already_exists = 14
             if err.returncode == cli_exit_code_project_already_exists:
                 LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)

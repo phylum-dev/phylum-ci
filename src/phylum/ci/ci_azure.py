@@ -112,22 +112,26 @@ class CIAzure(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://learn.microsoft.com/azure/devops/pipelines/build/variables
         if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI") is None:
-            raise SystemExit("Must be working within the Azure Pipelines environment")
+            msg = "Must be working within the Azure Pipelines environment"
+            raise SystemExit(msg)
 
         self.triggering_repo = os.getenv("BUILD_REPOSITORY_PROVIDER", "unknown")
         LOG.debug("Triggering repository: %s", self.triggering_repo)
         # "TfsGit" is the legacy name for "Azure Repos Git"
         if self.triggering_repo not in ("TfsGit", "GitHub"):
-            raise SystemExit(f"Triggering repository `{self.triggering_repo}` not supported")
+            msg = f"Triggering repository `{self.triggering_repo}` not supported"
+            raise SystemExit(msg)
 
         azure_token = os.getenv("AZURE_TOKEN", "")
         if not azure_token and self.triggering_repo == "TfsGit" and is_in_pr():
-            raise SystemExit(f"An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}")
+            msg = f"An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}"
+            raise SystemExit(msg)
         self._azure_token = azure_token
 
         github_token = os.getenv("GITHUB_TOKEN", "")
         if not github_token and self.triggering_repo == "GitHub" and is_in_pr():
-            raise SystemExit(f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}")
+            msg = f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}"
+            raise SystemExit(msg)
         self._github_token = github_token
 
     @property
@@ -173,7 +177,8 @@ class CIAzure(CIBase):
 
             src_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "")
             if not src_branch:
-                raise SystemExit("The BUILD_SOURCEBRANCHNAME environment variable must exist and be set")
+                msg = "The BUILD_SOURCEBRANCHNAME environment variable must exist and be set"
+                raise SystemExit(msg)
             LOG.debug("BUILD_SOURCEBRANCHNAME: %s", src_branch)
 
             # This is a best effort attempt since it is finding the merge base between the current commit
@@ -263,10 +268,12 @@ class CIAzure(CIBase):
 
             owner_repo = os.getenv("BUILD_REPOSITORY_NAME")
             if not owner_repo:
-                raise SystemExit("The GitHub owner and repository could not be found.")
+                msg = "The GitHub owner and repository could not be found."
+                raise SystemExit(msg)
             pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
             if not pr_number:
-                raise SystemExit("The GitHub PR number could not be found.")
+                msg = "The GitHub PR number could not be found."
+                raise SystemExit(msg)
 
             # API Reference: https://docs.github.com/en/rest/issues/comments
             # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
@@ -284,9 +291,11 @@ def get_pr_branches() -> Tuple[str, str]:
     src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "")
     tgt_branch = os.getenv("SYSTEM_PULLREQUEST_TARGETBRANCH", "")
     if not src_branch:
-        raise SystemExit("The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set")
+        msg = "The SYSTEM_PULLREQUEST_SOURCEBRANCH environment variable must exist and be set"
+        raise SystemExit(msg)
     if not tgt_branch:
-        raise SystemExit("The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set")
+        msg = "The SYSTEM_PULLREQUEST_TARGETBRANCH environment variable must exist and be set"
+        raise SystemExit(msg)
     LOG.debug("SYSTEM_PULLREQUEST_SOURCEBRANCH: %s", src_branch)
     LOG.debug("SYSTEM_PULLREQUEST_TARGETBRANCH: %s", tgt_branch)
     return src_branch, tgt_branch
@@ -337,7 +346,8 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     resp = requests.get(pr_threads_url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()
     if resp.status_code != requests.codes.OK:
-        raise SystemExit(f"Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}")
+        msg = f"Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}"
+        raise SystemExit(msg)
     pr_threads = resp.json()
 
     LOG.info("Checking pull request threads for existing comment content to avoid duplication ...")

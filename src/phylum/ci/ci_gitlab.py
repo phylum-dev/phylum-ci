@@ -68,14 +68,16 @@ class CIGitLab(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         if os.getenv("GITLAB_CI") != "true":
-            raise SystemExit("Must be working within the GitLab CI environment")
+            msg = "Must be working within the GitLab CI environment"
+            raise SystemExit(msg)
 
         # A GitLab token with API access is required to use the API (e.g., to post notes/comments).
         # This can be a personal, project, or group access token...and possibly some other types as well.
         # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
         gitlab_token = os.getenv("GITLAB_TOKEN", "")
         if not gitlab_token and is_in_mr():
-            raise SystemExit("A GitLab token with API access must be set at `GITLAB_TOKEN`")
+            msg = "A GitLab token with API access must be set at `GITLAB_TOKEN`"
+            raise SystemExit(msg)
         self._gitlab_token = gitlab_token
 
     @property
@@ -111,7 +113,8 @@ class CIGitLab(CIBase):
 
         src_branch_name = os.getenv("CI_COMMIT_BRANCH")
         if not src_branch_name:
-            raise SystemExit("The CI_COMMIT_BRANCH environment variable must exist and be set")
+            msg = "The CI_COMMIT_BRANCH environment variable must exist and be set"
+            raise SystemExit(msg)
         src_branch = f"refs/remotes/{remote}/{src_branch_name}"
 
         # The default branch name is used instead of `HEAD` because of a GitLab runner bug where HEAD is not available:

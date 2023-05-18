@@ -85,7 +85,8 @@ class CIBitbucket(CIBase):
         # https://github.com/watson/ci-info/blob/master/vendors.json
         # https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
         if os.getenv("BITBUCKET_COMMIT") is None:
-            raise SystemExit("Must be working within the Bitbucket Pipelines environment")
+            msg = "Must be working within the Bitbucket Pipelines environment"
+            raise SystemExit(msg)
 
         # A Bitbucket token with API access is required to use the API (e.g., to post comments).
         # This can be a repository, project, or workspace access token.
@@ -93,7 +94,8 @@ class CIBitbucket(CIBase):
         # https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens
         bitbucket_token = os.getenv("BITBUCKET_TOKEN", "")
         if not bitbucket_token and is_in_pr():
-            raise SystemExit(f"A Bitbucket access token must be set at `BITBUCKET_TOKEN`: {BITBUCKET_TOK_ERR_MSG}")
+            msg = f"A Bitbucket access token must be set at `BITBUCKET_TOKEN`: {BITBUCKET_TOK_ERR_MSG}"
+            raise SystemExit(msg)
         self._bitbucket_token = bitbucket_token
 
     @property
@@ -130,9 +132,11 @@ class CIBitbucket(CIBase):
             src_branch = os.getenv("BITBUCKET_BRANCH", "")
             tgt_branch = os.getenv("BITBUCKET_PR_DESTINATION_BRANCH", "")
             if not src_branch:
-                raise SystemExit("The BITBUCKET_BRANCH environment variable must exist and be set")
+                msg = "The BITBUCKET_BRANCH environment variable must exist and be set"
+                raise SystemExit(msg)
             if not tgt_branch:
-                raise SystemExit("The BITBUCKET_PR_DESTINATION_BRANCH environment variable must exist and be set")
+                msg = "The BITBUCKET_PR_DESTINATION_BRANCH environment variable must exist and be set"
+                raise SystemExit(msg)
             LOG.debug("BITBUCKET_BRANCH: %s", src_branch)
             LOG.debug("BITBUCKET_PR_DESTINATION_BRANCH: %s", tgt_branch)
         else:
@@ -140,7 +144,8 @@ class CIBitbucket(CIBase):
             # build environment when not in a PR (no tag or custom pipelines).
             src_branch = os.getenv("BITBUCKET_BRANCH", "")
             if not src_branch:
-                raise SystemExit("The BITBUCKET_BRANCH environment variable must exist and be set")
+                msg = "The BITBUCKET_BRANCH environment variable must exist and be set"
+                raise SystemExit(msg)
             LOG.debug("BITBUCKET_BRANCH: %s", src_branch)
 
             # This is a best effort attempt since it is finding the merge base between the current commit

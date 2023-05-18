@@ -31,9 +31,11 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
     cmd = [*git_base_cmd(git_c_path), "remote"]
     remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()  # noqa: S603
     if not remotes:
-        raise RuntimeError("No git remotes configured")
+        msg = "No git remotes configured"
+        raise RuntimeError(msg)
     if len(remotes) > 1:
-        raise RuntimeError("Only one git remote is supported at this time")
+        msg = "Only one git remote is supported at this time"
+        raise RuntimeError(msg)
     remote = remotes[0]
     return remote
 

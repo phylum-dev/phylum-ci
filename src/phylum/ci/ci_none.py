@@ -36,7 +36,8 @@ class CINone(CIBase):
         if git_dir.is_dir():
             LOG.debug("Existing [code].git[/] directory found at the current working directory", extra={"markup": True})
         else:
-            raise SystemExit("This script expects to be run from the top level of a `git` repository")
+            msg = "This script expects to be run from the top level of a `git` repository"
+            raise SystemExit(msg)
 
     @property
     def phylum_label(self) -> str:

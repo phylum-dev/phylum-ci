@@ -66,21 +66,25 @@ class CIGitHub(CIBase):
         super()._check_prerequisites()
 
         if os.getenv("GITHUB_ACTIONS") != "true":
-            raise SystemExit("Must be working within the GitHub Actions environment")
+            msg = "Must be working within the GitHub Actions environment"
+            raise SystemExit(msg)
 
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
-            raise SystemExit(f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {PAT_ERR_MSG}")
+            msg = f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {PAT_ERR_MSG}"
+            raise SystemExit(msg)
         self._github_token = github_token
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
         # Instead, the full event webhook payload can be used to obtain the information. Reference:
         # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
         if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
-            raise SystemExit("The workflow event must be `pull_request`")
+            msg = "The workflow event must be `pull_request`"
+            raise SystemExit(msg)
         github_event_path_envvar = os.getenv("GITHUB_EVENT_PATH")
         if github_event_path_envvar is None:
-            raise SystemExit("Could not read the `GITHUB_EVENT_PATH` environment variable")
+            msg = "Could not read the `GITHUB_EVENT_PATH` environment variable"
+            raise SystemExit(msg)
         github_event_path = Path(github_event_path_envvar)
         with github_event_path.open(encoding="utf-8") as f:
             pr_event = json.load(f)
@@ -141,7 +145,8 @@ class CIGitHub(CIBase):
 
         comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
         if comments_url is None:
-            raise SystemExit("The API for posting a GitHub comment was not found.")
+            msg = "The API for posting a GitHub comment was not found."
+            raise SystemExit(msg)
 
         post_github_comment(comments_url, self.github_token, self.analysis_report)
 

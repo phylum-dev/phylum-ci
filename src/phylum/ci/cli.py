@@ -56,7 +56,8 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
 
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
-        raise SystemExit(f"Multiple CI environments detected: {ci_platform_names}")
+        msg = f"Multiple CI environments detected: {ci_platform_names}"
+        raise SystemExit(msg)
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:

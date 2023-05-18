@@ -113,7 +113,8 @@ def get_latest_version() -> str:
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
     latest_version = req_json.get("tag_name")
     if not latest_version:
-        raise SystemExit(f"The `tag_name` entry was not available or not set when querying: {github_api_url}")
+        msg = f"The `tag_name` entry was not available or not set when querying: {github_api_url}"
+        raise SystemExit(msg)
 
     return latest_version
 
@@ -136,7 +137,8 @@ def supported_releases() -> List[str]:
         try:
             cli_releases[rel_ver] = Version(canonicalize_version(rel_ver))
         except InvalidVersion as err:
-            raise SystemExit(f"An invalid version was provided: {rel_ver}") from err
+            msg = f"An invalid version was provided: {rel_ver}"
+            raise SystemExit(msg) from err
     sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=lambda x: x[1], reverse=True)]
     releases = itertools.takewhile(is_supported_version, sorted_cli_releases)
 
@@ -149,7 +151,8 @@ def is_supported_version(version: str) -> bool:
         provided_version = Version(canonicalize_version(version))
         min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
     except InvalidVersion as err:
-        raise SystemExit(f"An invalid version was provided: {version}") from err
+        msg = f"An invalid version was provided: {version}"
+        raise SystemExit(msg) from err
 
     return provided_version >= min_supported_version
 
@@ -168,7 +171,8 @@ def supported_targets(release_tag: str) -> List[str]:
       * https://rust-lang.github.io/rfcs/0131-target-specification.html
     """
     if release_tag not in supported_releases():
-        raise SystemExit(f"Unsupported version: {release_tag}")
+        msg = f"Unsupported version: {release_tag}"
+        raise SystemExit(msg)
 
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
@@ -198,8 +202,8 @@ def version_check(version: str) -> str:
 
     supported_versions = supported_releases()
     if version not in supported_versions:
-        releases = ", ".join(supported_versions)
-        raise SystemExit(f"Specified Phylum CLI version must be from a supported release: {releases}")
+        msg = f"Specified Phylum CLI version must be from a supported release: {', '.join(supported_versions)}"
+        raise SystemExit(msg)
 
     return version
 
@@ -314,7 +318,8 @@ def ensure_settings_file() -> None:
     if not phylum_settings_path.exists():
         phylum_bin_path, _ = get_phylum_bin_path()
         if phylum_bin_path is None:
-            raise SystemExit("Could not find the path to the Phylum CLI. Unable to ensure the settings file.")
+            msg = "Could not find the path to the Phylum CLI. Unable to ensure the settings file."
+            raise SystemExit(msg)
         cmd = [str(phylum_bin_path), "version"]
         subprocess.run(cmd, check=True)  # noqa: S603
 
@@ -473,7 +478,8 @@ def main(args=None):
 
     target_triple = args.target
     if target_triple not in supported_target_triples:
-        raise SystemExit(f"The identified target triple `{target_triple}` is not supported for release {tag_name}")
+        msg = f"The identified target triple `{target_triple}` is not supported for release {tag_name}"
+        raise SystemExit(msg)
 
     archive_name = f"phylum-{target_triple}.zip"
     sig_name = f"{archive_name}.signature"
@@ -492,7 +498,8 @@ def main(args=None):
 
         with zipfile.ZipFile(archive_path, mode="r") as zip_file:
             if zip_file.testzip() is not None:
-                raise zipfile.BadZipFile(f"There was a bad file in the zip archive {archive_name}")
+                msg = f"There was a bad file in the zip archive {archive_name}"
+                raise zipfile.BadZipFile(msg)
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 

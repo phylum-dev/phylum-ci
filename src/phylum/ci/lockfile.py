@@ -32,7 +32,8 @@ class Lockfile:
         self._is_lockfile_changed: Optional[bool] = None
 
         if not shutil.which("git"):
-            raise SystemExit("`git` is required to be installed and available on the PATH")
+            msg = "`git` is required to be installed and available on the PATH"
+            raise SystemExit(msg)
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Lockfile` object."""
@@ -140,6 +141,7 @@ class Lockfile:
             return None
         try:
             # Use the `repr` form to get the relative path to the lockfile
+            # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! cmd = ["git", "rev-parse", "--verify", f"HEAD:{self!r}"]
             cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
             prev_lockfile_object = subprocess.run(
                 cmd,  # noqa: S603

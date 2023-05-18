@@ -63,16 +63,19 @@ def verify_sig(file_path: Path, sig_path: Path) -> None:
     try:
         # The `cryptography` library does not know this is an RSA public key yet...make sure it is
         phylum_public_key: types.PUBLIC_KEY_TYPES = serialization.load_pem_public_key(PHYLUM_RSA_PUBKEY)
-        if isinstance(phylum_public_key, rsa.RSAPublicKey):
-            phylum_rsa_public_key: rsa.RSAPublicKey = phylum_public_key
-        else:
-            raise SystemExit(f"The public key was expected to be RSA but instead got: {type(phylum_public_key)}")
     except UnsupportedAlgorithm as err:
         openssl_ver = backend.openssl_version_text()
         msg = f"Serialized key type is not supported by the OpenSSL version `cryptography` is using: {openssl_ver}"
         raise SystemExit(msg) from err
     except ValueError as err:
-        raise SystemExit("The PEM data's structure could not be decoded successfully") from err
+        msg = "The PEM data's structure could not be decoded successfully"
+        raise SystemExit(msg) from err
+
+    if isinstance(phylum_public_key, rsa.RSAPublicKey):
+        phylum_rsa_public_key: rsa.RSAPublicKey = phylum_public_key
+    else:
+        msg = f"The public key was expected to be RSA but instead got: {type(phylum_public_key)}"
+        raise SystemExit(msg)
 
     # Confirm the data from `file_path` with the signature from the `sig_path`
     try:
