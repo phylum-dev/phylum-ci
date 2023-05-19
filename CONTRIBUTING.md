@@ -182,6 +182,10 @@ Here's how to set up `phylum-ci` for local development.
     phylum analyze poetry.lock
     ```
 
+    **NOTE:** The version of `poetry` used to make changes to the lockfile must match the one specified
+    in CI configuration files. Otherwise, the QA status check will fail when submitting a PR. The current
+    version can be found in the `.github/workflows/*.yml` files by searching for `pipx install poetry`.
+
 8. When you're done making changes, check that your changes pass QA and the tests:
 
     ```sh
