@@ -31,7 +31,7 @@ from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-from phylum.logger import LOG
+from phylum.logger import LOG, progress_spinner
 
 
 class CIBase(ABC):
@@ -122,6 +122,7 @@ class CIBase(ABC):
         msg = "No valid lockfiles were detected. Consider specifying at least one with `--lockfile`."
         raise SystemExit(msg)
 
+    @progress_spinner("Filtering lockfiles")
     def filter_lockfiles(self, provided_lockfiles: List[Path]) -> Lockfiles:
         """Filter potential lockfiles and return the valid ones in sorted order."""
         lockfiles = []
@@ -139,7 +140,6 @@ class CIBase(ABC):
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 LOG.warning("Provided lockfile failed to parse as a known lockfile type: %s", provided_lockfile)
-                # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (comment out the `continue`)
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
         return sorted(lockfiles)
@@ -321,7 +321,6 @@ class CIBase(ABC):
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
                 LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
-                # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (change to `True`)
                 lockfile.is_lockfile_changed = False
             elif ret.returncode == 1:
                 LOG.debug("The lockfile [code]%r[/] has changed", lockfile, extra={"markup": True})
@@ -351,6 +350,7 @@ class CIBase(ABC):
             msg = "`git` is required to be installed and available on the PATH"
             raise SystemExit(msg)
 
+    @progress_spinner("Ensuring a Phylum project exists")
     def ensure_project_exists(self) -> None:
         """Ensure a Phylum project is created and in place.
 
@@ -371,7 +371,6 @@ class CIBase(ABC):
             # The Phylum CLI will return a unique error code when a project that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
             # since it means the project exists as expected. Any other exit code is an error.
-            # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! (change to `15`)
             cli_exit_code_project_already_exists = 14
             if err.returncode == cli_exit_code_project_already_exists:
                 LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
@@ -391,8 +390,9 @@ class CIBase(ABC):
         # Post the markdown output, rendered for terminal/log output
         LOG.debug("Analysis output:\n")
         report_md = Markdown(self.analysis_report, hyperlinks=False)
-        console.print(report_md, soft_wrap=True)
+        console.print(report_md)
 
+    @progress_spinner("Analyzing dependencies with Phylum")
     def analyze(self) -> ReturnCode:
         """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
         # Build up the analyze command based on the provided inputs
@@ -424,7 +424,6 @@ class CIBase(ABC):
             cmd.extend(["--base", base_fd.name])
             cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
 
-            # TODO: Use a rich progress display element here?
             LOG.info("Performing analysis. This may take a few seconds.")
             LOG.debug("Using analysis command: %s", shlex.join(cmd))
             try:

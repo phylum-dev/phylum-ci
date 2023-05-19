@@ -141,7 +141,6 @@ class Lockfile:
             return None
         try:
             # Use the `repr` form to get the relative path to the lockfile
-            # TODO: USE THIS FOR DEMO AND THEN REMOVE!!! cmd = ["git", "rev-parse", "--verify", f"HEAD:{self!r}"]
             cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
             prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
             prev_lockfile_object = prev_lockfile_object.strip()

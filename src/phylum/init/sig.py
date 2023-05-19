@@ -31,7 +31,7 @@ from cryptography.hazmat.backends.openssl import backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa, types
 
-from phylum.logger import LOG
+from phylum.logger import LOG, progress_spinner
 
 # This is the RSA Public Key for Phylum, Inc. The matching private key was used to sign the software releases
 PHYLUM_RSA_PUBKEY = bytes(
@@ -52,6 +52,7 @@ PHYLUM_RSA_PUBKEY = bytes(
 )
 
 
+@progress_spinner("Verifying RSA SHA256 signature")
 def verify_sig(file_path: Path, sig_path: Path) -> None:
     """Verify a given file has a valid signature.
 

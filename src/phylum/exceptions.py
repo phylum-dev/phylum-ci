@@ -29,7 +29,6 @@ class PhylumCalledProcessError(Exception):
             raise PhylumCalledProcessError(err, msg) from err
         ```
         """
-        # TODO: figure out how to apply a theme to a panel (like how traceback does)
         pprint_subprocess_error(err)
         LOG.critical(msg, extra={"markup": True})
         raise SystemExit(err.returncode)
@@ -57,4 +56,4 @@ def pprint_subprocess_error(err: subprocess.CalledProcessError) -> None:
         expand=False,
         border_style="traceback.border",
     )
-    rich_print(err_panel, file=sys.stderr)
+    rich_print("", err_panel, file=sys.stderr)

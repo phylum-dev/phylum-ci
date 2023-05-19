@@ -37,6 +37,9 @@ PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
     "markdown.item.number": "bold blue",
     # The `rich` default styles:
     "code": "bold reverse",
+    "repr.number": "bold not italic cyan",
+    "traceback.border": "red",
+    "progress.description": "none",
     "markdown.strong": "bold",
     "markdown.emph": "italic",
     "markdown.paragraph": "none",
@@ -51,4 +54,4 @@ PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
 }
 
 phylum_theme = Theme(styles=PHYLUM_STYLES)
-console = Console(theme=phylum_theme)
+console = Console(theme=phylum_theme, soft_wrap=True)

@@ -35,7 +35,7 @@ from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
-from phylum.logger import LOG, set_logger_level
+from phylum.logger import LOG, progress_spinner, set_logger_level
 
 
 def get_phylum_settings_path():
@@ -232,6 +232,7 @@ def get_target_triple() -> str:
     return f"{arch}-{plat}"
 
 
+@progress_spinner("Downloading")
 def save_file_from_url(url: str, path: Path) -> None:
     """Save a file from a given URL to a local file path, in binary mode."""
     LOG.info("Getting %s file ...", url)
@@ -271,6 +272,7 @@ def is_token_set(phylum_settings_path, token=None):
     return True
 
 
+@progress_spinner("Processing Phylum token option")
 def process_token_option(args):
     """Process the Phylum token option as parsed from the arguments."""
     phylum_settings_path = get_phylum_settings_path()
@@ -334,6 +336,7 @@ def ensure_settings_file() -> None:
             raise PhylumCalledProcessError(err, msg) from err
 
 
+@progress_spinner("Processing Phylum API URI option")
 def process_uri_option(args: argparse.Namespace) -> None:
     """Process the Phylum API URI option as parsed from the arguments."""
     phylum_settings_path = get_phylum_settings_path()
@@ -367,20 +370,48 @@ def process_uri_option(args: argparse.Namespace) -> None:
             LOG.debug("The CLI will use the PRODUCTION instance: %s", configured_uri)
 
 
+@progress_spinner("Installing the Phylum CLI")
+def install_phylum_cli(args: argparse.Namespace, extracted_dir: Path) -> None:
+    """Install the Phylum CLI from an archive that has been extracted to the given path."""
+    # This may look wrong, but a decision was made to manually handle global installs
+    # in the places it is required instead of updating the CLI's install script.
+    # Reference: https://github.com/phylum-dev/cli/pull/671
+    if args.global_install:  # noqa: SIM108 ; ternary operator makes it harder to place comments
+        # Current assumptions for this method:
+        #   * the /usr/local/bin directory exists, has proper permissions, and is on the PATH for all users
+        #   * the install is on a system with glibc
+        cmd = ["install", "-m", "0755", "phylum", "/usr/local/bin/phylum"]
+    else:
+        cmd = ["sh", "install.sh"]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=extracted_dir)  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error while trying to install the Phylum CLI"
+        raise PhylumCalledProcessError(err, msg) from err
+
+
+@progress_spinner("Confirming Phylum CLI installation and setup")
 def confirm_setup() -> None:
     """Check to ensure everything is working."""
     phylum_bin_path, _ = get_phylum_bin_path()
 
+    # Print the version message to aid log review
+    cmd = [str(phylum_bin_path), "version"]
+    version_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+    LOG.debug(version_output)
+
     if is_token_set(get_phylum_settings_path()):
         # Check that the token and API URI were setup correctly by using them to display the current auth status
         cmd = [str(phylum_bin_path), "auth", "status"]
-        subprocess.run(cmd, check=True)  # noqa: S603
+        auth_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+        LOG.debug(auth_output)
     else:
         LOG.warning("Existing token not found. Can't confirm setup.")
 
     # Print the help message to aid log review
     cmd = [str(phylum_bin_path), "--help"]
-    subprocess.run(cmd, check=True)  # noqa: S603
+    help_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+    LOG.debug(help_output)
 
 
 def get_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
@@ -475,7 +506,7 @@ def main(args=None):
     if args.list_releases:
         LOG.info("Looking up supported releases ...")
         releases = ", ".join(supported_releases())
-        LOG.warning("Supported releases: %s", releases)
+        LOG.warning("Supported releases: %s", releases, extra={"highlighter": False})
         return 0
 
     tag_name = args.version
@@ -483,7 +514,7 @@ def main(args=None):
     supported_target_triples = supported_targets(tag_name)
     if args.list_targets:
         targets = ", ".join(supported_target_triples)
-        LOG.warning("Supported targets for release %s: %s", tag_name, targets)
+        LOG.warning("Supported targets for release %s: %s", tag_name, targets, extra={"highlighter": False})
         return 0
 
     target_triple = args.target
@@ -513,25 +544,12 @@ def main(args=None):
             extracted_dir = temp_dir_path / f"phylum-{target_triple}"
             zip_file.extractall(path=temp_dir)
 
-        # This may look wrong, but a decision was made to manually handle global installs
-        # in the places it is required instead of updating the CLI's install script.
-        # Reference: https://github.com/phylum-dev/cli/pull/671
-        if args.global_install:
-            # Current assumptions for this method:
-            #   * the /usr/local/bin directory exists, has proper permissions, and is on the PATH for all users
-            #   * the install is on a system with glibc
-            cmd = ["install", "-m", "0755", "phylum", "/usr/local/bin/phylum"]
-        else:
-            cmd = ["sh", "install.sh"]
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=extracted_dir)  # noqa: S603
-        except subprocess.CalledProcessError as err:
-            msg = "There was an error while trying to install the Phylum CLI"
-            raise PhylumCalledProcessError(err, msg) from err
+        install_phylum_cli(args, extracted_dir)
 
     process_uri_option(args)
     process_token_option(args)
     confirm_setup()
+    LOG.warning(":white_check_mark: Installed Phylum CLI %s", tag_name, extra={"markup": True, "highlighter": False})
 
     return 0
 

@@ -3,9 +3,10 @@ import inspect
 import logging
 import sys
 from types import FunctionType, MethodType
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from rich.logging import RichHandler
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 import rich.traceback
 
 from phylum import PKG_NAME
@@ -207,3 +208,29 @@ def add_trace_logging() -> None:
         module_where_defined = cls.__module__
         if module_where_defined.startswith(pkg_namespace):
             sys.modules[module_where_defined].__dict__[name] = class_trace_logger(cls)
+
+
+def progress_spinner(desc: str) -> Callable:
+    """Display a spinner for tasks with indeterminate progress.
+
+    This is a function decorator that takes `desc` as a description of the task.
+    """
+
+    def make_traced(func: Callable) -> Callable:
+        def traced_function(*args, **kwargs) -> Any:
+            # Reference: https://rich.readthedocs.io/en/latest/progress.html
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                TimeElapsedColumn(),
+                console=console,
+                transient=True,
+            ) as progress:
+                task = progress.add_task(desc, total=None)
+                result = func(*args, **kwargs)
+                progress.stop_task(task)
+            return result
+
+        return traced_function
+
+    return make_traced

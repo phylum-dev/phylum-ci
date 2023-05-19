@@ -7,7 +7,7 @@ from typing import Dict, Optional
 import requests
 
 from phylum.constants import PHYLUM_USER_AGENT, REQ_TIMEOUT
-from phylum.logger import LOG
+from phylum.logger import LOG, progress_spinner
 
 # GitHub API version to use when making requests to the REST API.
 # Reference: https://docs.github.com/rest/overview/api-versions
@@ -46,6 +46,7 @@ def get_headers(github_token: Optional[str] = None) -> Dict[str, str]:
     return headers
 
 
+@progress_spinner("Making GitHub API request")
 def github_request(
     api_url: str,
     params: Optional[dict] = None,
