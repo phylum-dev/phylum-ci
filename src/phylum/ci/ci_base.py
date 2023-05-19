@@ -128,7 +128,8 @@ class CIBase(ABC):
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
                 msg = f"Provided lockfile does not exist: {provided_lockfile}"
-                raise SystemExit(msg)
+                LOG.warning(msg)
+                continue
             if not provided_lockfile.stat().st_size:
                 LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
                 continue
