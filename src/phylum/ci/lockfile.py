@@ -182,14 +182,11 @@ class Lockfile:
                 ).stdout.strip()
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
-                msg = textwrap.dedent(
-                    f"""\
+                msg = f"""\
                     Due to error, assuming no previous lockfile packages.
                     Please report this as a bug if you believe [code]{self!r}[/]
-                    is a valid lockfile at revision [code]{self.common_ancestor_commit}[/].
-                    """  # noqa: COM812 ; FP due to multiline string in function call
-                )
-                LOG.warning(msg, extra={"markup": True})
+                    is a valid lockfile at revision [code]{self.common_ancestor_commit}[/]."""
+                LOG.warning(textwrap.dedent(msg), extra={"markup": True})
                 return []
 
         parsed_pkgs = json.loads(parse_result)

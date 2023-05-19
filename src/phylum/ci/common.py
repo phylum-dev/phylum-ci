@@ -35,6 +35,7 @@ class ReturnCode(IntEnum):
     FAILURE = 1
     INCOMPLETE = 5
     FAILURE_INCOMPLETE = 6
+    LOCKFILE_FILTER = 10
 
 
 # Reference: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses

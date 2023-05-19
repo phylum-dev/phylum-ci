@@ -204,17 +204,17 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Generate a label to use for analysis and report it
     LOG.info("Label to use for analysis: %s", ci_env.phylum_label)
 
-    # Analyze current project lockfile(s) with phylum CLI and review analysis results to determine the overall state
-    return_code = ci_env.analyze()
-    LOG.debug("Return code: %s", return_code)
+    # Analyze current project lockfile(s) with Phylum CLI
+    ci_env.analyze()
 
     # Output the results of the analysis
     ci_env.post_output()
 
     # Don't return a failure code if the results are unknown at this point
-    if return_code == ReturnCode.INCOMPLETE:
+    LOG.debug("Return code: %s", ci_env.returncode)
+    if ci_env.returncode == ReturnCode.INCOMPLETE:
         return 0
-    return return_code.value
+    return ci_env.returncode.value
 
 
 def script_main() -> None:

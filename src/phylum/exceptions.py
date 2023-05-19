@@ -40,12 +40,20 @@ def rich_called_process_error(err: subprocess.CalledProcessError) -> RenderResul
 
     Reference: https://rich.readthedocs.io/en/latest/group.html
     """
+    # If stdout or stderr are not strings, it is almost certainly because the `subprocess.run` call did not set
+    # `capture_output=True`` and `text=True`, which is desired for just about every call in this repository.
     yield f"[bold yellow]COMMAND[/]: [code]{' '.join(err.cmd)}[/]"
     yield f"[bold yellow]RETURN CODE[/]: [repr.number]{err.returncode}"
-    stdout = err.stdout.strip() if err.stdout and isinstance(err.stdout, str) else "[dim]NONE"
-    yield Panel(stdout, title="[bold yellow]STDOUT", expand=False, border_style="yellow")
-    stderr = err.stderr.strip() if err.stderr and isinstance(err.stderr, str) else "[dim]NONE"
-    yield Panel(stderr, title="[bold yellow]STDERR", expand=False, border_style="yellow")
+    if err.stdout:
+        if isinstance(err.stdout, str):
+            yield Panel(err.stdout.strip(), title="[bold yellow]STDOUT", expand=False, border_style="yellow")
+        else:
+            LOG.debug("`stdout` exists but can't be displayed. Please report this as a bug.")
+    if err.stderr:
+        if isinstance(err.stderr, str):
+            yield Panel(err.stderr.strip(), title="[bold yellow]STDERR", expand=False, border_style="yellow")
+        else:
+            LOG.debug("`stderr` exists but can't be displayed. Please report this as a bug.")
 
 
 def pprint_subprocess_error(err: subprocess.CalledProcessError) -> None:

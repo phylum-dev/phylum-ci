@@ -14,7 +14,8 @@ from phylum.console import console
 
 LOG = logging.getLogger(PKG_NAME)
 
-# This is a custom logging level, defined relative to existing logging.DEBUG level to make type checkers happy.
+# This is a custom logging level, defined relative to existing logging.DEBUG level as suggested in the
+# Python `logging` library documentation: https://docs.python.org/3/library/logging.html#logging-levels
 LOGGING_TRACE_LEVEL = logging.DEBUG - 5
 
 DEFAULT_RICH_HANDLER = RichHandler(

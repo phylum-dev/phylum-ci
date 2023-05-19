@@ -24,7 +24,7 @@ Please use the bug report template which should remind you to include:
 * Additional context
   * Your operating system name and version
   * Any details about your local setup that might be helpful in troubleshooting
-  * Output from the highest verbosity setting
+  * Output from the highest verbosity setting (`-vvv`)
 
 ### Fix Bugs
 

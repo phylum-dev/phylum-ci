@@ -48,6 +48,7 @@ class CIBase(ABC):
         self._args = args
         self._all_deps = args.all_deps
         self._force_analysis = args.force_analysis
+        self._returncode = ReturnCode.SUCCESS
 
         # Create a copy of the original `.phylum_project` file values, when the file exists.
         # This is necessary because it is possible that user-provided values for the project and
@@ -79,6 +80,18 @@ class CIBase(ABC):
     def args(self) -> Namespace:
         """Get the namespace arguments provided on the command line."""
         return self._args
+
+    @property
+    def returncode(self) -> ReturnCode:
+        """Get the current return code."""
+        return self._returncode
+
+    @returncode.setter
+    def returncode(self, value: ReturnCode) -> None:
+        """Set the return code value."""
+        # Do not allow setting a `SUCCESS` value once the return code has already been set to an error value.
+        if self._returncode == ReturnCode.SUCCESS or value != ReturnCode.SUCCESS:
+            self._returncode = value
 
     @cached_property
     def lockfiles(self) -> Lockfiles:
@@ -128,11 +141,12 @@ class CIBase(ABC):
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
-                msg = f"Provided lockfile does not exist: {provided_lockfile}"
-                LOG.warning(msg)
+                LOG.warning("Provided lockfile does not exist: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             if not provided_lockfile.stat().st_size:
                 LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             cmd = [str(self.cli_path), "parse", str(provided_lockfile)]
             try:
@@ -140,6 +154,7 @@ class CIBase(ABC):
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 LOG.warning("Provided lockfile failed to parse as a known lockfile type: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
         return sorted(lockfiles)
@@ -393,7 +408,7 @@ class CIBase(ABC):
         console.print(report_md)
 
     @progress_spinner("Analyzing dependencies with Phylum")
-    def analyze(self) -> ReturnCode:
+    def analyze(self) -> None:
         """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
         # Build up the analyze command based on the provided inputs
         cmd = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
@@ -444,23 +459,20 @@ class CIBase(ABC):
         analysis = JobPolicyEvalResult(**json.loads(analysis_result))
         self._analysis_report = analysis.report
 
-        returncode = ReturnCode.SUCCESS
         # The logic below would make for a good match statement, which was introduced in Python 3.10
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
                 LOG.error("The analysis is complete and there were failures")
-                returncode = ReturnCode.FAILURE
+                self.returncode = ReturnCode.FAILURE
             else:
                 LOG.info("The analysis is complete and there were NO failures")
-                returncode = ReturnCode.SUCCESS
+                self.returncode = ReturnCode.SUCCESS
         elif analysis.is_failure:
             LOG.error("There were failures in one or more completed packages")
-            returncode = ReturnCode.FAILURE_INCOMPLETE
+            self.returncode = ReturnCode.FAILURE_INCOMPLETE
         else:
             LOG.warning("There were no failures in the packages that have completed so far")
-            returncode = ReturnCode.INCOMPLETE
-
-        return returncode
+            self.returncode = ReturnCode.INCOMPLETE
 
 
 # Type alias
