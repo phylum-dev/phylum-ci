@@ -115,6 +115,7 @@ ignore = [
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
     "ANN",  # flake8-annotations
     "TCH",  # flake8-type-checking
+    "FA",   # flake8-future-annotations
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/47
     "EM",   # flake8-errmsg
     "TRY",  # tryceratops

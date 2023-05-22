@@ -108,8 +108,8 @@ class Lockfile:
         prev_pkg_set = set(prev_lockfile_packages)
         curr_pkg_set = set(curr_lockfile_packages)
 
-        # TODO: Consider using these new dependencies to track the output findings...as mapped to a lockfile.
-        #       https://github.com/phylum-dev/roadmap/issues/263
+        # TODO(maxrake): Consider using these new dependencies to track the output findings...as mapped to a lockfile.
+        #                https://github.com/phylum-dev/roadmap/issues/263
         new_deps_set = curr_pkg_set.difference(prev_pkg_set)
         new_deps_list = sorted(new_deps_set)
         print(f" [+] New dependencies in `{self!r}`: {new_deps_list}")
