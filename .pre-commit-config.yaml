@@ -22,7 +22,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 11c1d1d46cde6812135d98d4ae0d2311de64a8dd  # frozen: v0.0.267
+    rev: fbc96a6c25c4a03a3ab7cb6408b5852e739101b3  # frozen: v0.0.269
     hooks:
       - id: ruff
 
@@ -44,7 +44,7 @@ repos:
   - repo: https://github.com/python-poetry/poetry
     # NOTE: The autoupdated/frozen version here may not always be the latest version:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
-    rev: 7fe4678f92dcab48a35169db6567cbb3f5a7e3ef  # frozen: 1.4.0
+    rev: cacd43c076748411a759c65dd46858cd8b7ef3b3  # frozen: 1.5.0
     hooks:
       - id: poetry-check
       - id: poetry-lock
