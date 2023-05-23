@@ -98,8 +98,8 @@ def github_request(
         )
         raise SystemExit(msg)
 
-    # TODO: Make this a debug level log output statement
-    #       https://github.com/phylum-dev/phylum-ci/issues/23
+    # TODO(maxrake): Make this a debug level log output statement
+    #                https://github.com/phylum-dev/phylum-ci/issues/23
     print(f" [+] {rate_limit_remaining} GitHub API requests remaining until window resets at: {reset_time}")
 
     # Wrap all other request failures in a detailed message and exit with that instead of a stack trace
