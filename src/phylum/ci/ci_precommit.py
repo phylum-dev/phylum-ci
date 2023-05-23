@@ -18,6 +18,8 @@ from typing import List, Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
+from phylum.logger import LOG
 
 
 class CIPreCommit(CIBase):
@@ -38,33 +40,37 @@ class CIPreCommit(CIBase):
         super()._check_prerequisites()
 
         cmd = ["git", "diff", "--cached", "--name-only"]
-        output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        try:
+            output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = "Getting the staged files from git failed."
+            raise PhylumCalledProcessError(err, msg) from err
         staged_files = output.strip().split("\n")
         extra_arg_paths = [Path(extra_arg).resolve() for extra_arg in self.extra_args]
 
-        print(" [*] Checking extra args for valid pre-commit scenarios ...")
+        LOG.debug("Checking extra args for valid pre-commit scenarios ...")
 
         # Allow for a pre-commit config set up to send all staged files to the hook
         if sorted(staged_files) == sorted(self.extra_args):
-            print(" [+] The extra args provided exactly match the list of staged files")
+            LOG.debug("The extra args provided exactly match the list of staged files")
             if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-                print(" [+] Valid pre-commit scenario found: lockfile(s) found in extra arguments")
+                LOG.info("Valid pre-commit scenario found: lockfile(s) found in extra arguments")
                 return
-            print(" [+] A lockfile is not included in extra args. Nothing to do. Exiting ...")
+            LOG.warning("A lockfile is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for a pre-commit config set up to filter the files sent to the hook
         if all(extra_arg in staged_files for extra_arg in self.extra_args):
-            print(" [+] All the extra args are staged files")
+            LOG.debug("All the extra args are staged files")
             if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-                print(" [+] Valid pre-commit scenario found: lockfile(s) found in extra arguments")
+                LOG.info("Valid pre-commit scenario found: lockfile(s) found in extra arguments")
                 return
-            print(" [+] A lockfile is not included in extra args. Nothing to do. Exiting ...")
+            LOG.warning("A lockfile is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
         if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-            print(" [+] A lockfile was included in the extra args")
+            LOG.info("A lockfile was included in the extra args")
         # NOTE: There is still the case where a lockfile is "accidentally" included as an extra argument. For example,
         #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
         #       nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not terrible; it
@@ -72,8 +78,8 @@ class CIPreCommit(CIBase):
         #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
         #       heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
-            print(" [+] A lockfile was not included in the extra args...possible invalid pre-commit scenario")
-            print(f" [!] Unrecognized arguments: {' '.join(self.extra_args)}")
+            LOG.warning("A lockfile was not included in the extra args...possible invalid pre-commit scenario")
+            LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra={"markup": True})
             sys.exit(0)
 
     @property
@@ -91,9 +97,8 @@ class CIPreCommit(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            print(f" [!] The common ancestor commit could not be found: {err}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
+            pprint_subprocess_error(err)
+            LOG.warning("The common ancestor commit could not be found")
             common_commit = None
         return common_commit
 
@@ -107,9 +112,9 @@ class CIPreCommit(CIBase):
         staged_files = [Path(staged_file).resolve() for staged_file in self.extra_args]
         for lockfile in self.lockfiles:
             if lockfile.path in staged_files:
-                print(f" [-] The lockfile `{lockfile!r}` has changed")
+                LOG.debug("The lockfile [code]%r[/] has changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = True
             else:
-                print(f" [-] The lockfile `{lockfile!r}` has not changed")
+                LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = False
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)

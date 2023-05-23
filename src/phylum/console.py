@@ -3,8 +3,10 @@
 The `rich` library is used here for excellent control over the console.
 Reference: https://rich.readthedocs.io/en/latest/index.html
 """
+from typing import Mapping, Union
 
 from rich.console import Console
+from rich.style import Style
 from rich.theme import Theme
 
 # Create a custom Phylum theme by setting unique style values for a subset of the markdown styles that `rich` supports.
@@ -15,8 +17,13 @@ from rich.theme import Theme
 # References:
 #   * https://rich.readthedocs.io/en/latest/style.html
 #   * https://rich.readthedocs.io/en/latest/appendix/colors.html
-PHYLUM_STYLES = {
+PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
+    # Styles that have been added to the default:
+    "logging.level.trace": Style(dim=True),
     # Styles that have been modified from the default:
+    "logging.level.debug": Style.null(),
+    "logging.level.info": Style(color="green"),
+    "logging.level.warning": Style(color="yellow"),
     "markdown.code": "bold reverse",
     "markdown.h1.border": "dodger_blue2",
     "markdown.h1": "dodger_blue2",
@@ -29,6 +36,10 @@ PHYLUM_STYLES = {
     "markdown.item.bullet": "bold blue",
     "markdown.item.number": "bold blue",
     # The `rich` default styles:
+    "code": "bold reverse",
+    "repr.number": "bold not italic cyan",
+    "traceback.border": "red",
+    "progress.description": "none",
     "markdown.strong": "bold",
     "markdown.emph": "italic",
     "markdown.paragraph": "none",
@@ -43,4 +54,4 @@ PHYLUM_STYLES = {
 }
 
 phylum_theme = Theme(styles=PHYLUM_STYLES)
-console = Console(theme=phylum_theme)
+console = Console(theme=phylum_theme, soft_wrap=True)

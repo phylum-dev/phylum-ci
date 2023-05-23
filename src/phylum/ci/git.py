@@ -2,7 +2,11 @@
 
 from pathlib import Path
 import subprocess
+import textwrap
 from typing import List, Optional
+
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
+from phylum.logger import LOG
 
 
 def git_base_cmd(git_c_path: Optional[Path] = None) -> List[str]:
@@ -26,11 +30,17 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
     A RuntimeError exception will be raised when there is not exactly one remote.
     """
     cmd = [*git_base_cmd(git_c_path), "remote"]
-    remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()  # noqa: S603
+    try:
+        remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error retrieving the git remote"
+        raise PhylumCalledProcessError(err, msg) from err
     if not remotes:
-        raise RuntimeError("No git remotes configured")
+        msg = "No git remotes configured"
+        raise RuntimeError(msg)
     if len(remotes) > 1:
-        raise RuntimeError("Only one git remote is supported at this time")
+        msg = "Only one git remote is supported at this time"
+        raise RuntimeError(msg)
     remote = remotes[0]
     return remote
 
@@ -45,15 +55,13 @@ def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
     It assumes git credentials are available to run the command.
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
-    print(" [*] Automatically setting the remote HEAD ref ...")
+    LOG.info("Automatically setting the remote HEAD ref ...")
     cmd = [*base_cmd, "remote", "set-head", remote, "--auto"]
     try:
-        subprocess.run(cmd, check=True, capture_output=True)  # noqa: S603
+        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
     except subprocess.CalledProcessError as err:
-        print(f" [!] Setting the remote HEAD failed: {err}")
-        print(f" [!] stdout:\n{err.stdout}")
-        print(f" [!] stderr:\n{err.stderr}")
-        raise SystemExit(" [!] Ensure credentials are available to run git commands") from err
+        msg = "Setting the remote HEAD failed. Ensure credentials are available to run git commands."
+        raise PhylumCalledProcessError(err, msg) from err
 
 
 def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> str:
@@ -69,29 +77,25 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
     prefix = f"refs/remotes/{remote}/"
     cmd = [*base_cmd, "symbolic-ref", f"{prefix}HEAD"]
     try:
-        default_branch_name = subprocess.run(
-            cmd,  # noqa: S603
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout.strip()
-    except subprocess.CalledProcessError:
+        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+    except subprocess.CalledProcessError as outer_err:
         # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
         # the except block, is due to wanting to minimize calling commands that require git credentials.
-        print(" [!] Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
+        pprint_subprocess_error(outer_err)
+        LOG.warning("Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
         git_set_remote_head(remote)
-        default_branch_name = subprocess.run(
-            cmd,  # noqa: S603
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout.strip()
+        try:
+            default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        except subprocess.CalledProcessError as inner_err:
+            msg = "Failed to get the remote HEAD ref even after setting it."
+            raise PhylumCalledProcessError(inner_err, msg) from outer_err
 
+    default_branch_name = default_branch_name.strip()
     # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
     if default_branch_name.startswith(prefix):
         default_branch_name = default_branch_name.replace(prefix, "", 1)
 
-    print(f" [+] Default branch name: {default_branch_name}")
+    LOG.debug("Default branch name: %s", default_branch_name)
 
     return default_branch_name
 
@@ -104,7 +108,11 @@ def git_curent_branch_name(git_c_path: Optional[Path] = None) -> str:
     """
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     cmd = [*base_cmd, "branch", "--show-current"]
-    current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    try:
+        current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error retrieving the current branch name"
+        raise PhylumCalledProcessError(err, msg) from err
     return current_branch
 
 
@@ -117,7 +125,11 @@ def git_hash_object(object_path: Path, git_c_path: Optional[Path] = None) -> str
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
     cmd = [*base_cmd, "hash-object", str(object_path)]
-    hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    try:
+        hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error retrieving the git hash object"
+        raise PhylumCalledProcessError(err, msg) from err
     return hash_object
 
 
@@ -144,11 +156,19 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
         is_remote_defined = True
         cmd = [*base_cmd, "remote", "get-url", remote]
     except RuntimeError as err:
-        print(f" [!] {err}. Will get the repo name from the local repository instead.")
+        LOG.warning("%s. Will get the repo name from the local repository instead.", err)
         is_remote_defined = False
         cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
 
-    full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    try:
+        full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = """\
+            Getting the git repository name failed. Are all assumptions met:
+              * Only a single remote is in use if remotes are used
+              * When a remote exists, it points to a URL and not another local repo
+              * Cloned local repos without a remote defined have a name that does not end in `.git`"""
+        raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
     full_repo_path = Path(full_repo_name)
     repo_name = full_repo_path.name

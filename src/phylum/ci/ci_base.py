@@ -28,8 +28,10 @@ from phylum.ci.git import git_hash_object, git_repo_name
 from phylum.ci.lockfile import Lockfile, Lockfiles
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
+from phylum.logger import LOG, progress_spinner
 
 
 class CIBase(ABC):
@@ -46,6 +48,7 @@ class CIBase(ABC):
         self._args = args
         self._all_deps = args.all_deps
         self._force_analysis = args.force_analysis
+        self._returncode = ReturnCode.SUCCESS
 
         # Create a copy of the original `.phylum_project` file values, when the file exists.
         # This is necessary because it is possible that user-provided values for the project and
@@ -59,7 +62,7 @@ class CIBase(ABC):
 
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
-        print(" [+] All pre-requisites met")
+        LOG.info("All pre-requisites met")
 
         self._analysis_report = "No analysis output yet"
         self.ci_platform_name = "Unknown"
@@ -78,6 +81,18 @@ class CIBase(ABC):
         """Get the namespace arguments provided on the command line."""
         return self._args
 
+    @property
+    def returncode(self) -> ReturnCode:
+        """Get the current return code."""
+        return self._returncode
+
+    @returncode.setter
+    def returncode(self, value: ReturnCode) -> None:
+        """Set the return code value."""
+        # Do not allow setting a `SUCCESS` value once the return code has already been set to an error value.
+        if self._returncode == ReturnCode.SUCCESS or value != ReturnCode.SUCCESS:
+            self._returncode = value
+
     @cached_property
     def lockfiles(self) -> Lockfiles:
         """Get the package lockfile(s) in lexicographic order.
@@ -91,48 +106,55 @@ class CIBase(ABC):
         if arg_lockfiles:
             # flatten the list of lists
             provided_arg_lockfiles = [path for sub_list in arg_lockfiles for path in sub_list]
-            print(f" [+] Lockfile(s) provided as arguments: {provided_arg_lockfiles}")
+            LOG.debug("Lockfile(s) provided as arguments: %s", provided_arg_lockfiles)
             valid_lockfiles = self.filter_lockfiles(provided_arg_lockfiles)
             if valid_lockfiles:
-                print(f" [-] Valid provided lockfiles: {valid_lockfiles}")
+                LOG.debug("Valid provided lockfiles: %s", valid_lockfiles)
                 return valid_lockfiles
 
-        print(" [+] No valid lockfiles were provided as arguments. Checking the `.phylum_project` file ...")
+        LOG.info("No valid lockfiles were provided as arguments. Checking the `.phylum_project` file ...")
         lockfile_entries: List[OrderedDict] = self._project_settings.get("lockfiles", [])
         lockfile_paths = [lockfile_entry.get("path") for lockfile_entry in lockfile_entries]
         provided_project_lockfiles = [Path(lockfile) for lockfile in lockfile_paths if lockfile]
         if provided_project_lockfiles:
-            print(f" [+] Lockfile(s) provided in `.phylum_project` file: {provided_project_lockfiles}")
+            LOG.debug("Lockfile(s) provided in `.phylum_project` file: %s", provided_project_lockfiles)
             valid_lockfiles = self.filter_lockfiles(provided_project_lockfiles)
             if valid_lockfiles:
-                print(f" [-] Valid provided lockfiles: {valid_lockfiles}")
+                LOG.debug("Valid provided lockfiles: %s", valid_lockfiles)
                 return valid_lockfiles
 
-        print(" [+] No valid lockfiles in the `.phylum_project` file. An attempt will be made to detect lockfiles.")
+        LOG.info("No valid lockfiles in the `.phylum_project` file. An attempt will be made to detect lockfiles.")
         detected_lockfiles = detect_lockfiles()
         if detected_lockfiles:
-            print(f" [+] Detected lockfile(s): {detected_lockfiles}")
+            LOG.debug("Detected lockfile(s): %s", detected_lockfiles)
             valid_lockfiles = self.filter_lockfiles(detected_lockfiles)
             if valid_lockfiles:
-                print(f" [-] Valid detected lockfiles: {valid_lockfiles}")
+                LOG.debug("Valid detected lockfiles: %s", valid_lockfiles)
                 return valid_lockfiles
 
-        raise SystemExit(" [!] No valid lockfiles were detected. Consider specifying at least one with `--lockfile`.")
+        msg = "No valid lockfiles were detected. Consider specifying at least one with `--lockfile`."
+        raise SystemExit(msg)
 
+    @progress_spinner("Filtering lockfiles")
     def filter_lockfiles(self, provided_lockfiles: List[Path]) -> Lockfiles:
         """Filter potential lockfiles and return the valid ones in sorted order."""
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
-                raise SystemExit(f" [!] Provided lockfile does not exist: {provided_lockfile}")
+                LOG.warning("Provided lockfile does not exist: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
+                continue
             if not provided_lockfile.stat().st_size:
-                print(f" [!] Provided lockfile is an empty file: {provided_lockfile}")
+                LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             cmd = [str(self.cli_path), "parse", str(provided_lockfile)]
-            # stdout and stderr are piped to DEVNULL because we only care about the return code.
-            # pylint: disable-next=subprocess-run-check ; we want return code here and don't want to raise when non-zero
-            if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode):  # noqa: S603
-                print(f" [!] Provided lockfile failed to parse as a known lockfile type: {provided_lockfile}")
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            except subprocess.CalledProcessError as err:
+                pprint_subprocess_error(err)
+                LOG.warning("Provided lockfile failed to parse as a known lockfile type: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
         return sorted(lockfiles)
@@ -160,18 +182,18 @@ class CIBase(ABC):
         """
         project_name = self.args.project
         if project_name:
-            print(f" [+] Project name provided as argument: {project_name}")
+            LOG.debug("Project name provided as argument: %s", project_name)
             return project_name
 
-        print(" [+] Project name not provided as argument. Checking the `.phylum_project` file ...")
+        LOG.info("Project name not provided as argument. Checking the `.phylum_project` file ...")
         project_name = self._project_settings.get("name")
         if project_name:
-            print(f" [+] Project name provided in `.phylum_project` file: {project_name}")
+            LOG.debug("Project name provided in `.phylum_project` file: %s", project_name)
             return project_name
 
-        print(" [+] Project name not found in the `.phylum_project` file or file does not exist. Detecting instead ...")
+        LOG.info("Project name not found in the `.phylum_project` file or file does not exist. Detecting instead ...")
         project_name = git_repo_name()
-        print(f" [+] Project name detected from git repository name: {project_name}")
+        LOG.debug("Project name detected from git repository name: %s", project_name)
         return project_name
 
     @property
@@ -212,33 +234,36 @@ class CIBase(ABC):
         # fmt: on
         cli_path, cli_version = get_phylum_bin_path()
         if cli_path is None:
-            print(f" [+] Existing Phylum CLI instance not found. Installing version `{specified_version}` ...")
+            LOG.warning("Existing Phylum CLI instance not found. Installing version `%s` ...", specified_version)
             phylum_init(install_args)
         else:
-            print(f" [+] Existing Phylum CLI instance found: {cli_version} at {cli_path}")
+            LOG.debug("Existing Phylum CLI instance found: %s at %s", cli_version, cli_path)
             if cli_version != specified_version:
-                print(f" [+] Existing version {cli_version} does not match the specified version {specified_version}")
+                LOG.warning("Existing version %s does not match specified version %s", cli_version, specified_version)
                 if self.args.force_install:
-                    print(f" [*] Installing Phylum CLI version {specified_version} ...")
+                    LOG.warning("Forced install option given. Installing Phylum CLI version %s ...", specified_version)
                     phylum_init(install_args)
                 else:
-                    print(" [+] Attempting to use existing version ...")
+                    LOG.debug("Attempting to use existing version ...")
                     if Version(str(cli_version)) < Version(MIN_CLI_VER_INSTALLED):
-                        raise SystemExit(f" [!] The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}")
-                    print(" [+] Version checks succeeded. Using existing version.")
+                        msg = f"The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}"
+                        raise SystemExit(msg)
+                    LOG.info("Version checks succeeded. Using existing version.")
 
         cli_path, cli_version = get_phylum_bin_path()
         if cli_path is None:
-            raise SystemExit(" [!] Failed to initialize the Phylum CLI")
+            msg = "Failed to initialize the Phylum CLI"
+            raise SystemExit(msg)
 
         # Exit condition: a Phylum API key should be in place or available at this point.
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
         cmd = [str(cli_path), "auth", "token"]
         # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
         if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603
-            raise SystemExit(" [!] A Phylum API key is required to continue.")
+            msg = "A Phylum API key is required to continue."
+            raise SystemExit(msg)
 
-        print(f" [+] Using Phylum CLI instance: {cli_version} at {cli_path}")
+        LOG.info("Using Phylum CLI instance: %s at %s", cli_version, cli_path)
         return cli_path
 
     @property
@@ -304,20 +329,20 @@ class CIBase(ABC):
         branch history...which can happen with shallow clones.
         """
         for lockfile in self.lockfiles:
-            print(f" [*] Checking `{lockfile!r}` for changes ...")
+            LOG.debug("Checking `%r` for changes ...", lockfile)
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
             cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(lockfile.path)]
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
-                print(f" [-] The lockfile `{lockfile!r}` has not changed")
+                LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = False
             elif ret.returncode == 1:
-                print(f" [-] The lockfile `{lockfile!r}` has changed")
+                LOG.debug("The lockfile [code]%r[/] has changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = True
             else:
                 if err_msg:
-                    print(textwrap.dedent(err_msg))
+                    LOG.error("%s", textwrap.dedent(err_msg))
                 ret.check_returncode()
 
     @abstractmethod
@@ -328,41 +353,48 @@ class CIBase(ABC):
           * A Phylum CLI version with ability to specify multiple lockfiles
           * Have `git` installed and available for use on the PATH
         """
-        print(" [+] Confirming pre-requisites ...")
+        LOG.info("Confirming pre-requisites ...")
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
-            raise SystemExit(f" [!] The CLI version must be at least {MIN_CLI_VER_INSTALLED}")
+            msg = f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}"
+            raise SystemExit(msg)
 
         if shutil.which("git"):
-            print(" [+] `git` binary found on the PATH")
+            LOG.debug("`git` binary found on the PATH")
         else:
-            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+            msg = "`git` is required to be installed and available on the PATH"
+            raise SystemExit(msg)
 
+    @progress_spinner("Ensuring a Phylum project exists")
     def ensure_project_exists(self) -> None:
         """Ensure a Phylum project is created and in place.
 
         A project may or may not already exist. Attempt to create the project, possibly overwriting a `.phylum_project`
         file that already exists. Continue on without error when the specified project already exists.
         """
-        print(f" [*] Attempting to create a Phylum project with the name: {self.phylum_project} ...")
+        LOG.info("Attempting to create a Phylum project with the name: %s ...", self.phylum_project)
         cmd = [str(self.cli_path), "project", "create", self.phylum_project]
         if self.phylum_group:
-            print(f" [-] Using Phylum group: {self.phylum_group}")
+            LOG.debug("Using Phylum group: %s", self.phylum_group)
             cmd = [str(self.cli_path), "project", "create", "--group", self.phylum_group, self.phylum_project]
-        ret = subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  # noqa: S603
-        # The Phylum CLI will return a unique error code of 14 when a project that already
-        # exists is attempted to be created. This situation is recognized and allowed to happen
-        # since it means the project exists as expected. Any other exit code is an error.
-        cli_exit_code_project_already_exists = 14
-        if ret.returncode == 0:
-            print(f" [-] Project {self.phylum_project} created successfully.")
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            LOG.info("Project %s created successfully.", self.phylum_project)
             if self._project_file_already_existed:
-                print(f" [!] Overwrote previous `.phylum_project` file found at: {self._phylum_project_file}")
-        elif ret.returncode == cli_exit_code_project_already_exists:
-            print(f" [-] Project {self.phylum_project} already exists. Continuing with it ...")
-        else:
-            print(f" [!] There was a problem creating the project with command: {shlex.join(cmd)}")
-            ret.check_returncode()
+                LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
+        except subprocess.CalledProcessError as err:
+            # The Phylum CLI will return a unique error code when a project that already
+            # exists is attempted to be created. This situation is recognized and allowed to happen
+            # since it means the project exists as expected. Any other exit code is an error.
+            cli_exit_code_project_already_exists = 14
+            if err.returncode == cli_exit_code_project_already_exists:
+                LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
+            else:
+                msg = """\
+                    There was a problem creating the project.
+                    A PRO account is needed to create a project with a group.
+                    If the command was expected to succeed, please report this as a bug."""
+                raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
     def post_output(self) -> None:
         """Post the output of the analysis as markdown rendered for output to the terminal/logs.
@@ -371,11 +403,12 @@ class CIBase(ABC):
         ensure those comments are unique and not added multiple times as the review changes but no lockfile does.
         """
         # Post the markdown output, rendered for terminal/log output
-        print(" [+] Analysis output:\n")
+        LOG.debug("Analysis output:\n")
         report_md = Markdown(self.analysis_report, hyperlinks=False)
-        console.print(report_md, soft_wrap=True)
+        console.print(report_md)
 
-    def analyze(self) -> ReturnCode:
+    @progress_spinner("Analyzing dependencies with Phylum")
+    def analyze(self) -> None:
         """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
         # Build up the analyze command based on the provided inputs
         cmd = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
@@ -384,20 +417,20 @@ class CIBase(ABC):
         cmd.extend(["--verbose", "--json"])
 
         if self.all_deps:
-            print(" [+] Considering all current dependencies ...")
+            LOG.info("Considering all current dependencies ...")
             base_pkgs = []
             total_packages = {pkg for lockfile in self.lockfiles for pkg in lockfile.current_lockfile_packages()}
-            print(f" [+] {len(total_packages)} unique current dependencies")
+            LOG.debug("%s unique current dependencies", len(total_packages))
         else:
-            print(" [+] Only considering newly added dependencies ...")
+            LOG.info("Only considering newly added dependencies ...")
             # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is necessary
             # to ensure the `is_lockfile_changed` property is set for each lockfile. Simply referencing
             # the `is_any_lockfile_changed` property will ensure this happens.
             if self.force_analysis and self.is_any_lockfile_changed:
-                print(" [-] Updated each lockfile's change status")
+                LOG.debug("Updated each lockfile's change status")
             base_pkgs = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.base_deps})
             new_packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
-            print(f" [+] {len(new_packages)} unique newly added dependencies")
+            LOG.debug("%s unique newly added dependencies", len(new_packages))
 
         with tempfile.NamedTemporaryFile(mode="w+", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
@@ -406,7 +439,8 @@ class CIBase(ABC):
             cmd.extend(["--base", base_fd.name])
             cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
 
-            print(f" [*] Performing analysis with command: {shlex.join(cmd)}")
+            LOG.info("Performing analysis. This may take a few seconds.")
+            LOG.debug("Using analysis command: %s", shlex.join(cmd))
             try:
                 analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
             except subprocess.CalledProcessError as err:
@@ -416,30 +450,29 @@ class CIBase(ABC):
                 if err.returncode == cli_exit_code_failed_policy:
                     analysis_result = err.stdout
                 else:
-                    print(f" [!] stdout:\n{err.stdout}")
-                    print(f" [!] stderr:\n{err.stderr}")
-                    raise SystemExit(f" [!] {err}") from err
+                    msg = """\
+                        There was a problem analyzing the project.
+                        A PRO account is needed to use groups.
+                        If the command was expected to succeed, please report this as a bug."""
+                    raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         analysis = JobPolicyEvalResult(**json.loads(analysis_result))
         self._analysis_report = analysis.report
 
-        returncode = ReturnCode.SUCCESS
         # The logic below would make for a good match statement, which was introduced in Python 3.10
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
-                print(" [!] The analysis is complete and there were failures")
-                returncode = ReturnCode.FAILURE
+                LOG.error("The analysis is complete and there were failures")
+                self.returncode = ReturnCode.FAILURE
             else:
-                print(" [+] The analysis is complete and there were NO failures")
-                returncode = ReturnCode.SUCCESS
+                LOG.info("The analysis is complete and there were NO failures")
+                self.returncode = ReturnCode.SUCCESS
         elif analysis.is_failure:
-            print(" [!] There were failures in one or more completed packages")
-            returncode = ReturnCode.FAILURE_INCOMPLETE
+            LOG.error("There were failures in one or more completed packages")
+            self.returncode = ReturnCode.FAILURE_INCOMPLETE
         else:
-            print(" [+] There were no failures in the packages that have completed so far")
-            returncode = ReturnCode.INCOMPLETE
-
-        return returncode
+            LOG.warning("There were no failures in the packages that have completed so far")
+            self.returncode = ReturnCode.INCOMPLETE
 
 
 # Type alias
@@ -467,8 +500,7 @@ def detect_lockfiles() -> List[Path]:
             spec = pathspec.PathSpec.from_lines("gitwildmatch", lines)
         except (UnicodeDecodeError, pathspec.patterns.gitwildmatch.GitWildMatchPatternError) as err:
             # Ignore the failure and proceed without ignore-file filtering (how ironic)
-            print(f" [!] Could not parse an ignore file: {err}")
-            print(" [-] Continuing anyway ...")
+            LOG.warning("Could not parse ignore file %s - continuing anyway ...", err)
 
     lockfiles = [path.resolve() for lockfile_glob in SUPPORTED_LOCKFILES for path in cwd.glob(f"**/{lockfile_glob}")]
     if spec:

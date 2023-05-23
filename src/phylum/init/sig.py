@@ -31,6 +31,8 @@ from cryptography.hazmat.backends.openssl import backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa, types
 
+from phylum.logger import LOG, progress_spinner
+
 # This is the RSA Public Key for Phylum, Inc. The matching private key was used to sign the software releases
 PHYLUM_RSA_PUBKEY = bytes(
     dedent(
@@ -50,6 +52,7 @@ PHYLUM_RSA_PUBKEY = bytes(
 )
 
 
+@progress_spinner("Verifying RSA SHA256 signature")
 def verify_sig(file_path: Path, sig_path: Path) -> None:
     """Verify a given file has a valid signature.
 
@@ -61,23 +64,26 @@ def verify_sig(file_path: Path, sig_path: Path) -> None:
     try:
         # The `cryptography` library does not know this is an RSA public key yet...make sure it is
         phylum_public_key: types.PUBLIC_KEY_TYPES = serialization.load_pem_public_key(PHYLUM_RSA_PUBKEY)
-        if isinstance(phylum_public_key, rsa.RSAPublicKey):
-            phylum_rsa_public_key: rsa.RSAPublicKey = phylum_public_key
-        else:
-            raise SystemExit(f" [!] The public key was expected to be RSA but instead got: {type(phylum_public_key)}")
     except UnsupportedAlgorithm as err:
         openssl_ver = backend.openssl_version_text()
-        msg = f" [!] Serialized key type is not supported by the OpenSSL version `cryptography` is using: {openssl_ver}"
+        msg = f"Serialized key type is not supported by the OpenSSL version `cryptography` is using: {openssl_ver}"
         raise SystemExit(msg) from err
     except ValueError as err:
-        raise SystemExit(" [!] The PEM data's structure could not be decoded successfully") from err
+        msg = "The PEM data's structure could not be decoded successfully"
+        raise SystemExit(msg) from err
+
+    if isinstance(phylum_public_key, rsa.RSAPublicKey):
+        phylum_rsa_public_key: rsa.RSAPublicKey = phylum_public_key
+    else:
+        msg = f"The public key was expected to be RSA but instead got: {type(phylum_public_key)}"
+        raise SystemExit(msg)
 
     # Confirm the data from `file_path` with the signature from the `sig_path`
     try:
-        print(f" [*] Verifying {file_path} with signature from {sig_path} ...", end="")
+        LOG.info("Verifying %s with signature from %s ...", file_path, sig_path)
         # NOTE: The verify method has no return value, but will raise an exception when the signature does not validate
         phylum_rsa_public_key.verify(sig_path.read_bytes(), file_path.read_bytes(), padding.PKCS1v15(), hashes.SHA256())
-        print("SUCCESS", flush=True)
+        LOG.info("Signature verification succeeded")
     except InvalidSignature as err:
-        print("FAIL", flush=True)
-        raise SystemExit(" [!] The signature could not be verified and may be invalid") from err
+        LOG.critical("The signature could not be verified and may be invalid!")
+        raise SystemExit from err

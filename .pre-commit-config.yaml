@@ -58,7 +58,7 @@ repos:
   - repo: local
     hooks:
       - id: phylum-ci
-        name: analyze lockfile with phylum-ci
+        name: analyze dependencies with phylum-ci
         language: system
         files: ^poetry\.lock$
-        entry: poetry run phylum-ci
+        entry: poetry run phylum-ci -vv

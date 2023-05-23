@@ -13,6 +13,8 @@ from typing import Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name, git_remote
+from phylum.exceptions import pprint_subprocess_error
+from phylum.logger import LOG
 
 
 class CINone(CIBase):
@@ -32,9 +34,10 @@ class CINone(CIBase):
 
         git_dir = Path.cwd() / ".git"
         if git_dir.is_dir():
-            print(" [+] Existing `.git` directory was found at the current working directory")
+            LOG.debug("Existing [code].git[/] directory found at the current working directory", extra={"markup": True})
         else:
-            raise SystemExit(" [!] This script expects to be run from the top level of a `git` repository")
+            msg = "This script expects to be run from the top level of a `git` repository"
+            raise SystemExit(msg)
 
     @property
     def phylum_label(self) -> str:
@@ -52,9 +55,8 @@ class CINone(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            print(f" [!] The common ancestor commit could not be found: {err}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
+            pprint_subprocess_error(err)
+            LOG.warning("The common ancestor commit could not be found")
             common_commit = None
         return common_commit
 

@@ -1,9 +1,14 @@
 """"Test the phylum-ci command line interface (CLI)."""
+import logging
 import subprocess
 import sys
 
+import pytest
+
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
+from phylum.ci.cli import get_args
+from phylum.logger import LOG, LOGGING_TRACE_LEVEL, set_logger_level
 from tests.constants import PYPROJECT
 
 
@@ -36,3 +41,24 @@ def test_version_option():
     assert not ret.stderr, "Nothing should be written to stderr"
     assert ret.returncode == 0, "A non-successful return code was provided"
     assert ret.stdout == expected_output, "Output did not match expected input"
+
+
+@pytest.mark.parametrize(
+    ("supplied_args", "expected_level"),
+    [
+        ([], logging.WARNING),
+        (["-v"], logging.INFO),
+        (["-vv"], logging.DEBUG),
+        (["-vvv"], LOGGING_TRACE_LEVEL),
+        (["-vvvv"], LOGGING_TRACE_LEVEL),
+        (["-q"], logging.ERROR),
+        (["-qq"], logging.CRITICAL),
+        (["-qqq"], logging.CRITICAL),
+    ],
+)
+@pytest.mark.usefixtures("_log")
+def test_log_verbosity_set_correctly(supplied_args, expected_level):
+    """Ensure the log verbosity options are handled correctly."""
+    args, _ = get_args(supplied_args)
+    set_logger_level(args.verbose - args.quiet)
+    assert LOG.getEffectiveLevel() == expected_level

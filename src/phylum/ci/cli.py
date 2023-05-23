@@ -16,7 +16,8 @@ from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
 from phylum.constants import HELP_MSG_API_URI, HELP_MSG_TARGET, HELP_MSG_TOKEN, HELP_MSG_VERSION
-from phylum.init.cli import default_phylum_cli_version, get_target_triple, version_check
+from phylum.init.cli import get_target_triple, process_version
+from phylum.logger import LOG, set_logger_level
 
 
 def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
@@ -28,40 +29,41 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
 
     # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":
-        print(" [+] CI environment detected: GitLab CI")
+        LOG.debug("CI environment detected: GitLab CI")
         ci_envs.append(CIGitLab(args))
 
     # Detect GitHub Actions
     if os.getenv("GITHUB_ACTIONS") == "true":
-        print(" [+] CI environment detected: GitHub Actions")
+        LOG.debug("CI environment detected: GitHub Actions")
         ci_envs.append(CIGitHub(args))
 
     # Detect Azure Pipelines
     if os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"):
-        print(" [+] CI environment detected: Azure Pipelines")
+        LOG.debug("CI environment detected: Azure Pipelines")
         ci_envs.append(CIAzure(args))
 
     # Detect Bitbucket Pipelines
     if os.getenv("BITBUCKET_COMMIT"):
-        print(" [+] CI environment detected: Bitbucket Pipelines")
+        LOG.debug("CI environment detected: Bitbucket Pipelines")
         ci_envs.append(CIBitbucket(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,
     # via a pre-requisite check, to check the extra arguments for common/valid pre-commit usage patterns.
     if any(remainder):
-        print(" [+] Extra arguments provided. Assuming a Python `pre-commit` working environment.")
+        LOG.debug("Extra arguments provided. Assuming a Python `pre-commit` working environment.")
         ci_envs.append(CIPreCommit(args, remainder))
 
     if len(ci_envs) > 1:
         ci_platform_names = ", ".join(ci_env.ci_platform_name for ci_env in ci_envs)
-        raise SystemExit(f" [!] Multiple CI environments detected: {ci_platform_names}")
+        msg = f"Multiple CI environments detected: {ci_platform_names}"
+        raise SystemExit(msg)
     if len(ci_envs) == 1:
         ci_env = ci_envs[0]
     else:
         # Fallback to default local environment
         # This happens when the `phylum-ci` command is run directly, from the CLI, but not within a CI environment.
-        print(" [+] No CI environment detected")
+        LOG.debug("No CI environment detected")
         ci_env = CINone(args)
 
     return ci_env
@@ -80,6 +82,22 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "--version",
         action="version",
         version=f"{SCRIPT_NAME} {__version__}",
+    )
+
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase output verbosity (the maximum is -vvv)",
+    )
+    log_group.add_argument(
+        "-q",
+        "--quiet",
+        action="count",
+        default=0,
+        help="Decrease output verbosity (the maximum is -qq)",
     )
 
     analysis_group = parser.add_argument_group(title="Lockfile Analysis Options")
@@ -164,44 +182,39 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
 def main(args: Optional[Sequence[str]] = None) -> int:
     """Provide the main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
+    set_logger_level(parsed_args.verbose - parsed_args.quiet)
 
-    # Perform version check and normalization here so as to minimize GitHub API calls when
-    # showing the help message but still bail early when the version provided is invalid
-    if parsed_args.version:
-        print(f" [+] Phylum CLI version was specified as: {parsed_args.version}")
-        parsed_args.version = version_check(parsed_args.version)
-    else:
-        print(" [+] Phylum CLI version not specified")
-        parsed_args.version = version_check(default_phylum_cli_version())
-    print(f" [*] Using Phylum CLI version: {parsed_args.version}")
+    # Perform version check and normalization separately from the argument parsing so as to minimize GitHub
+    # API calls when showing the help message but still bail early when the version provided is invalid.
+    parsed_args.version = process_version(parsed_args.version)
 
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
     # Bail early if there are no changes to any lockfile
-    print(f" [+] lockfile(s) in use: {ci_env.lockfiles}")
+    LOG.debug("Lockfiles in use: %s", ci_env.lockfiles)
     if ci_env.force_analysis:
-        print(" [+] Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
+        LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     elif ci_env.is_any_lockfile_changed:
-        print(" [+] A lockfile has changed. Proceeding with analysis ...")
+        LOG.info("A lockfile has changed. Proceeding with analysis ...")
     else:
-        print(" [+] No lockfile has changed. Nothing to do.")
+        LOG.warning("No lockfile has changed. Nothing to do.")
         return 0
 
     # Generate a label to use for analysis and report it
-    print(f" [+] Label to use for analysis: {ci_env.phylum_label}")
+    LOG.info("Label to use for analysis: %s", ci_env.phylum_label)
 
-    # Analyze current project lockfile(s) with phylum CLI and review analysis results to determine the overall state
-    return_code = ci_env.analyze()
-    print(f" [-] Return code: {return_code}")
+    # Analyze current project lockfile(s) with Phylum CLI
+    ci_env.analyze()
 
     # Output the results of the analysis
     ci_env.post_output()
 
     # Don't return a failure code if the results are unknown at this point
-    if return_code == ReturnCode.INCOMPLETE:
+    LOG.debug("Return code: %s", ci_env.returncode)
+    if ci_env.returncode == ReturnCode.INCOMPLETE:
         return 0
-    return return_code.value
+    return ci_env.returncode.value
 
 
 def script_main() -> None:

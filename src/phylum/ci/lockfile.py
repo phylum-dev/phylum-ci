@@ -13,6 +13,8 @@ import textwrap
 from typing import List, Optional, TypeVar
 
 from phylum.ci.common import PackageDescriptor, Packages
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
+from phylum.logger import LOG
 
 # Starting with Python 3.11, the `typing.Self` type was introduced to do this same thing.
 # Reference: https://peps.python.org/pep-0673/
@@ -30,7 +32,8 @@ class Lockfile:
         self._is_lockfile_changed: Optional[bool] = None
 
         if not shutil.which("git"):
-            raise SystemExit(" [!] `git` is required to be installed and available on the PATH")
+            msg = "`git` is required to be installed and available on the PATH"
+            raise SystemExit(msg)
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Lockfile` object."""
@@ -82,7 +85,7 @@ class Lockfile:
         """
         prev_lockfile_object = self.previous_lockfile_object()
         if not prev_lockfile_object:
-            print(f" [+] No previous lockfile object found for `{self!r}`. Assuming no base dependencies.")
+            LOG.info("No previous lockfile object found for `%r`. Assuming no base dependencies.", self)
             return []
         prev_lockfile_packages = sorted(set(self.get_previous_lockfile_packages(prev_lockfile_object)))
         return prev_lockfile_packages
@@ -92,7 +95,7 @@ class Lockfile:
         """Get the new dependencies added to the lockfile and return them in sorted order."""
         # Only consider newly added dependencies
         if self.is_lockfile_changed is None:
-            print(" [!] The `is_lockfile_changed` property has not been set yet")
+            LOG.warning("The `is_lockfile_changed` property has not been set yet")
         if not self.is_lockfile_changed:
             return []
 
@@ -100,7 +103,7 @@ class Lockfile:
 
         prev_lockfile_object = self.previous_lockfile_object()
         if not prev_lockfile_object:
-            print(f" [+] No previous lockfile object found for `{self!r}`. Assuming all current packages are new.")
+            LOG.debug("No previous lockfile object found for `%r`. Assuming all current packages are new.", self)
             return curr_lockfile_packages
 
         prev_lockfile_packages = self.get_previous_lockfile_packages(prev_lockfile_object)
@@ -112,7 +115,7 @@ class Lockfile:
         #                https://github.com/phylum-dev/roadmap/issues/263
         new_deps_set = curr_pkg_set.difference(prev_pkg_set)
         new_deps_list = sorted(new_deps_set)
-        print(f" [+] New dependencies in `{self!r}`: {new_deps_list}")
+        LOG.debug("New dependencies in `%r`: %s", self, new_deps_list)
         return new_deps_list
 
     @lru_cache(maxsize=1)
@@ -122,10 +125,8 @@ class Lockfile:
             cmd = [str(self.cli_path), "parse", str(self.path)]
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
-            print(f" [!] stdout:\n{err.stdout}")
-            print(f" [!] stderr:\n{err.stderr}")
-            raise SystemExit(f" [!] Is `{self!r}` a valid lockfile? If so, please report this as a bug.") from err
+            msg = f"Is [reverse]{self!r}[/] a valid lockfile? If so, please report this as a bug."
+            raise PhylumCalledProcessError(err, msg) from err
         parsed_pkgs = json.loads(parse_result)
         curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return curr_lockfile_packages
@@ -141,18 +142,15 @@ class Lockfile:
         try:
             # Use the `repr` form to get the relative path to the lockfile
             cmd = ["git", "rev-parse", "--verify", f"{self.common_ancestor_commit}:{self!r}"]
-            prev_lockfile_object = subprocess.run(
-                cmd,  # noqa: S603
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
+            prev_lockfile_object = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+            prev_lockfile_object = prev_lockfile_object.strip()
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
-            print(f" [?] There *may* be an issue with the attempt to get the previous lockfile object: {err}")
-            print(f" [?] stdout:\n{err.stdout}")
-            print(f" [?] stderr:\n{err.stderr}")
-            print(" [+] Assuming a previous lockfile version does not exist ...")
+            msg = """\
+                There [italic]may[/] be an issue with the attempt to get the previous lockfile object.
+                Continuing with the assumption a previous lockfile version does not exist ..."""
+            pprint_subprocess_error(err)
+            LOG.warning(textwrap.dedent(msg), extra={"markup": True})
             prev_lockfile_object = None
         return prev_lockfile_object
 
@@ -171,10 +169,8 @@ class Lockfile:
                 prev_lockfile_fd.write(prev_lockfile_contents)
                 prev_lockfile_fd.flush()
             except subprocess.CalledProcessError as err:
-                print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
-                print(f" [!] stdout:\n{err.stdout}")
-                print(f" [!] stderr:\n{err.stderr}")
-                print(" [!] Due to error, assuming no previous lockfile packages. Please report this as a bug.")
+                pprint_subprocess_error(err)
+                LOG.error("Due to error, assuming no previous lockfile packages. Please report this as a bug.")
                 return []
             try:
                 cmd = [str(self.cli_path), "parse", prev_lockfile_fd.name]
@@ -185,17 +181,12 @@ class Lockfile:
                     text=True,
                 ).stdout.strip()
             except subprocess.CalledProcessError as err:
-                print(f" [!] There was an error running the command: {' '.join(err.cmd)}")
-                print(f" [!] stdout:\n{err.stdout}")
-                print(f" [!] stderr:\n{err.stderr}")
-                msg = textwrap.dedent(
-                    f"""\
-                    [!] Due to error, assuming no previous lockfile packages.
-                        Please report this as a bug if you believe `{self!r}`
-                        is a valid lockfile at revision `{self.common_ancestor_commit}`.
-                    """  # noqa: COM812 ; FP due to multiline string in function call
-                )
-                print(msg)
+                pprint_subprocess_error(err)
+                msg = f"""\
+                    Due to error, assuming no previous lockfile packages.
+                    Please report this as a bug if you believe [code]{self!r}[/]
+                    is a valid lockfile at revision [code]{self.common_ancestor_commit}[/]."""
+                LOG.warning(textwrap.dedent(msg), extra={"markup": True})
                 return []
 
         parsed_pkgs = json.loads(parse_result)
