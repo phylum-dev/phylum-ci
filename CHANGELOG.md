@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.29.0 (2023-05-23)
+### Feature
+* Add logging support and better error output ([#247](https://github.com/phylum-dev/phylum-ci/issues/247)) ([`0350be9`](https://github.com/phylum-dev/phylum-ci/commit/0350be9257cc906583b0a8ede83fe3e0ebe9ff12))
+
 ## v0.28.1 (2023-04-14)
 ### Fix
 * Link to Phylum UI project clipped in logs ([#227](https://github.com/phylum-dev/phylum-ci/issues/227)) ([`8d2e91e`](https://github.com/phylum-dev/phylum-ci/commit/8d2e91e0223045525c68d899df63fd75b20c10ba))
