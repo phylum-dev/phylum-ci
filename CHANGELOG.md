@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.30.0 (2023-05-24)
+### Feature
+* Add `npm-shrinkwrap.json` and `requirements*.txt` to supported lockfiles ([#250](https://github.com/phylum-dev/phylum-ci/issues/250)) ([`c21b0e6`](https://github.com/phylum-dev/phylum-ci/commit/c21b0e6b18c02549d25e592d558fcbf51c374553))
+
 ## v0.29.0 (2023-05-23)
 ### Feature
 * Add logging support and better error output ([#247](https://github.com/phylum-dev/phylum-ci/issues/247)) ([`0350be9`](https://github.com/phylum-dev/phylum-ci/commit/0350be9257cc906583b0a8ede83fe3e0ebe9ff12))
