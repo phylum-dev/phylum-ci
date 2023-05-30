@@ -22,7 +22,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: fbc96a6c25c4a03a3ab7cb6408b5852e739101b3  # frozen: v0.0.269
+    rev: 14b59ee3b18bd49d0816d1f36820c97110e780cc  # frozen: v0.0.270
     hooks:
       - id: ruff
 
@@ -37,7 +37,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: 98f2281f56be5503f3851e74556e1122fc18b2a8  # frozen: v1.31.0
+    rev: b05e028c5881819161d11cb543fd96a30c06cceb  # frozen: v1.32.0
     hooks:
       - id: yamllint
 
