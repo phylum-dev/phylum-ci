@@ -44,8 +44,10 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/python-poetry/poetry
-    # NOTE: The autoupdated/frozen version here may not always be the latest version:
+    # NOTE: The frozen version here may not always be the latest version:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
+    # NOTE: This `rev` should be manually updated whenever `poetry` is updated. The `rev` can be found by checking out
+    #       the `poetry` repository and running the command: `git show-ref --tags <tag_name>`
     rev: abe8da187ec1301dc9495828a3426e503712f405  # frozen: 1.5.1
     hooks:
       - id: poetry-check
