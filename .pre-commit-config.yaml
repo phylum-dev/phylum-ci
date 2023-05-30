@@ -3,8 +3,10 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 #
-# NOTE: Individual hook revisions are kept up to date automatically with
-#       the `auto_updates` workflow, which bumps hooks to the latest tag.
+# NOTE: Individual hook revisions are kept up to date automatically with the `auto_updates` workflow, which
+#       bumps hooks to the latest tag. That workflow manually specifies every repository except for `poetry`
+#       since it sometimes specifies the most recent tag on a stable version branch instead of the default branch.
+# NOTE: New repos added here should also be added to the `auto_updates` workflow.
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -44,7 +46,7 @@ repos:
   - repo: https://github.com/python-poetry/poetry
     # NOTE: The autoupdated/frozen version here may not always be the latest version:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
-    rev: cacd43c076748411a759c65dd46858cd8b7ef3b3  # frozen: 1.5.0
+    rev: abe8da187ec1301dc9495828a3426e503712f405  # frozen: 1.5.1
     hooks:
       - id: poetry-check
       - id: poetry-lock
