@@ -34,10 +34,8 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
-      - name: Install poetry and pre-commit
-        run: |
-          pipx install poetry==1.5.0
-          pipx install pre-commit
+      - name: Install poetry
+        run: pipx install poetry==1.5.1
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -48,15 +46,32 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      # The project does not need to be installed to update the lockfile
-      - name: Update Python dependencies
+      - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
+          poetry lock --check
+          poetry lock --no-update
+          poetry install --verbose --no-root --sync --with qa
+
+      # Update hooks before dependencies because otherwise `pre-commit` may be updated and used before it can be trusted
+      #
+      # NOTE: Specific repos are specified for update since the autoupdated/frozen version here may not always be the
+      # latest version. This is the case for `poetry`, which has described the limitations of `pre-commit` here:
+      # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
+      - name: Update pre-commit hooks
+        run: |
+          poetry run pre-commit autoupdate --freeze \
+          --repo https://github.com/pre-commit/pre-commit-hooks \
+          --repo https://github.com/psf/black \
+          --repo https://github.com/charliermarsh/ruff-pre-commit \
+          --repo https://github.com/dosisod/refurb \
+          --repo https://github.com/jendrikseipp/vulture \
+          --repo https://github.com/adrienverge/yamllint
+
+      - name: Update Python dependencies
+        run: |
           poetry update -vv --lock
           poetry lock --check
-
-      - name: Update pre-commit hooks
-        run: pre-commit autoupdate --freeze
 
       - name: Commit changes
         id: commit

@@ -350,7 +350,7 @@ class CIBase(ABC):
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         The current pre-requisites for *all* CI environments/platforms are:
-          * A Phylum CLI version with ability to specify multiple lockfiles
+          * A Phylum CLI version at least as new as the minimum supported version
           * Have `git` installed and available for use on the PATH
         """
         LOG.info("Confirming pre-requisites ...")
