@@ -42,7 +42,7 @@ jobs:
         run: |
           poetry env use python${{ matrix.python-version }}
           poetry lock --check
-          poetry lock --no-update
+          poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with qa
 
       - name: Run tox via poetry
@@ -82,7 +82,7 @@ jobs:
         run: |
           poetry env use python${{ matrix.python-version }}
           poetry lock --check
-          poetry lock --no-update
+          poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with test,ci
 
       - name: Run tox via poetry
@@ -119,7 +119,7 @@ jobs:
         run: |
           poetry env use python${{ matrix.python-version }}
           poetry lock --check
-          poetry lock --no-update
+          poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync
 
       - name: Build docker image from source
