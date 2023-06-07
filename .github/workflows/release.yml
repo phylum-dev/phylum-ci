@@ -82,7 +82,7 @@ jobs:
         run: |
           poetry env use python${{ matrix.python-version }}
           poetry lock --check
-          poetry lock --no-update
+          poetry lock --no-update --no-cache
           poetry install --verbose --sync --with test,ci
 
       - name: Set PHYLUM_ORIGINAL_VER value

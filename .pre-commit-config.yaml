@@ -17,6 +17,10 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
     rev: bf7a16254ec96b084a6caf3d435ec18f0f245cc7  # frozen: 23.3.0
@@ -24,7 +28,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 14b59ee3b18bd49d0816d1f36820c97110e780cc  # frozen: v0.0.270
+    rev: fdea37e497cb28d3b745dc9d07d64ae69d66fbd1  # frozen: v0.0.271
     hooks:
       - id: ruff
 
@@ -55,7 +59,7 @@ repos:
         args: [--check]
       # The `--check` option is the only one that will run when the `--no-update` option is also provided
       - id: poetry-lock
-        args: [--no-update]
+        args: [--no-update, --no-cache]
 
   # NOTE: don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`
