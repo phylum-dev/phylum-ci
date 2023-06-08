@@ -110,10 +110,10 @@ ignore = [
     "D203", # one-blank-line-before-class
     # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Prefer D212.
     "D213", # multi-line-summary-second-line
-    # Most `flake8-fixme` (T0) rules are incompatible with `flake8-todos` (TD). Prefer TD.
-    "T001",   # line-contains-fixme
-    "T002",   # line-contains-todo
-    "T003",   # line-contains-xxx
+    # These `flake8-fixme` (FIX) rules are incompatible with `flake8-todos` (TD). Prefer TD.
+    "FIX001",   # line-contains-fixme
+    "FIX002",   # line-contains-todo
+    "FIX003",   # line-contains-xxx
     # Cached instance methods are okay in this project b/c instances are short lived and won't lead to memory leaks.
     "B019", # cached-instance-method
     # Assigning to a variable before a return statement is more readable and useful for debugging
