@@ -50,7 +50,10 @@ jobs:
           # Skip the `phylum-ci` pre-commit hook since:
           #   * The current GitHub integration expects to *only* be run in a PR context
           #   * The `phylum-ci` action will already be run for pull request triggers
-          SKIP: phylum-ci
+          # Skip the `no-commit-to-branch` pre-commit hook since:
+          #   * It will cause failures in CI when merging a PR back to `main`
+          #   * The hook is meant to be used locally, where blocking before CI can run is the goal
+          SKIP: phylum-ci,no-commit-to-branch
           # Add annotations to the PR for any findings
           RUFF_FORMAT: github
         run: poetry run tox run -e qa
