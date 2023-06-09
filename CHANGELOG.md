@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.30.1 (2023-06-09)
+
+
+
 ## v0.30.0 (2023-05-24)
 ### Feature
 * Add `npm-shrinkwrap.json` and `requirements*.txt` to supported lockfiles ([#250](https://github.com/phylum-dev/phylum-ci/issues/250)) ([`c21b0e6`](https://github.com/phylum-dev/phylum-ci/commit/c21b0e6b18c02549d25e592d558fcbf51c374553))
