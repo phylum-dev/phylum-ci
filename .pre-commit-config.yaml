@@ -61,8 +61,8 @@ repos:
       - id: poetry-lock
         args: [--no-update, --no-cache]
 
-  # NOTE: don't use this config for your own repositories. Instead, see
-  #       "Git pre-commit Integration" in `docs/sync/git_precommit.md`
+  # NOTE: Don't use this config for your own repositories. Instead, see
+  #       "Git pre-commit Integration" at https://docs.phylum.io/docs/git_precommit
   - repo: local
     hooks:
       - id: phylum-ci
