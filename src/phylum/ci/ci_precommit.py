@@ -84,7 +84,7 @@ class CIPreCommit(CIBase):
 
     @property
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`."""
+        """Get a custom label for use when submitting jobs for analysis."""
         current_branch = git_curent_branch_name()
         label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
         label = re.sub(r"\s+", "-", label)

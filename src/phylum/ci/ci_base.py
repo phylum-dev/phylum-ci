@@ -29,6 +29,7 @@ from phylum.ci.lockfile import Lockfile, Lockfiles
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
+from phylum.exts.ci import CI_EXT_PATH
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
 from phylum.logger import LOG, progress_spinner
@@ -274,7 +275,7 @@ class CIBase(ABC):
     @property
     @abstractmethod
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`.
+        """Get a custom label for use when submitting jobs for analysis.
 
         Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
         However, each implementation is expected to at least:
@@ -409,12 +410,19 @@ class CIBase(ABC):
 
     @progress_spinner("Analyzing dependencies with Phylum")
     def analyze(self) -> None:
-        """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
-        # Build up the analyze command based on the provided inputs
-        cmd = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
+        """Analyze the results gathered from passing the lockfile(s) to the CLI."""
+        # Build up the extension command based on the provided inputs
+        cmd = [
+            str(self.cli_path),
+            "extension",
+            "run",
+            "--yes",
+            str(CI_EXT_PATH),
+            self.phylum_project,
+            self.phylum_label,
+        ]
         if self.phylum_group:
             cmd.extend(["--group", self.phylum_group])
-        cmd.extend(["--verbose", "--json"])
 
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
@@ -436,7 +444,7 @@ class CIBase(ABC):
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
 
-            cmd.extend(["--base", base_fd.name])
+            cmd.append(base_fd.name)
             cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
 
             LOG.info("Performing analysis. This may take a few seconds.")
