@@ -2,14 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# `phylum analyze` usage and report out was broken in v5.3.1-rc1
-# and fixed in v5.3.1-rc2 by enabling complete extension based analysis.
-MIN_CLI_VER_FOR_INSTALL = "v5.3.1-rc2"
+# Support for `requirements*.txt` lockfiles was added in v5.2.0
+MIN_CLI_VER_FOR_INSTALL = "v5.2.0"
 
 # This is the minimum CLI version supported for existing installs.
-# `phylum analyze` usage and report out was broken in v5.3.1-rc1
-# and fixed in v5.3.1-rc2 by enabling complete extension based analysis.
-MIN_CLI_VER_INSTALLED = "v5.3.1-rc2"
+# Support for `requirements*.txt` lockfiles was added in v5.2.0
+MIN_CLI_VER_INSTALLED = "v5.2.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
