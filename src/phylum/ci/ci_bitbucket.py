@@ -105,7 +105,7 @@ class CIBitbucket(CIBase):
 
     @property
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`."""
+        """Get a custom label for use when submitting jobs for analysis."""
         if is_in_pr():
             pr_id = os.getenv("BITBUCKET_PR_ID", "unknown-ID")
             pr_src_branch = os.getenv("BITBUCKET_BRANCH", "unknown-branch")

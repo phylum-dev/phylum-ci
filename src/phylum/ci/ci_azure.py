@@ -146,7 +146,7 @@ class CIAzure(CIBase):
 
     @property
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`."""
+        """Get a custom label for use when submitting jobs for analysis."""
         if is_in_pr():
             # This variable is only populated for PRs from GitHub which have a different PR ID and PR number
             pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")

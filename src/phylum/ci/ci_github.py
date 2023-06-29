@@ -111,7 +111,7 @@ class CIGitHub(CIBase):
 
     @property
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`."""
+        """Get a custom label for use when submitting jobs for analysis."""
         pr_number = self.pr_event.get("pull_request", {}).get("number", "unknown-number")
         pr_src_branch = os.getenv("GITHUB_HEAD_REF", "unknown-ref")
         label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"

@@ -87,7 +87,7 @@ class CIGitLab(CIBase):
 
     @property
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`."""
+        """Get a custom label for use when submitting jobs for analysis."""
         if is_in_mr():
             mr_iid = os.getenv("CI_MERGE_REQUEST_IID", "unknown-IID")
             mr_src_branch = os.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME", "unknown-branch")

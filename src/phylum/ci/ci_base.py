@@ -29,7 +29,8 @@ from phylum.ci.lockfile import Lockfile, Lockfiles
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED, SUPPORTED_LOCKFILES
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
-from phylum.init.cli import get_phylum_bin_path
+from phylum.exts.ci import CI_EXT_PATH
+from phylum.init.cli import get_phylum_bin_path, get_phylum_cli_version
 from phylum.init.cli import main as phylum_init
 from phylum.logger import LOG, progress_spinner
 
@@ -274,7 +275,7 @@ class CIBase(ABC):
     @property
     @abstractmethod
     def phylum_label(self) -> str:
-        """Get a custom label for use when submitting jobs with `phylum analyze`.
+        """Get a custom label for use when submitting jobs for analysis.
 
         Each CI platform/environment has unique ways of referencing events, PRs, branches, etc.
         However, each implementation is expected to at least:
@@ -409,12 +410,31 @@ class CIBase(ABC):
 
     @progress_spinner("Analyzing dependencies with Phylum")
     def analyze(self) -> None:
-        """Analyze the results gathered from passing the lockfile(s) to `phylum analyze`."""
-        # Build up the analyze command based on the provided inputs
-        cmd = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
+        """Analyze the results gathered from passing the lockfile(s) to the CLI."""
+        # `phylum analyze` usage and report output was changed in v5.3.1-rc1
+        # and updated in v5.3.1-rc2 by enabling complete extension based analysis.
+        # Using v5.3.1-rc1 specifically works but the label is not populated upon submission.
+        cli_ver_ext_analysis = "v5.3.1-rc1"
+
+        # Build up the command based on the version of the CLI in use and the provided inputs.
+        # This is the command to use for CLI versions < v5.3.1-rc1
+        cmd_analyze = [str(self.cli_path), "analyze", "--label", self.phylum_label, "--project", self.phylum_project]
+        # This is the command to use for CLI versions >= v5.3.1-rc1
+        cmd_ext_analyze = [
+            str(self.cli_path),
+            "extension",
+            "run",
+            "--yes",
+            str(CI_EXT_PATH),
+            self.phylum_project,
+            self.phylum_label,
+        ]
+
         if self.phylum_group:
-            cmd.extend(["--group", self.phylum_group])
-        cmd.extend(["--verbose", "--json"])
+            cmd_analyze.extend(["--group", self.phylum_group])
+            cmd_ext_analyze.extend(["--group", self.phylum_group])
+
+        cmd_analyze.extend(["--verbose", "--json"])
 
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
@@ -436,7 +456,13 @@ class CIBase(ABC):
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
 
-            cmd.extend(["--base", base_fd.name])
+            cmd_analyze.extend(["--base", base_fd.name])
+            cmd_ext_analyze.append(base_fd.name)
+
+            cmd = cmd_ext_analyze
+            if Version(get_phylum_cli_version(self.cli_path)) < Version(cli_ver_ext_analysis):
+                cmd = cmd_analyze
+
             cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
 
             LOG.info("Performing analysis. This may take a few seconds.")
@@ -456,7 +482,12 @@ class CIBase(ABC):
                         If the command was expected to succeed, please report this as a bug."""
                     raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
+        self.parse_analysis_result(analysis_result)
+
+    def parse_analysis_result(self, analysis_result: str) -> None:
+        """Parse the results of a Phylum analysis command output."""
         analysis = JobPolicyEvalResult(**json.loads(analysis_result))
+
         self._analysis_report = analysis.report
 
         # The logic below would make for a good match statement, which was introduced in Python 3.10
