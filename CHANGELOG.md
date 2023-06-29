@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.31.0 (2023-06-29)
+
+### Feature
+
+* Update the phylum analysis technique ([#269](https://github.com/phylum-dev/phylum-ci/issues/269)) ([`4a6367b`](https://github.com/phylum-dev/phylum-ci/commit/4a6367b2fd53d4594557c3b29d1e7fede5f044d6))
+
+### Documentation
+
+* Remove docs hosted in `documentation` repo ([#264](https://github.com/phylum-dev/phylum-ci/issues/264)) ([`1bcc72b`](https://github.com/phylum-dev/phylum-ci/commit/1bcc72b6a4e7220d447e55304fb99b958c2a5166))
+
 ## v0.30.1 (2023-06-09)
 
 
