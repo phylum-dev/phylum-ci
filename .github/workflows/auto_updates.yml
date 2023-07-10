@@ -79,7 +79,7 @@ jobs:
         # NOTE: The git user name and email used for commits is already configured,
         #       by the crazy-max/ghaction-import-gpg action.
         run: |
-          git commit -a -m "build: Bump `poetry.lock` dependencies and `pre-commit` hooks"
+          git commit -a -m "build: bump `poetry.lock` dependencies and `pre-commit` hooks"
           git push --force origin HEAD:workflow-auto-updates
 
       - name: Create Pull Request

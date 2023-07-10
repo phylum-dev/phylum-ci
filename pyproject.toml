@@ -118,6 +118,8 @@ ignore = [
     "B019", # cached-instance-method
     # Assigning to a variable before a return statement is more readable and useful for debugging
     "RET504",   # unnecessary-assign
+    # Allowing exception handling within loops improves readability with ony a negligible performance impact.
+    "PERF203",  # try-except-in-loop
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
     "ANN",  # flake8-annotations
     "TCH",  # flake8-type-checking
