@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.32.0 (2023-07-19)
+
+### Feature
+
+* Add `pnpm-lock.yaml` and `packages.lock.json` lockfile support ([#277](https://github.com/phylum-dev/phylum-ci/issues/277)) ([`a24b2c2`](https://github.com/phylum-dev/phylum-ci/commit/a24b2c27a6726015c4b830c1bf4a44be03ba836c))
+
+### Breaking
+
+* CLI installs prior to v5.5.0 are no longer supported. A Phylum CLI version with ability to parse `pnpm-lock.yaml` and `packages.lock.json` lockfiles is needed. ([`a24b2c2`](https://github.com/phylum-dev/phylum-ci/commit/a24b2c27a6726015c4b830c1bf4a44be03ba836c))
+
 ## v0.31.0 (2023-06-29)
 
 ### Feature
