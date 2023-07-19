@@ -69,7 +69,9 @@ optional = true
 [tool.poetry.group.ci.dependencies]
 tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
-python-semantic-release = "*"
+# TODO: Unpin this to allow for using the v8+ PSR release
+#       https://github.com/phylum-dev/phylum-ci/issues/278
+python-semantic-release = "7.*"
 rich-codex = "*"
 
 [tool.poetry.group.qa]
