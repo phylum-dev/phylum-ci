@@ -2,7 +2,7 @@
 import dataclasses
 from enum import IntEnum
 import json
-from typing import List
+from typing import List, Optional
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -12,6 +12,7 @@ class PackageDescriptor:
     name: str
     version: str
     type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+    lockfile: Optional[str] = None
 
 
 # Type alias
