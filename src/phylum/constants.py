@@ -2,12 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Support for `pnpm-lock.yaml` and `packages.lock.json` lockfiles was added in v5.5.0
-MIN_CLI_VER_FOR_INSTALL = "v5.5.0"
+# Support for `packages.*.lock.json` lockfiles was added in v5.6.0
+MIN_CLI_VER_FOR_INSTALL = "v5.6.0"
 
 # This is the minimum CLI version supported for existing installs.
-# Support for `pnpm-lock.yaml` and `packages.lock.json` lockfiles was added in v5.5.0
-MIN_CLI_VER_INSTALLED = "v5.5.0"
+# Support and `packages.*.lock.json` lockfiles was added in v5.6.0
+MIN_CLI_VER_INSTALLED = "v5.6.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -43,6 +43,7 @@ SUPPORTED_LOCKFILES = {
     # C#
     "*.csproj": "msbuild",
     "packages.lock.json": "nuget",
+    "packages.*.lock.json": "nuget",
     # Java
     "effective-pom.xml": "mvn",
     "gradle.lockfile": "gradle",
