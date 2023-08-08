@@ -10,6 +10,10 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.32.1 (2023-08-08)
+
+
+
 ## v0.32.0 (2023-07-19)
 
 ### Feature
