@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.33.0 (2023-08-09)
+
+### Feature
+
+* Add `packages.*.lock.json` lockfile detection ([#287](https://github.com/phylum-dev/phylum-ci/issues/287)) ([`00e1d57`](https://github.com/phylum-dev/phylum-ci/commit/00e1d57ecec0778481401cee876175fa827a765d))
+
 ## v0.32.1 (2023-08-08)
 
 
