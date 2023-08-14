@@ -125,7 +125,7 @@ class CIGitLab(CIBase):
             default_branch_name = git_default_branch_name(remote)
         default_branch = f"refs/remotes/{remote}/{default_branch_name}"
 
-        project_dir = Path(os.getenv("CI_PROJECT_DIR", "."))
+        project_dir = Path(os.getenv("CI_PROJECT_DIR", ".")).resolve()
         if not Path(project_dir, ".git", default_branch).resolve().exists():
             LOG.warning("The default remote branch is not available. Attempting to fetch it...")
             git_fetch(repo=remote, ref=default_branch_name, git_c_path=project_dir)
