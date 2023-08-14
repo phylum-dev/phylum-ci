@@ -49,6 +49,8 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
 def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path: Optional[Path] = None) -> None:
     """Execute a `git fetch` command with optional repository and refspec specified.
 
+    See git documentation for more detail: https://git-scm.com/docs/git-fetch
+
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
     path instead of the current working directory, which is the default when not provided.
     """
