@@ -1,6 +1,7 @@
 """Provide common git functions."""
 
 from pathlib import Path
+import shlex
 import subprocess
 import textwrap
 from typing import List, Optional
@@ -43,6 +44,27 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
         raise RuntimeError(msg)
     remote = remotes[0]
     return remote
+
+
+def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path: Optional[Path] = None) -> None:
+    """Execute a `git fetch` command with optional repository and refspec specified.
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "fetch"]
+    if repo is not None:
+        cmd.append(repo)
+        # Specifying a refspec is only possible when a repository is already specified
+        if ref is not None:
+            cmd.append(ref)
+    LOG.debug("Executing command: %s", shlex.join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "Fetching failed. Ensure credentials are available to run git commands."
+        raise PhylumCalledProcessError(err, msg) from err
 
 
 def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
