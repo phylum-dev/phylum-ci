@@ -5,7 +5,7 @@ from pathlib import Path
 from dulwich import porcelain
 import pytest
 
-from phylum.ci.git import git_repo_name
+from phylum.ci.git import git_fetch, git_repo_name
 
 # Names of a git repository that will be cloned locally
 CLONED_LOCAL_REPO_NAMES = [
@@ -45,3 +45,14 @@ def test_cloned_remote_repo_name(tmp_path):
     porcelain.clone(source="https://github.com/phylum-dev/phylum-ci.git", target=str(repo_path), depth=1)
     remote_repo_name = git_repo_name(git_c_path=repo_path)
     assert remote_repo_name == "phylum-ci", "The cloned remote repo name should be found"
+
+
+def test_fetch_default_remote_branch(tmp_path):
+    """Ensure `git_fetch` works with a cloned remote repo missing it's default remote branch ref."""
+    repo_path: Path = tmp_path / "cloned_remote_repo_name"
+    porcelain.clone(source="https://github.com/phylum-dev/phylum-ci.git", target=str(repo_path), depth=1)
+    default_remote_branch_ref = repo_path / ".git/refs/remotes/origin/main"
+    default_remote_branch_ref.unlink(missing_ok=True)
+    assert not default_remote_branch_ref.exists()
+    git_fetch(repo="origin", ref="main", git_c_path=repo_path)
+    assert default_remote_branch_ref.exists()

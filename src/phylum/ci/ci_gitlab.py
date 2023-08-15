@@ -10,6 +10,7 @@ GitLab References:
 from argparse import Namespace
 from functools import cached_property, lru_cache
 import os
+from pathlib import Path
 import re
 import shlex
 import subprocess
@@ -19,7 +20,7 @@ from typing import Optional
 import requests
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.git import git_default_branch_name, git_remote
+from phylum.ci.git import git_default_branch_name, git_fetch, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 from phylum.exceptions import pprint_subprocess_error
 from phylum.logger import LOG
@@ -123,6 +124,11 @@ class CIGitLab(CIBase):
         if not default_branch_name:
             default_branch_name = git_default_branch_name(remote)
         default_branch = f"refs/remotes/{remote}/{default_branch_name}"
+
+        project_dir = Path(os.getenv("CI_PROJECT_DIR", ".")).resolve()
+        if not Path(project_dir, ".git", default_branch).resolve().exists():
+            LOG.warning("The default remote branch is not available. Attempting to fetch it...")
+            git_fetch(repo=remote, ref=default_branch_name, git_c_path=project_dir)
 
         if src_branch == default_branch:
             LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
