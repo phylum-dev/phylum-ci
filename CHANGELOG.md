@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.34.0 (2023-08-15)
+
+### Feature
+
+* Improve GitLab integration for partial checkouts ([#291](https://github.com/phylum-dev/phylum-ci/issues/291)) ([`ca33672`](https://github.com/phylum-dev/phylum-ci/commit/ca33672ce75c59b4365ca4d618148ce1501a5313))
+
 ## v0.33.0 (2023-08-09)
 
 ### Feature
