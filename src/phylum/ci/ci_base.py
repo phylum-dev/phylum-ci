@@ -138,7 +138,10 @@ class CIBase(ABC):
 
     @progress_spinner("Filtering lockfiles")
     def filter_lockfiles(self, provided_lockfiles: List[Path]) -> Lockfiles:
-        """Filter potential lockfiles and return the valid ones in sorted order."""
+        """Filter potential lockfiles and return the valid ones in sorted order.
+
+        A unique return code is set when *no* provided lockfiles pass through the filtering checks.
+        """
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
