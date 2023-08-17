@@ -143,15 +143,12 @@ class CIBase(ABC):
         for provided_lockfile in provided_lockfiles:
             if not provided_lockfile.exists():
                 LOG.warning("Provided lockfile does not exist: %s", provided_lockfile)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             if not provided_lockfile.is_file():
                 LOG.warning("Provided lockfile is not a file: %s", provided_lockfile)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             if not provided_lockfile.stat().st_size:
                 LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             cmd = [str(self.cli_path), "parse", str(provided_lockfile)]
             try:
@@ -159,9 +156,10 @@ class CIBase(ABC):
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 LOG.warning("Provided lockfile failed to parse as a known lockfile type: %s", provided_lockfile)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
             lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
+        if not lockfiles:
+            self.returncode = ReturnCode.LOCKFILE_FILTER
         return sorted(lockfiles)
 
     @property
