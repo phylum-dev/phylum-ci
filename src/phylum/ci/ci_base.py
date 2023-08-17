@@ -145,6 +145,10 @@ class CIBase(ABC):
                 LOG.warning("Provided lockfile does not exist: %s", provided_lockfile)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
+            if not provided_lockfile.is_file():
+                LOG.warning("Provided lockfile is not a file: %s", provided_lockfile)
+                self.returncode = ReturnCode.LOCKFILE_FILTER
+                continue
             if not provided_lockfile.stat().st_size:
                 LOG.warning("Provided lockfile is an empty file: %s", provided_lockfile)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
