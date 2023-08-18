@@ -69,6 +69,26 @@ def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path:
         raise PhylumCalledProcessError(err, msg) from err
 
 
+def git_branch_exists(ref_path: str, git_c_path: Optional[Path] = None) -> bool:
+    """Predicate for whether a given branch exists.
+
+    `ref_path` is meant to be an "exact path" to a specific reference (e.g., `refs/remotes/origin/main`)
+    Reference: https://git-scm.com/docs/git-show-ref
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "show-ref", "--quiet", "--verify", "--", ref_path]
+    LOG.debug("Executing command: %s", shlex.join(cmd))
+    # We want the return code here and don't want to raise when non-zero.
+    if bool(subprocess.run(cmd, check=False).returncode):  # noqa: S603
+        LOG.debug("%s does not exist", ref_path)
+        return False
+    LOG.debug("%s exists", ref_path)
+    return True
+
+
 def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
     """Set the remote HEAD ref for a given remote.
 
