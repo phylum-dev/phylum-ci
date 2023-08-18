@@ -263,9 +263,9 @@ class CIBase(ABC):
 
         # Exit condition: a Phylum API key should be in place or available at this point.
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
+        # We want the return code here and don't want to raise when non-zero.
         cmd = [str(cli_path), "auth", "token"]
-        # pylint: disable-next=subprocess-run-check ; we want the return code here and don't want to raise when non-zero
-        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603
+        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603, PLW1510
             msg = "A Phylum API key is required to continue."
             raise SystemExit(msg)
 
