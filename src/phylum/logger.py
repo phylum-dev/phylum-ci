@@ -62,7 +62,7 @@ def add_logging_level(level_name: str, level_num: int, method_name: Optional[str
 
     def for_logger_class(self, message, *args, **kwargs):
         if self.isEnabledFor(level_num):
-            # pylint: disable-next=protected-access ; this is the name used in the logging class
+            # This private member access is required; it is the name used in the logging class
             self._log(level_num, message, args, **kwargs)
 
     def for_logging_module(message, *args, **kwargs):
