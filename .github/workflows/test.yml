@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       - name: Install poetry
-        run: pipx install poetry==1.5.1
+        run: pipx install poetry==1.6.1
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -41,7 +41,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry lock --check
+          poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with qa
 
@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       - name: Install poetry
-        run: pipx install poetry==1.5.1
+        run: pipx install poetry==1.6.1
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -84,7 +84,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry lock --check
+          poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with test,ci
 
@@ -107,7 +107,7 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       - name: Install poetry
-        run: pipx install poetry==1.5.1
+        run: pipx install poetry==1.6.1
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -121,7 +121,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry lock --check
+          poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync
 
