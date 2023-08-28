@@ -2,14 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Support for `pnpm-lock.yaml` and `packages.lock.json` lockfiles was added in v5.5.0
-# Support for `packages.*.lock.json` _detection_ was added in v5.6.0, but _parsing_ works with v5.5.0
-MIN_CLI_VER_FOR_INSTALL = "v5.5.0"
+# Support for CycloneDX lockfiles was added in v5.7.0
+MIN_CLI_VER_FOR_INSTALL = "v5.7.0"
 
 # This is the minimum CLI version supported for existing installs.
-# Support for `pnpm-lock.yaml` and `packages.lock.json` lockfiles was added in v5.5.0
-# Support for `packages.*.lock.json` _detection_ was added in v5.6.0, but _parsing_ works with v5.5.0
-MIN_CLI_VER_INSTALLED = "v5.5.0"
+# Support for CycloneDX lockfiles was added in v5.7.0
+MIN_CLI_VER_INSTALLED = "v5.7.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -58,6 +56,8 @@ SUPPORTED_LOCKFILES = {
     "*.spdx.yaml": "spdx",
     "*.spdx.yml": "spdx",
     "*.spdx": "spdx",
+    "*bom.json": "cyclonedx",
+    "*bom.xml": "cyclonedx",
 }
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
