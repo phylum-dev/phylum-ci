@@ -23,7 +23,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       # This GPG key is for the `phylum-bot` account and used in order to ensure commits are signed/verified
       - name: Import GPG key for bot account
