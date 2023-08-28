@@ -87,7 +87,7 @@ RUN set -eux; \
 RUN set -eux; \
     python -m venv ${POETRY_VENV}; \
     ${POETRY_VENV}/bin/pip install --no-cache-dir --upgrade pip setuptools; \
-    ${POETRY_VENV}/bin/pip install --no-cache-dir poetry poetry-plugin-export
+    ${POETRY_VENV}/bin/pip install --no-cache-dir poetry==1.6.1 poetry-plugin-export
 
 # Copy the bare minimum needed for specifying dependencies.
 # This will enable better layer caching and faster builds when iterating locally.

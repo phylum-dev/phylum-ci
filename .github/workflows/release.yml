@@ -65,7 +65,7 @@ jobs:
           git_tag_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.5.1
+        run: pipx install poetry==1.6.1
 
       - name: Configure poetry
         run: |
@@ -81,7 +81,7 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ matrix.python-version }}
-          poetry lock --check
+          poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --sync --with test,ci
 

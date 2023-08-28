@@ -126,17 +126,19 @@ Here's how to set up `phylum-ci` for local development.
     pyenv global 3.11.x 3.10.x 3.9.x 3.8.x
     ```
 
-4. Ensure [poetry v1.3+](https://python-poetry.org/docs/) is installed
+4. Ensure [poetry v1.6+](https://python-poetry.org/docs/) is installed
    1. The dependency group syntax feature was added in Poetry v1.2.0, and it's use in `phylum-ci` means the project will
       no longer build with Poetry v1.1
    2. A new `poetry.lock` lockfile format was added in Poetry v1.3.0
+   3. The `--lock` option for the `poetry check` command was added in Poetry v1.6.0
 5. Install dependencies with `poetry`, which will automatically create a virtual environment:
 
     ```sh
     cd phylum-ci
 
     # Verify the lockfile corresponds to the current version of `pyproject.toml`
-    poetry lock --check
+    # and validate the content of the `pyproject.toml` file:
+    poetry check --lock
 
     # Install the main dependencies only:
     poetry install --sync
