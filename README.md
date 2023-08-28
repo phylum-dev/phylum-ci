@@ -9,7 +9,7 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)][CoC]
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)][pre-commit]
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
-[![Downloads](https://pepy.tech/badge/phylum/month)][downloads]
+[![Downloads](https://static.pepy.tech/badge/phylum/month)][downloads]
 [![Discord](https://img.shields.io/discord/1070071012353376387?logo=discord)][discord_invite]
 
 Utilities for integrating Phylum into CI pipelines (and beyond)
