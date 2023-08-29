@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.35.0 (2023-08-29)
+
+### Feature
+
+* Add CycloneDX lockfile support ([#297](https://github.com/phylum-dev/phylum-ci/issues/297)) ([`3897879`](https://github.com/phylum-dev/phylum-ci/commit/3897879c6ce90eb74f7e2ab077755b3385207f55))
+
+### Breaking
+
+* CLI installs prior to v5.7.0 are no longer supported. A Phylum CLI version with ability to parse CycloneDX lockfiles is needed. ([`3897879`](https://github.com/phylum-dev/phylum-ci/commit/3897879c6ce90eb74f7e2ab077755b3385207f55))
+
 ## v0.34.0 (2023-08-15)
 
 ### Feature
