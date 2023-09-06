@@ -12,7 +12,7 @@ class PackageDescriptor:
     name: str
     version: str
     type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
-    lockfile: Optional[str] = None
+    lockfile: Optional[str] = dataclasses.field(compare=False, default=None)
 
 
 # Type alias
