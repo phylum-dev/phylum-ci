@@ -103,7 +103,7 @@ class CIBitbucket(CIBase):
         """Get the Bitbucket token (e.g., repository, project, or workspace access token)."""
         return self._bitbucket_token
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         if is_in_pr():
@@ -204,6 +204,11 @@ class CIBitbucket(CIBase):
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        return False
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 
@@ -260,7 +265,7 @@ class CIBitbucket(CIBase):
         req.raise_for_status()
         pr_comments = req.json()
 
-        LOG.info("Checking existing pull request comments for existing content to avoid duplication ...")
+        LOG.info("Checking pull request comments for existing content to avoid duplication ...")
         if pr_comments.get("values"):
             # NOTE: The API call normally returns all the comments in chronological order. Query parameters are used to
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.

@@ -82,7 +82,7 @@ class CIPreCommit(CIBase):
             LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra={"markup": True})
             sys.exit(0)
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         current_branch = git_curent_branch_name()
@@ -118,3 +118,9 @@ class CIPreCommit(CIBase):
                 LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = False
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        # There are no historical comments in this implementation
+        return False

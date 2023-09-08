@@ -191,12 +191,14 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Detect which CI environment, if any, we are in
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
-    # Bail early if there are no changes to any lockfile
+    # Bail early when possible
     LOG.debug("Lockfiles in use: %s", ci_env.lockfiles)
     if ci_env.force_analysis:
         LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     elif ci_env.is_any_lockfile_changed:
         LOG.info("A lockfile has changed. Proceeding with analysis ...")
+    elif ci_env.phylum_comment_exists:
+        LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
     else:
         LOG.warning("No lockfile has changed. Nothing to do.")
         return 0

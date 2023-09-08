@@ -39,7 +39,7 @@ class CINone(CIBase):
             msg = "This script expects to be run from the top level of a `git` repository"
             raise SystemExit(msg)
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         current_branch = git_curent_branch_name()
@@ -77,3 +77,9 @@ class CINone(CIBase):
         remote = git_remote()
         self.update_lockfiles_change_status(f"refs/remotes/{remote}/HEAD...")
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        # There are no historical comments in this implementation
+        return False

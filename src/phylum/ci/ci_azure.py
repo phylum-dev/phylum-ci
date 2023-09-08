@@ -144,7 +144,7 @@ class CIAzure(CIBase):
         """Get the custom Personal Access Token (PAT) in use."""
         return self._github_token
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         if is_in_pr():
@@ -247,6 +247,11 @@ class CIAzure(CIBase):
         self.update_lockfiles_change_status(diff_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        return False
 
     def post_output(self) -> None:
         """Post the output of the analysis.

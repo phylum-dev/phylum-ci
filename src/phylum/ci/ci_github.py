@@ -109,7 +109,7 @@ class CIGitHub(CIBase):
         """Get the `pull_request` webhook event payload."""
         return self._pr_event
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         pr_number = self.pr_event.get("pull_request", {}).get("number", "unknown-number")
@@ -143,6 +143,11 @@ class CIGitHub(CIBase):
         self.update_lockfiles_change_status(pr_base_sha, err_msg)
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        return False
 
     def post_output(self) -> None:
         """Post the output of the analysis.
