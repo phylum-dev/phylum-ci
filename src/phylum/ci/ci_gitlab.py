@@ -181,7 +181,6 @@ class CIGitLab(CIBase):
             return False
 
         # Detecting Phylum notes is done simply by looking for notes that start with a known string value.
-        # TODO: Convert this into a function and swap the `PHYLUM_HEADER` out for a value unique to this integration.
         for mr_note in self.mr_notes:
             if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
                 LOG.debug("A Phylum-generated merge request note was found.")
