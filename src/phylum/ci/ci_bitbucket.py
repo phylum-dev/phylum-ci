@@ -207,7 +207,7 @@ class CIBitbucket(CIBase):
     @property
     def phylum_comment_exists(self) -> bool:
         """Predicate for detecting whether a Phylum-generated comment exists."""
-        return False
+        return bool(self.most_recent_phylum_comment)
 
     def post_output(self) -> None:
         """Post the output of the analysis.
@@ -221,29 +221,52 @@ class CIBitbucket(CIBase):
             # Can't post the output to the PR when there is no PR
             return
 
-        # API Reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/
-        bitbucket_api_root_url = "https://api.bitbucket.org"
+        LOG.info("Checking pull request comments for existing content to avoid duplication ...")
+        if self.most_recent_phylum_comment:
+            LOG.debug("The most recently posted Phylum pull request comment was found.")
+            if self.most_recent_phylum_comment == self.analysis_report:
+                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
+                return
+            LOG.debug("It does not contain the same content as the current analysis.")
+        else:
+            LOG.debug("No existing Phylum pull request comments found.")
 
-        # BITBUCKET_REPO_FULL_NAME provides the workspace and repository name that corresponds to BITBUCKET_REPO_UUID.
-        # BITBUCKET_REPO_UUID is used in the API calls since it should never change.
-        repo_uuid = os.getenv("BITBUCKET_REPO_UUID")
-        repo_full_name = os.getenv("BITBUCKET_REPO_FULL_NAME")
+        # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
+        # there were no Phylum PR comments. Either way, create a new PR comment.
+        url = get_comments_url()
+        data = {"content": {"raw": self.analysis_report}}
+        headers = self.headers.copy()
+        headers["Content-Type"] = "application/json"
+        LOG.info("Creating new pull request comment with POST URL: %s ...", url)
+        response = requests.post(url, json=data, headers=headers, timeout=REQ_TIMEOUT)
+        response.raise_for_status()
 
-        pr_id = os.getenv("BITBUCKET_PR_ID")
-
-        # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
-        # NOTE: It is possible to make calls with the repository UUID and an empty workspace:
-        #       https://api.bitbucket.org/2.0/repositories/{}/{repo_uuid}/pullrequests/{pull_request_id}/comments
-        #       The braces (even the empty braces) are required in the construction of the endpoint request.
-        #       Reference: https://developer.atlassian.com/cloud/bitbucket/rest/intro/#repository-object-and-uuid
-        pr_comments_api_endpoint = f"/2.0/repositories/{{}}/{repo_uuid}/pullrequests/{pr_id}/comments"
-        url = f"{bitbucket_api_root_url}{pr_comments_api_endpoint}"
-
+    @property
+    def headers(self) -> dict:
+        """Provide headers to use when making Bitbucket API calls."""
         headers = {
             "User-Agent": PHYLUM_USER_AGENT,
             "Accept": "application/json",
             "Authorization": f"Bearer {self.bitbucket_token}",
         }
+        return headers
+
+    @cached_property
+    def most_recent_phylum_comment(self) -> Optional[str]:
+        """Get the raw text of the most recently posted Phylum-generated comment.
+
+        Return `None` when one does not exist.
+        """
+        if not is_in_pr():
+            # It only makes sense to reference this property in the context of a PR
+            return None
+
+        url = get_comments_url()
+
+        # BITBUCKET_REPO_FULL_NAME provides the workspace and repository name that corresponds to BITBUCKET_REPO_UUID.
+        # BITBUCKET_REPO_UUID is used in the API calls since it should never change.
+        repo_full_name = os.getenv("BITBUCKET_REPO_FULL_NAME")
+        repo_uuid = os.getenv("BITBUCKET_REPO_UUID")
 
         # Comments are returned in chronological order. It is possible to use query parameters to our advantage.
         # Reference: https://developer.atlassian.com/cloud/bitbucket/rest/intro/#filtering
@@ -261,27 +284,37 @@ class CIBitbucket(CIBase):
         query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
         LOG.info("Getting all current pull request comments with GET URL: %s?%s ...", url, query_params_encoded)
         LOG.debug("The repository UUID %s maps to workspace and repository name: %s", repo_uuid, repo_full_name)
-        req = requests.get(url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
+        req = requests.get(url, params=query_params, headers=self.headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
-        pr_comments = req.json()
-
-        LOG.info("Checking pull request comments for existing content to avoid duplication ...")
-        if pr_comments.get("values"):
+        pr_comments_resp: dict = req.json()
+        pr_comments_values: list = pr_comments_resp.get("values", [])
+        if pr_comments_values:
             # NOTE: The API call normally returns all the comments in chronological order. Query parameters are used to
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.
             LOG.debug("The most recently posted Phylum pull request comment was found.")
-            pr_comment = pr_comments.get("values")[0]
-            if pr_comment.get("content", {}).get("raw", "") == self.analysis_report:
-                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
-                return
-            LOG.debug("It does not contain the same content as the current analysis.")
-        else:
-            LOG.debug("No existing Phylum pull request comments found.")
+            most_recent_phylum_comment = pr_comments_values[0].get("content", {}).get("raw", "")
+            return most_recent_phylum_comment
 
-        # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
-        # there were no Phylum PR comments. Either way, create a new PR comment.
-        data = {"content": {"raw": self.analysis_report}}
-        headers["Content-Type"] = "application/json"
-        LOG.info("Creating new pull request comment with POST URL: %s ...", url)
-        response = requests.post(url, json=data, headers=headers, timeout=REQ_TIMEOUT)
-        response.raise_for_status()
+        LOG.debug("No existing Phylum pull request comments found.")
+        return None
+
+
+def get_comments_url() -> str:
+    """Get the comments API URL and return it."""
+    if not is_in_pr():
+        msg = "Must be working in the context of a pull request pipeline"
+        raise SystemExit(msg)
+    # API Reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/
+    bitbucket_api_root_url = "https://api.bitbucket.org"
+    # BITBUCKET_REPO_FULL_NAME provides the workspace and repository name that corresponds to BITBUCKET_REPO_UUID.
+    # BITBUCKET_REPO_UUID is used in the API calls since it should never change.
+    repo_uuid = os.getenv("BITBUCKET_REPO_UUID")
+    pr_id = os.getenv("BITBUCKET_PR_ID")
+    # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
+    # NOTE: It is possible to make calls with the repository UUID and an empty workspace:
+    #       https://api.bitbucket.org/2.0/repositories/{}/{repo_uuid}/pullrequests/{pull_request_id}/comments
+    #       The braces (even the empty braces) are required in the construction of the endpoint request.
+    #       Reference: https://developer.atlassian.com/cloud/bitbucket/rest/intro/#repository-object-and-uuid
+    pr_comments_api_endpoint = f"/2.0/repositories/{{}}/{repo_uuid}/pullrequests/{pr_id}/comments"
+    url = f"{bitbucket_api_root_url}{pr_comments_api_endpoint}"
+    return url
