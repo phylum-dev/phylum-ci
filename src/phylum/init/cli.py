@@ -309,7 +309,7 @@ def setup_token(token: str) -> None:
     phylum_settings_path = get_phylum_settings_path()
     ensure_settings_file()
     yaml = YAML()
-    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     settings.setdefault("auth_info", {})
     settings["auth_info"]["offline_access"] = token
     with phylum_settings_path.open("w", encoding="utf-8") as f:
@@ -350,7 +350,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
     settings_file_existed = phylum_settings_path.exists()
     ensure_settings_file()
     yaml = YAML()
-    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     configured_uri = settings.get("connection", {}).get("uri")
 
     if api_uri:

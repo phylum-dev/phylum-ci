@@ -23,7 +23,7 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import Optional
+from typing import Dict, List, Optional
 import urllib.parse
 
 import requests
@@ -286,8 +286,8 @@ class CIBitbucket(CIBase):
         LOG.debug("The repository UUID %s maps to workspace and repository name: %s", repo_uuid, repo_full_name)
         req = requests.get(url, params=query_params, headers=self.headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
-        pr_comments_resp: dict = req.json()
-        pr_comments_values: list = pr_comments_resp.get("values", [])
+        pr_comments_resp: Dict = req.json()
+        pr_comments_values: List = pr_comments_resp.get("values", [])
         if pr_comments_values:
             # NOTE: The API call normally returns all the comments in chronological order. Query parameters are used to
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.
