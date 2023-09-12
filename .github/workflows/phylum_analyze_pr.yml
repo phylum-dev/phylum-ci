@@ -16,7 +16,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Analyze poetry.lock file
-        uses: phylum-dev/phylum-analyze-pr-action@53d203dd18c41350a673bcc236aa05337eb6edf3 # v2.1.1
+        # TODO: revert this after testing
+        uses: phylum-dev/phylum-analyze-pr-action@comment_period
+        # uses: phylum-dev/phylum-analyze-pr-action@53d203dd18c41350a673bcc236aa05337eb6edf3 # v2.1.1
         with:
           phylum_token: ${{ secrets.PHYLUM_TOKEN }}
           cmd: phylum-ci -vv
