@@ -23,7 +23,7 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: 193ee766ca496871f93621d6b58d57a6564ff81b  # frozen: 23.7.0
+    rev: e87737140f32d3cd7c44ede75f02dcd58e55820e  # frozen: 23.9.1
     hooks:
       - id: black
 
@@ -33,7 +33,7 @@ repos:
       - id: ruff
 
   - repo: https://github.com/dosisod/refurb
-    rev: 37d7d4b6f2c71b7338eaeac0fc11d6c28265af34  # frozen: v1.20.0
+    rev: 68a878e3e94db3e7cc97c0ec0aa600105acb9d40  # frozen: v1.21.0
     hooks:
       - id: refurb
 

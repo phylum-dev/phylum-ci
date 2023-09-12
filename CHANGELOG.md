@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.35.1 (2023-09-07)
+
+### Fix
+
+* Incorrect new dependency logic ([#304](https://github.com/phylum-dev/phylum-ci/issues/304)) ([`b447b46`](https://github.com/phylum-dev/phylum-ci/commit/b447b46c0f75692cfa22ec3c7a5faa8ab1379329))
+
 ## v0.35.0 (2023-08-29)
 
 ### Feature
