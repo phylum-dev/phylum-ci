@@ -19,4 +19,4 @@ jobs:
         uses: phylum-dev/phylum-analyze-pr-action@53d203dd18c41350a673bcc236aa05337eb6edf3 # v2.1.1
         with:
           phylum_token: ${{ secrets.PHYLUM_TOKEN }}
-          cmd: phylum-ci -vvv
+          cmd: phylum-ci -vv
