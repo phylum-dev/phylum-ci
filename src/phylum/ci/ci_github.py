@@ -18,7 +18,7 @@ from pathlib import Path
 import re
 import subprocess
 import textwrap
-from typing import Optional
+from typing import List, Optional
 
 import requests
 
@@ -177,7 +177,7 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     """
     query_params = {"per_page": 100}
     LOG.info("Getting all current pull request comments with GET URL: %s ...", comments_url)
-    pr_comments = github_request(comments_url, params=query_params, github_token=github_token)
+    pr_comments: List = github_request(comments_url, params=query_params, github_token=github_token)
 
     LOG.info("Checking pull request comments for existing content to avoid duplication ...")
     if not pr_comments:
