@@ -139,6 +139,19 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Copy only Python packages to limit the image size
 COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 
+# Install Rust & Cargo
+# Update default packages
+RUN apt-get update
+
+# Get required packages
+RUN  apt-get install --yes --no-install-recommends build-essential  curl
+
+# Get Rust; NOTE: using sh for better compatibility with other base images
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+# Add .cargo/bin to PATH
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 RUN set -eux; \
     apt-get update; \
     apt-get upgrade --yes; \
