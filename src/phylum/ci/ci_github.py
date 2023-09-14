@@ -159,7 +159,7 @@ class CIGitHub(CIBase):
     @property
     def phylum_comment_exists(self) -> bool:
         """Predicate for detecting whether a Phylum-generated comment exists."""
-        return bool(_get_most_recent_phylum_comment(self.comments_url, self.github_token))
+        return bool(get_most_recent_phylum_comment_github(self.comments_url, self.github_token))
 
     def post_output(self) -> None:
         """Post the output of the analysis.
@@ -173,11 +173,11 @@ class CIGitHub(CIBase):
 
 
 # This is a cached function due to the desire to limit API calls.
-# The function is meant to only be used internally, where it is known that the comments on the PR at the time
+# The function is meant to be used internally, where it is known that the comments on the PR at the time
 # of first execution will suffice for the duration of the rest of the lifetime of the running integration.
 @lru_cache(maxsize=1)
-def _get_most_recent_phylum_comment(comments_url: str, github_token: str) -> Optional[str]:
-    """Get the raw text of the most recently posted Phylum-generated comment.
+def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) -> Optional[str]:
+    """Get the raw text of the most recently posted Phylum-generated comment for GitHub PRs.
 
     Return `None` when one does not exist.
 
@@ -218,7 +218,7 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     or if the most recently posted Phylum comment does not contain the same content.
     """
     LOG.info("Checking pull request comments for existing content to avoid duplication ...")
-    most_recent_phylum_comment = _get_most_recent_phylum_comment(comments_url, github_token)
+    most_recent_phylum_comment = get_most_recent_phylum_comment_github(comments_url, github_token)
     if most_recent_phylum_comment:
         LOG.debug("The most recently posted Phylum pull request comment was found.")
         if most_recent_phylum_comment == comment:
