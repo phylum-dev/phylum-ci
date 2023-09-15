@@ -15,7 +15,7 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import requests
 
@@ -172,22 +172,7 @@ class CIGitLab(CIBase):
     @property
     def phylum_comment_exists(self) -> bool:
         """Predicate for detecting whether a Phylum-generated note (comment) exists."""
-        if not is_in_mr():
-            # Notes only exist in the context of an MR
-            return False
-
-        if not self.mr_notes:
-            LOG.debug("No existing merge request notes found.")
-            return False
-
-        # Detecting Phylum notes is done simply by looking for notes that start with a known string value.
-        for mr_note in self.mr_notes:
-            if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                LOG.debug("A Phylum-generated merge request note was found.")
-                return True
-
-        LOG.debug("No Phylum-generated merge request notes found.")
-        return False
+        return bool(self.most_recent_phylum_note)
 
     def post_output(self) -> None:
         """Post the output of the analysis.
@@ -202,19 +187,14 @@ class CIGitLab(CIBase):
             return
 
         LOG.info("Checking merge request notes for existing content to avoid duplication ...")
-        if not self.mr_notes:
-            LOG.debug("No existing merge request notes found.")
-        # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
-        #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
-        #       We only care about the most recent Phylum note.
-        for mr_note in self.mr_notes:
-            if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                LOG.debug("The most recently posted Phylum merge request note was found.")
-                if mr_note.get("body", "") == self.analysis_report:
-                    LOG.debug("It contains the same content as the current analysis. Nothing to do.")
-                    return
-                LOG.debug("It does not contain the same content as the current analysis.")
-                break
+        if self.most_recent_phylum_note:
+            LOG.debug("The most recently posted Phylum merge request note was found.")
+            if self.most_recent_phylum_note == self.analysis_report:
+                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
+                return
+            LOG.debug("It does not contain the same content as the current analysis.")
+        else:
+            LOG.debug("No existing Phylum merge request notes found.")
 
         # If we got here, then the most recent Phylum MR note does not match the current analysis output or
         # there were no Phylum MR notes. Either way, create a new MR note.
@@ -234,17 +214,37 @@ class CIGitLab(CIBase):
         return headers
 
     @cached_property
-    def mr_notes(self) -> List:
-        """Get the current merge request notes."""
+    def most_recent_phylum_note(self) -> Optional[str]:
+        """Get the raw text of the most recently posted Phylum-generated note.
+
+        Return `None` when one does not exist.
+        """
         if not is_in_mr():
             # It only makes sense to reference this property in the context of an MR
-            return []
+            return None
+
         url = get_notes_url()
         LOG.info("Getting all current merge request notes with GET URL: %s ...", url)
         req = requests.get(url, headers=self.headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
-        mr_notes = req.json()
-        return mr_notes
+        mr_notes: List = req.json()
+
+        if not mr_notes:
+            LOG.debug("No existing merge request notes found.")
+            return None
+
+        # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
+        #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
+        #       We only care about the most recent Phylum note.
+        mr_note: Dict
+        for mr_note in mr_notes:
+            note_body: str = mr_note.get("body", "")
+            if note_body.lstrip().startswith(PHYLUM_HEADER.strip()):
+                LOG.debug("The most recently posted Phylum merge request note was found.")
+                return note_body
+
+        LOG.debug("No existing Phylum merge request notes found.")
+        return None
 
 
 def get_notes_url() -> str:
