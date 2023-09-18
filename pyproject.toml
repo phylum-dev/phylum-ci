@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "phylum"
-version = "0.35.1"
+version = "0.35.2"
 description = "Utilities for integrating Phylum into CI pipelines (and beyond)"
 license = "GPL-3.0-or-later"
 authors = ["Phylum, Inc. <engineering@phylum.io>"]

@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.35.2 (2023-09-18)
+
+### Fix
+
+* Integrations should check for previous comments ([#305](https://github.com/phylum-dev/phylum-ci/issues/305)) ([`12e7445`](https://github.com/phylum-dev/phylum-ci/commit/12e74456ff061492a435860ab08cd370721b595d))
+
 ## v0.35.1 (2023-09-07)
 
 ### Fix
