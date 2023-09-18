@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 import zipfile
 
 from packaging.utils import canonicalize_version
@@ -112,7 +112,7 @@ def get_latest_version() -> str:
     """Get the "latest" version programmatically and return it."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
-    req_json = github_request(github_api_url)
+    req_json: Dict = github_request(github_api_url)
 
     # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
@@ -132,9 +132,10 @@ def supported_releases() -> List[str]:
     query_params = {"per_page": 100}
     LOG.debug("Minimum supported Phylum CLI version required for install: %s", MIN_CLI_VER_FOR_INSTALL)
 
-    req_json = github_request(github_api_url, params=query_params)
+    req_json: List = github_request(github_api_url, params=query_params)
 
     cli_releases = {}
+    rel: Dict
     for rel in req_json:
         # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
         # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
@@ -182,7 +183,7 @@ def supported_targets(release_tag: str) -> List[str]:
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
 
-    req_json = github_request(github_api_url)
+    req_json: Dict = github_request(github_api_url)
 
     assets = req_json.get("assets", [])
     targets: List[str] = []
@@ -308,7 +309,7 @@ def setup_token(token: str) -> None:
     phylum_settings_path = get_phylum_settings_path()
     ensure_settings_file()
     yaml = YAML()
-    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     settings.setdefault("auth_info", {})
     settings["auth_info"]["offline_access"] = token
     with phylum_settings_path.open("w", encoding="utf-8") as f:
@@ -349,7 +350,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
     settings_file_existed = phylum_settings_path.exists()
     ensure_settings_file()
     yaml = YAML()
-    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     configured_uri = settings.get("connection", {}).get("uri")
 
     if api_uri:

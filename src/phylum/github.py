@@ -2,7 +2,7 @@
 import os
 import textwrap
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -52,13 +52,13 @@ def github_request(
     params: Optional[dict] = None,
     github_token: Optional[str] = None,
     timeout: float = REQ_TIMEOUT,
-) -> dict:
+) -> Any:
     """Make a request to a given GitHub API endpoint and return the response.
 
     A limited amount of specific failure cases are checked to provide detailed information to users.
     All failure cases cause the system to exit with a failure code and a detailed message.
 
-    Valid GitHub API requests will return a JSON-formatted response body, which is returned as a Python dict.
+    Valid GitHub API requests will return a JSON-formatted response body, usually a dict or list.
     """
     headers = get_headers(github_token=github_token)
 

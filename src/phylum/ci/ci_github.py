@@ -11,14 +11,14 @@ GitHub References:
   * https://docs.github.com/en/rest/guides/working-with-comments#pull-request-comments
 """
 from argparse import Namespace
-from functools import cached_property
+from functools import cached_property, lru_cache
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import textwrap
-from typing import Optional
+from typing import Dict, List, Optional
 
 import requests
 
@@ -110,6 +110,18 @@ class CIGitHub(CIBase):
         return self._pr_event
 
     @property
+    def comments_url(self) -> str:
+        """Get the API endpoint for working with comments."""
+        # The `comments_url` is the full API endpoint for this particular GitHub issue/PR.
+        # API Reference: https://docs.github.com/en/rest/issues/comments
+        # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST).
+        comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
+        if comments_url is None:
+            msg = "The API for posting a GitHub comment was not found."
+            raise SystemExit(msg)
+        return comments_url
+
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         pr_number = self.pr_event.get("pull_request", {}).get("number", "unknown-number")
@@ -144,6 +156,11 @@ class CIGitHub(CIBase):
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        return bool(get_most_recent_phylum_comment_github(self.comments_url, self.github_token))
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 
@@ -152,12 +169,42 @@ class CIGitHub(CIBase):
         """
         super().post_output()
 
-        comments_url = self.pr_event.get("pull_request", {}).get("comments_url")
-        if comments_url is None:
-            msg = "The API for posting a GitHub comment was not found."
-            raise SystemExit(msg)
+        post_github_comment(self.comments_url, self.github_token, self.analysis_report)
 
-        post_github_comment(comments_url, self.github_token, self.analysis_report)
+
+# This is a cached function due to the desire to limit API calls.
+# The function is meant to be used internally, where it is known that the comments on the PR at the time
+# of first execution will suffice for the duration of the rest of the lifetime of the running integration.
+@lru_cache(maxsize=1)
+def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) -> Optional[str]:
+    """Get the raw text of the most recently posted Phylum-generated comment for GitHub PRs.
+
+    Return `None` when one does not exist.
+
+    The `comments_url` should be the full API endpoint for a particular GitHub issue/PR.
+    API Reference: https://docs.github.com/en/rest/issues/comments
+    This is the same endpoint for listing all PR comments (GET) and creating new ones (POST).
+    """
+    query_params = {"per_page": 100}
+    LOG.info("Getting all current pull request comments with GET URL: %s ...", comments_url)
+    pr_comments: List = github_request(comments_url, params=query_params, github_token=github_token)
+
+    if not pr_comments:
+        LOG.debug("No existing pull request comments found.")
+        return None
+
+    # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
+    #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
+    #       We only care about the most recent Phylum comment.
+    pr_comment: Dict
+    for pr_comment in reversed(pr_comments):
+        comment_body: str = pr_comment.get("body", "")
+        if comment_body.lstrip().startswith(PHYLUM_HEADER.strip()):
+            LOG.debug("The most recently posted Phylum pull request comment was found.")
+            return comment_body
+
+    LOG.debug("No existing Phylum pull request comments found.")
+    return None
 
 
 def post_github_comment(comments_url: str, github_token: str, comment: str) -> None:
@@ -170,24 +217,16 @@ def post_github_comment(comments_url: str, github_token: str, comment: str) -> N
     The comment will only be created if there isn't already a Phylum comment
     or if the most recently posted Phylum comment does not contain the same content.
     """
-    query_params = {"per_page": 100}
-    LOG.info("Getting all current pull request comments with GET URL: %s ...", comments_url)
-    pr_comments = github_request(comments_url, params=query_params, github_token=github_token)
-
     LOG.info("Checking pull request comments for existing content to avoid duplication ...")
-    if not pr_comments:
-        LOG.debug("No existing pull request comments found.")
-    # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
-    #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
-    #       We only care about the most recent Phylum comment.
-    for pr_comment in reversed(pr_comments):
-        if pr_comment.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-            LOG.debug("The most recently posted Phylum pull request comment was found.")
-            if pr_comment.get("body", "") == comment:
-                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
-                return
-            LOG.debug("It does not contain the same content as the current analysis.")
-            break
+    most_recent_phylum_comment = get_most_recent_phylum_comment_github(comments_url, github_token)
+    if most_recent_phylum_comment:
+        LOG.debug("The most recently posted Phylum pull request comment was found.")
+        if most_recent_phylum_comment == comment:
+            LOG.debug("It contains the same content as the current analysis. Nothing to do.")
+            return
+        LOG.debug("It does not contain the same content as the current analysis.")
+    else:
+        LOG.debug("No existing Phylum pull request comments found.")
 
     # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
     # there were no Phylum PR comments. Either way, create a new PR comment.

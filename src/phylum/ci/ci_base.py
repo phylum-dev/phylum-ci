@@ -272,7 +272,7 @@ class CIBase(ABC):
         """Get the report from the overall analysis, in markdown format."""
         return self._analysis_report
 
-    @property
+    @cached_property
     @abstractmethod
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis.
@@ -319,6 +319,15 @@ class CIBase(ABC):
         """Get the lockfiles' collective modification status.
 
         Implementations should return `True` if any lockfile has changed and `False` otherwise.
+        """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists.
+
+        Implementations should return `True` if an existing Phylum-generated comment exists and `False` otherwise.
         """
         raise NotImplementedError
 

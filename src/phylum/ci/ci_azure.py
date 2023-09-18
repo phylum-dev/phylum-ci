@@ -23,13 +23,13 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import urllib.parse
 
 import requests
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.ci_github import post_github_comment
+from phylum.ci.ci_github import get_most_recent_phylum_comment_github, post_github_comment
 from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 from phylum.exceptions import pprint_subprocess_error
@@ -144,7 +144,7 @@ class CIAzure(CIBase):
         """Get the custom Personal Access Token (PAT) in use."""
         return self._github_token
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         if is_in_pr():
@@ -248,6 +248,19 @@ class CIAzure(CIBase):
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated comment exists."""
+        if not is_in_pr():
+            # Comments only exist in the context of a PR
+            return False
+        if self.triggering_repo == "TfsGit":
+            return bool(get_most_recent_phylum_comment_azure(self.azure_token))
+        if self.triggering_repo == "GitHub":
+            comments_url = get_github_comments_url()
+            return bool(get_most_recent_phylum_comment_github(comments_url, self.github_token))
+        return False
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 
@@ -256,30 +269,13 @@ class CIAzure(CIBase):
         Post output as a comment on the GitHub PR for PR triggers and GitHub hosted repos.
         """
         super().post_output()
-
         if not is_in_pr():
             # Can't post the output to the PR when there is no PR
             return
-
         if self.triggering_repo == "TfsGit":
             post_azure_comment(self.azure_token, self.analysis_report)
         elif self.triggering_repo == "GitHub":
-            github_api_root_url = "https://api.github.com"
-
-            owner_repo = os.getenv("BUILD_REPOSITORY_NAME")
-            if not owner_repo:
-                msg = "The GitHub owner and repository could not be found."
-                raise SystemExit(msg)
-            pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
-            if not pr_number:
-                msg = "The GitHub PR number could not be found."
-                raise SystemExit(msg)
-
-            # API Reference: https://docs.github.com/en/rest/issues/comments
-            # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
-            pr_comments_api_endpoint = f"/repos/{owner_repo}/issues/{pr_number}/comments"
-            comments_url = f"{github_api_root_url}{pr_comments_api_endpoint}"
-
+            comments_url = get_github_comments_url()
             post_github_comment(comments_url, self.github_token, self.analysis_report)
 
 
@@ -301,85 +297,90 @@ def get_pr_branches() -> Tuple[str, str]:
     return src_branch, tgt_branch
 
 
-def post_azure_comment(azure_token: str, comment: str) -> None:
-    """Post a comment on an Azure Repos Pull Request (PR).
+# This is a cached function due to the desire to limit API calls.
+# The function is meant to be used internally, where it is known that the comments on the PR at the time
+# of first execution will suffice for the duration of the rest of the lifetime of the running integration.
+@lru_cache(maxsize=1)
+def get_most_recent_phylum_comment_azure(azure_token: str) -> Optional[str]:
+    """Get the raw text of the most recently posted Phylum-generated comment for Azure Repos PRs.
 
-    The comment will only be created if there isn't already a Phylum comment
-    or if the most recently posted Phylum comment does not contain the same content.
+    Return `None` when one does not exist.
     """
-    # API References:
-    #   * Basics: https://learn.microsoft.com/rest/api/azure/devops
-    #   * PR Threads - List: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/list
-    #   * PR Threads - Create: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/create
-
-    # This is the latest available API version a/o NOV 2022. While it is a "preview" version, it was chosen to
-    # lean forward in an effort to maintain relevance and recency for a longer period of time going forward.
-    # It does appear that the APIs for PR Threads are stable between this version and the previous major version
-    # with accessible documentation.
-    api_version = "7.1-preview.1"
+    if not is_in_pr():
+        # It only makes sense to reference this property in the context of a PR
+        return None
 
     # SYSTEM_TEAMPROJECT provides the name that corresponds to SYSTEM_TEAMPROJECTID.
     # SYSTEM_TEAMPROJECTID is used in the API calls since it should never change.
     team_project_id = os.getenv("SYSTEM_TEAMPROJECTID")
     team_project_name = os.getenv("SYSTEM_TEAMPROJECT")
-    instance = os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")
-    repo_id = os.getenv("BUILD_REPOSITORY_ID")
-    pr_id = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID")
-    resource_path = f"/_apis/git/repositories/{repo_id}/pullRequests/{pr_id}/threads"
+    pr_threads_url = get_azure_pr_threads_url()
+    headers = get_headers(azure_token)
+    query_params, query_params_encoded = get_query_params()
 
-    # This is the same endpoint for listing all PR threads (GET) and creating new ones (POST)
-    pr_threads_url = f"{instance}{team_project_id}{resource_path}"
-
-    # To provide the personal access token through an HTTP header, you must first convert it to a base64 string.
-    # NOTE: The colon (`:`) appended to the front of the PAT is intentional as it is expected by the endpoints.
-    b64_ado_pat = base64.b64encode(bytes(f":{azure_token}", encoding="ascii")).decode(encoding="ascii")
-
-    query_params = {"api-version": api_version}
-    headers = {
-        "User-Agent": PHYLUM_USER_AGENT,
-        "Authorization": f"Basic {b64_ado_pat}",
-    }
-
-    query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
-    LOG.info("Getting list of all current PR threads with GET URL: %s?%s ...", pr_threads_url, query_params_encoded)
+    LOG.info("Getting all current PR threads with GET URL: %s?%s ...", pr_threads_url, query_params_encoded)
     LOG.debug("The team project ID %s maps to name: %s", team_project_id, team_project_name)
     resp = requests.get(pr_threads_url, params=query_params, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()
     if resp.status_code != requests.codes.OK:
         msg = f"Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}"
         raise SystemExit(msg)
-    pr_threads = resp.json()
+    pr_threads_resp: Dict = resp.json()
+
+    pr_threads_count = pr_threads_resp.get("count", 0)
+    LOG.debug("PR threads found: %s", pr_threads_count)
+    if not pr_threads_count:
+        LOG.debug("No existing pull request comments found.")
+        return None
+
+    LOG.info("Checking pull request threads for existing Phylum-generated comments ...")
+    pr_threads: List = pr_threads_resp.get("value", [])
+    # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
+    #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
+    #       We only care about the most recent Phylum comment.
+    pr_thread: Dict
+    for pr_thread in reversed(pr_threads):
+        thread_comments = pr_thread.get("comments", [])
+        thread_comment: Dict
+        for thread_comment in thread_comments:
+            # All Phylum generated comments will be the first in their own thread
+            if thread_comment.get("id", 0) != 1:
+                continue
+            thread_comment_content: str = thread_comment.get("content", "")
+            if thread_comment_content.lstrip().startswith(PHYLUM_HEADER.strip()):
+                LOG.debug("The most recently posted Phylum pull request comment was found.")
+                return thread_comment_content
+
+    LOG.debug("No existing Phylum pull request comments found.")
+    return None
+
+
+def post_azure_comment(azure_token: str, comment: str) -> None:
+    """Post a comment on an Azure Repos Pull Request (PR).
+
+    The comment will only be created if there isn't already a Phylum comment
+    or if the most recently posted Phylum comment does not contain the same content.
+    """
+    if not is_in_pr():
+        msg = "Must be working in the context of a pull request pipeline"
+        raise SystemExit(msg)
 
     LOG.info("Checking pull request threads for existing comment content to avoid duplication ...")
-    pr_threads_count = pr_threads.get("count", 0)
-    LOG.debug("PR threads found: %s", pr_threads_count)
-    if pr_threads_count:
-        pr_threads = pr_threads.get("value", [])
-        is_phylum_comment_found = False
-        # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
-        #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
-        #       We only care about the most recent Phylum comment.
-        for pr_thread in reversed(pr_threads):
-            thread_comments = pr_thread.get("comments", [])
-            for thread_comment in thread_comments:
-                # All Phylum generated comments will be the first in their own thread
-                if thread_comment.get("id", 0) != 1:
-                    continue
-                if thread_comment.get("content", "").lstrip().startswith(PHYLUM_HEADER.strip()):
-                    LOG.debug("The most recently posted Phylum pull request comment was found.")
-                    is_phylum_comment_found = True
-                    if thread_comment.get("content", "") == comment:
-                        LOG.debug("It contains the same content as the current analysis. Nothing to do.")
-                        return
-                    LOG.debug("It does not contain the same content as the current analysis.")
-                    break
-            if is_phylum_comment_found:
-                break
-        if not is_phylum_comment_found:
-            LOG.debug("No existing Phylum pull request comments found.")
+    most_recent_phylum_comment = get_most_recent_phylum_comment_azure(azure_token)
+    if most_recent_phylum_comment:
+        LOG.debug("The most recently posted Phylum pull request comment was found.")
+        if most_recent_phylum_comment == comment:
+            LOG.debug("It contains the same content as the current analysis. Nothing to do.")
+            return
+        LOG.debug("It does not contain the same content as the current analysis.")
+    else:
+        LOG.debug("No existing Phylum pull request comments found.")
 
     # If we got here, then the most recent Phylum PR comment does not match the current analysis output or
     # there were no Phylum PR comments. Either way, create a new PR comment.
+    pr_threads_url = get_azure_pr_threads_url()
+    headers = get_headers(azure_token)
+    query_params, query_params_encoded = get_query_params()
     req_body = {
         "comments": [
             {
@@ -393,3 +394,71 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     LOG.info("Creating new pull request thread with POST URL: %s?%s ...", pr_threads_url, query_params_encoded)
     resp = requests.post(pr_threads_url, params=query_params, json=req_body, headers=headers, timeout=REQ_TIMEOUT)
     resp.raise_for_status()
+
+
+def get_headers(azure_token: str) -> Dict[str, str]:
+    """Provide the headers to use when making Azure Pipelines API calls."""
+    # To provide the personal access token through an HTTP header, you must first convert it to a base64 string.
+    # NOTE: The colon (`:`) appended to the front of the PAT is intentional as it is expected by the endpoints.
+    b64_ado_pat = base64.b64encode(bytes(f":{azure_token}", encoding="ascii")).decode(encoding="ascii")
+    headers = {
+        "User-Agent": PHYLUM_USER_AGENT,
+        "Authorization": f"Basic {b64_ado_pat}",
+    }
+    return headers
+
+
+def get_query_params() -> Tuple[Dict, str]:
+    """Provide the query parameters to use when making Azure Pipelines API calls."""
+    # This is the latest available API version a/o SEP 2023. While it is a "preview" version, it was chosen to
+    # lean forward in an effort to maintain relevance and recency for a longer period of time going forward.
+    # It does appear that the APIs for PR Threads are stable between this version and the previous major version
+    # with accessible documentation.
+    api_version = "7.2-preview.1"
+    query_params = {"api-version": api_version}
+    query_params_encoded = urllib.parse.urlencode(query_params, safe="/", quote_via=urllib.parse.quote)
+    return query_params, query_params_encoded
+
+
+def get_azure_pr_threads_url() -> str:
+    """Get the Azure Pipelines pull request threads API URL and return it."""
+    # API References:
+    #   * Basics: https://learn.microsoft.com/rest/api/azure/devops
+    #   * PR Threads - List: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/list
+    #   * PR Threads - Create: https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/create
+
+    if not is_in_pr():
+        msg = "Must be working in the context of a pull request pipeline"
+        raise SystemExit(msg)
+
+    # SYSTEM_TEAMPROJECT provides the name that corresponds to SYSTEM_TEAMPROJECTID.
+    # SYSTEM_TEAMPROJECTID is used in the API calls since it should never change.
+    team_project_id = os.getenv("SYSTEM_TEAMPROJECTID")
+    instance = os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")
+    repo_id = os.getenv("BUILD_REPOSITORY_ID")
+    pr_id = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID")
+    resource_path = f"/_apis/git/repositories/{repo_id}/pullRequests/{pr_id}/threads"
+
+    # This is the same endpoint for listing all PR threads (GET) and creating new ones (POST)
+    pr_threads_url = f"{instance}{team_project_id}{resource_path}"
+    return pr_threads_url
+
+
+def get_github_comments_url() -> str:
+    """Get the GitHub comments API URL and return it."""
+    github_api_root_url = "https://api.github.com"
+
+    owner_repo = os.getenv("BUILD_REPOSITORY_NAME")
+    if not owner_repo:
+        msg = "The GitHub owner and repository could not be found."
+        raise SystemExit(msg)
+    pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
+    if not pr_number:
+        msg = "The GitHub PR number could not be found."
+        raise SystemExit(msg)
+
+    # API Reference: https://docs.github.com/en/rest/issues/comments
+    # This is the same endpoint for listing all PR comments (GET) and creating new ones (POST)
+    pr_comments_api_endpoint = f"/repos/{owner_repo}/issues/{pr_number}/comments"
+    comments_url = f"{github_api_root_url}{pr_comments_api_endpoint}"
+    return comments_url

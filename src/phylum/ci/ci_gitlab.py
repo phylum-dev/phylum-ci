@@ -15,7 +15,7 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import Optional
+from typing import Dict, List, Optional
 
 import requests
 
@@ -86,7 +86,7 @@ class CIGitLab(CIBase):
         """Get the GitLab token (e.g., personal, project, group, etc.)."""
         return self._gitlab_token
 
-    @property
+    @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         if is_in_mr():
@@ -169,6 +169,11 @@ class CIGitLab(CIBase):
 
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 
+    @property
+    def phylum_comment_exists(self) -> bool:
+        """Predicate for detecting whether a Phylum-generated note (comment) exists."""
+        return bool(self.most_recent_phylum_note)
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 
@@ -181,41 +186,77 @@ class CIGitLab(CIBase):
             # Can't post the output to the MR when there is no MR
             return
 
-        # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
-        gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
-        mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
-        mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
-        # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
-        base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
-        url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
+        LOG.info("Checking merge request notes for existing content to avoid duplication ...")
+        if self.most_recent_phylum_note:
+            LOG.debug("The most recently posted Phylum merge request note was found.")
+            if self.most_recent_phylum_note == self.analysis_report:
+                LOG.debug("It contains the same content as the current analysis. Nothing to do.")
+                return
+            LOG.debug("It does not contain the same content as the current analysis.")
+        else:
+            LOG.debug("No existing Phylum merge request notes found.")
+
+        # If we got here, then the most recent Phylum MR note does not match the current analysis output or
+        # there were no Phylum MR notes. Either way, create a new MR note.
+        url = get_notes_url()
+        data = {"body": self.analysis_report}
+        LOG.info("Creating new merge request note with POST URL: %s ...", url)
+        response = requests.post(url, data=data, headers=self.headers, timeout=REQ_TIMEOUT)
+        response.raise_for_status()
+
+    @property
+    def headers(self) -> dict:
+        """Provide headers to use when making GitLab API calls."""
         headers = {
             "User-Agent": PHYLUM_USER_AGENT,
             "PRIVATE-TOKEN": self.gitlab_token,
         }
+        return headers
 
+    @cached_property
+    def most_recent_phylum_note(self) -> Optional[str]:
+        """Get the raw text of the most recently posted Phylum-generated note.
+
+        Return `None` when one does not exist.
+        """
+        if not is_in_mr():
+            # It only makes sense to reference this property in the context of an MR
+            return None
+
+        url = get_notes_url()
         LOG.info("Getting all current merge request notes with GET URL: %s ...", url)
-        req = requests.get(url, headers=headers, timeout=REQ_TIMEOUT)
+        req = requests.get(url, headers=self.headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
-        mr_notes = req.json()
+        mr_notes: List = req.json()
 
-        LOG.info("Checking existing merge request notes for existing content to avoid duplication ...")
         if not mr_notes:
             LOG.debug("No existing merge request notes found.")
+            return None
+
         # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
         #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
         #       We only care about the most recent Phylum note.
+        mr_note: Dict
         for mr_note in mr_notes:
-            if mr_note.get("body", "").lstrip().startswith(PHYLUM_HEADER.strip()):
+            note_body: str = mr_note.get("body", "")
+            if note_body.lstrip().startswith(PHYLUM_HEADER.strip()):
                 LOG.debug("The most recently posted Phylum merge request note was found.")
-                if mr_note.get("body", "") == self.analysis_report:
-                    LOG.debug("It contains the same content as the current analysis. Nothing to do.")
-                    return
-                LOG.debug("It does not contain the same content as the current analysis.")
-                break
+                return note_body
 
-        # If we got here, then the most recent Phylum MR note does not match the current analysis output or
-        # there were no Phylum MR notes. Either way, create a new MR note.
-        data = {"body": self.analysis_report}
-        LOG.info("Creating new merge request note with POST URL: %s ...", url)
-        response = requests.post(url, data=data, headers=headers, timeout=REQ_TIMEOUT)
-        response.raise_for_status()
+        LOG.debug("No existing Phylum merge request notes found.")
+        return None
+
+
+def get_notes_url() -> str:
+    """Get the notes API URL and return it."""
+    if not is_in_mr():
+        msg = "Must be working in the context of a merge request pipeline"
+        raise SystemExit(msg)
+    # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
+    gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
+    mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
+    mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
+    # This is the same endpoint for listing all MR notes (GET) and creating new ones (POST)
+    base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
+    url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
+    return url
