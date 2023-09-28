@@ -86,18 +86,18 @@ jobs:
           poetry install --verbose --sync --with test,ci
 
       - name: Set PHYLUM_ORIGINAL_VER value
-        run: echo "PHYLUM_ORIGINAL_VER=$(poetry version --short)" >> $GITHUB_ENV
+        run: echo "PHYLUM_ORIGINAL_VER=$(poetry version --short)" >> "${GITHUB_ENV}"
 
       - name: Set to next version for build
         run: |
           if [ "${{ inputs.prerelease }}" = "true" ]; then
-            poetry version $(poetry run semantic-release print-version --next --prerelease)
+            poetry version "$(poetry run semantic-release print-version --next --prerelease)"
           else
-            poetry version $(poetry run semantic-release print-version --next)
+            poetry version "$(poetry run semantic-release print-version --next)"
           fi
 
       - name: Set PHYLUM_REL_VER value
-        run: echo "PHYLUM_REL_VER=$(poetry version --short)" >> $GITHUB_ENV
+        run: echo "PHYLUM_REL_VER=$(poetry version --short)" >> "${GITHUB_ENV}"
 
       # NOTE: Run the tests for the current active Python version, as a sanity check.
       - name: Run tox via poetry
@@ -150,9 +150,9 @@ jobs:
           else
             poetry run semantic-release publish -v DEBUG
           fi
-          echo "url=https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/" >> $GITHUB_OUTPUT
+          echo "url=https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/" >> "${GITHUB_OUTPUT}"
 
-      - name: Build docker image
+      - name: Build default docker image
         run: |
           docker build \
             --tag phylum-ci \
@@ -162,13 +162,22 @@ jobs:
             --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
             .
 
-      - name: Test docker image with pre-built distributions
+      - name: Test default docker image with pre-built distributions
+        run: tests/docker_tests.sh --image phylum-ci
+
+      - name: Build slim docker image
         run: |
-          docker run --rm phylum-ci git --version
-          docker run --rm phylum-ci phylum-ci --version
-          docker run --rm phylum-ci phylum-ci --help
-          docker run --rm phylum-ci phylum-init --help
-          docker run --rm phylum-ci phylum --help
+          docker build \
+            --tag phylum-ci-slim \
+            --build-arg PKG_SRC=dist/phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --file Dockerfile.slim \
+            .
+
+      - name: Test slim docker image with pre-built distributions
+        run: tests/docker_tests.sh --image phylum-ci-slim --slim
 
       - name: Login to Docker Hub
         run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}
@@ -176,24 +185,32 @@ jobs:
       - name: Login to GitHub Container Registry
         run: docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-      - name: Tag and push unique docker image
+      - name: Create specific docker tags and push them
         run: |
-          export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
-          docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
-          docker push phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
-          docker push ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI$CLI_REL_VER
+          CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
+          docker tag phylum-ci "phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}"
+          docker tag phylum-ci-slim "phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}-slim"
+          docker tag phylum-ci "ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}"
+          docker tag phylum-ci-slim "ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}-slim"
+          docker push "phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}"
+          docker push "phylumio/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}-slim"
+          docker push "ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}"
+          docker push "ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}-slim"
 
-      - name: Tag and push latest docker image
+      - name: Tag and push latest docker images
         # Only tag and push `latest` when it's not a phylum-ci pre-release
         # NOTE: This is an instance where the expression syntax (`${{ }}`) is required for the `if` conditional,
         #       contrary to the GitHub workflow syntax documentation. Do not remove the expression syntax.
         if: ${{ !inputs.prerelease }}
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
+          docker tag phylum-ci-slim phylumio/phylum-ci:slim
           docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:latest
+          docker tag phylum-ci-slim ghcr.io/phylum-dev/phylum-ci:slim
           docker push phylumio/phylum-ci:latest
+          docker push phylumio/phylum-ci:slim
           docker push ghcr.io/phylum-dev/phylum-ci:latest
+          docker push ghcr.io/phylum-dev/phylum-ci:slim
 
       - name: Logout of Docker Hub
         if: always()
