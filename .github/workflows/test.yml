@@ -91,15 +91,19 @@ jobs:
       - name: Run tox via poetry
         run: poetry run tox
 
-  # This job is meant to be a sanity check on the Docker image...that it can be created and
+  # This job is meant to be a sanity check on the Docker image...that it can be
+  # created with various Dockerfiles, from source or a built distribution, and
   # have the script entry points called without error.
-  docker:
-    name: Docker smoke test
+  docker-matrix:
+    name: ${{ matrix.dockerfile }} ${{ matrix.build }} smoke test
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
         python-version: ["3.11"]
+        dockerfile: ["Dockerfile", "Dockerfile.slim"]
+        build: ["wheel", "source"]
     env:
       DOCKER_BUILDKIT: 1
     steps:
@@ -107,60 +111,61 @@ jobs:
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
 
       - name: Install poetry
+        if: ${{ matrix.build == 'wheel' }}
         run: pipx install poetry==1.6.1
 
       - name: Configure poetry
+        if: ${{ matrix.build == 'wheel' }}
         run: poetry config virtualenvs.in-project true
 
       - name: Set up Python
+        if: ${{ matrix.build == 'wheel' }}
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
       - name: Install the project with poetry
+        if: ${{ matrix.build == 'wheel' }}
         run: |
           poetry env use python${{ matrix.python-version }}
           poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync
 
-      - name: Build docker image from source
-        run: |
-          docker build \
-            --tag phylum-ci:from-src \
-            --cache-from phylumio/phylum-ci:latest \
-            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-            .
-
-      - name: Test docker image built from source
-        run: |
-          docker run --rm phylum-ci:from-src git --version
-          docker run --rm phylum-ci:from-src phylum-ci --version
-          docker run --rm phylum-ci:from-src phylum-ci --help
-          docker run --rm phylum-ci:from-src phylum-init --help
-          docker run --rm phylum-ci:from-src phylum --help
-
       - name: Build wheel and source distribution
+        if: ${{ matrix.build == 'wheel' }}
         run: poetry build -vvv
 
       - name: Build docker image with pre-built distributions
+        if: ${{ matrix.build == 'wheel' }}
         run: |
           docker build \
-            --tag phylum-ci:from-dist \
+            --tag phylum-ci \
             --cache-from phylumio/phylum-ci:latest \
             --build-arg PKG_SRC=dist/phylum-*.whl \
             --build-arg PKG_NAME=phylum-*.whl \
             --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --file ${{ matrix.dockerfile }} \
             .
 
-      - name: Test docker image built from dist
+      - name: Build docker image from source
+        if: ${{ matrix.build == 'source' }}
         run: |
-          docker run --rm phylum-ci:from-dist git --version
-          docker run --rm phylum-ci:from-dist phylum-ci --version
-          docker run --rm phylum-ci:from-dist phylum-ci --help
-          docker run --rm phylum-ci:from-dist phylum-init --help
-          docker run --rm phylum-ci:from-dist phylum --help
+          docker build \
+            --tag phylum-ci \
+            --cache-from phylumio/phylum-ci:latest \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --file ${{ matrix.dockerfile }} \
+            .
+
+      - name: Test slim docker image built from ${{ matrix.build }}
+        if: ${{ matrix.dockerfile == 'Dockerfile.slim' }}
+        run: tests/docker_tests.sh --image phylum-ci --slim
+
+      - name: Test full docker image built from ${{ matrix.build }}
+        if: ${{ matrix.dockerfile  == 'Dockerfile' }}
+        run: tests/docker_tests.sh --image phylum-ci
 
   # This job reports the results of the test jobs above and is used to enforce status checks in
   # the repo settings without needing to update those settings everytime the test jobs are updated.
@@ -168,20 +173,8 @@ jobs:
     name: Test rollup
     runs-on: ubuntu-latest
     if: always()
-    needs: [QA, test-matrix, docker]
+    needs: [QA, test-matrix, docker-matrix]
     steps:
-      - name: Check for test jobs failure
-        if: >
-          (needs.QA.result != 'success')
-          || (needs.test-matrix.result != 'success')
-          || (needs.docker.result != 'success')
-        run: |
-          echo "At least one test job was not successful"
-          exit 1
-
-      - name: Confirm test jobs success
-        if: >
-          (needs.QA.result == 'success')
-          && (needs.test-matrix.result == 'success')
-          && (needs.docker.result == 'success')
-        run: echo "All test jobs were successful"
+      - name: Check for test jobs failure or cancellation
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
