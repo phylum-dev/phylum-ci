@@ -79,26 +79,44 @@ docker run --rm phylumio/phylum-ci phylum-ci --help
 # Export a Phylum token (e.g., from `phylum auth token`)
 export PHYLUM_API_KEY=$(phylum auth token)
 
-# Run it from a git repo directory containing at least one lockfile
+# Run it from a git repo directory containing at least one supported lockfile or manifest
 docker run -it --rm -e PHYLUM_API_KEY --mount type=bind,src=$(pwd),dst=/phylum -w /phylum phylumio/phylum-ci
 ```
 
-The Docker image contains `git` and the installed `phylum` Python package.
-It also contains an installed version of the Phylum CLI.
-An advantage of using the Docker image is that the complete environment is packaged and made available with components
-that are known to work together.
+The default Docker image contains `git` and the installed `phylum` Python package.
+It also contains an installed version of the Phylum CLI and all required tools needed for [lockfile generation].
+An advantage of using the default Docker image is that the complete environment is packaged and made available with
+components that are known to work together.
+
+One disadvantage to the default image is it's size. It can take a while to download and may provide more tools than
+required for your specific use case. Special `slim` tags of the `phylum-ci` image are provided as an alternative.
+These tags differ from the default image in that they do not contain the required tools needed for [lockfile generation]
+(with the exception of the `pip` tool). The `slim` tags are significantly smaller and will allow integrations relying
+on them to complete faster. They are useful for those instances where *no* manifest files are present and/or *only*
+lockfiles are used.
+
+```sh
+# Get the "latest" `slim` tagged image
+docker pull phylumio/phylum-ci:slim
+```
 
 When using the `latest` tagged image, the version of the Phylum CLI is the `latest` available.
 There are additional image tag options available to specify a specific release of the `phylum-ci` project and a specific
-version of the Phylum CLI, in the form of `<phylum-ci version>-CLIv<Phylum CLI version>`. Here are image tag examples:
+version of the Phylum CLI, in the form of `<phylum-ci version>-CLIv<Phylum CLI version>`.
+Each of these also has a `-slim` variant that does not support [lockfile generation]. Here are image tag examples:
 
 ```sh
 # Get the most current release of *both* `phylum-ci` and the Phylum CLI
 docker pull phylumio/phylum-ci:latest
 
-# Get the image with `phylum-ci` version 0.24.1 and Phylum CLI version 4.7.0
-docker pull phylumio/phylum-ci:0.24.1-CLIv4.7.0
+# Get the image with `phylum-ci` version 0.35.2 and Phylum CLI version 5.7.1
+docker pull phylumio/phylum-ci:0.35.2-CLIv5.7.1
+
+# Get the `slim` image with `phylum-ci` version 0.36.0 and Phylum CLI version 5.7.1
+docker pull phylumio/phylum-ci:0.36.0-CLIv5.7.1-slim
 ```
+
+[lockfile generation]: https://docs.phylum.io/docs/lockfile_generation
 
 #### `phylum-init` Script Entry Point
 

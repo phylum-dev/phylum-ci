@@ -60,10 +60,10 @@ jobs:
               --exit-status \
               .tag_name \
           )
-          REL_VER_WITHOUT_v=$(echo $REL_VER_WITH_v | sed 's/v//')
-          echo $REL_VER_WITH_v $REL_VER_WITHOUT_v
-          echo "REL_VER_WITH_v=$REL_VER_WITH_v" >> $GITHUB_ENV
-          echo "REL_VER_WITHOUT_v=$REL_VER_WITHOUT_v" >> $GITHUB_ENV
+          REL_VER_WITHOUT_v="${REL_VER_WITH_v//v/}"
+          echo "${REL_VER_WITH_v}" "${REL_VER_WITHOUT_v}"
+          echo "REL_VER_WITH_v=${REL_VER_WITH_v}" >> "${GITHUB_ENV}"
+          echo "REL_VER_WITHOUT_v=${REL_VER_WITHOUT_v}" >> "${GITHUB_ENV}"
 
       - name: Checkout the repo
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
@@ -76,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release download ${{ env.REL_VER_WITH_v }} --pattern '*.whl'
 
-      - name: Build docker image with latest phylum wheel
+      - name: Build default docker image with latest phylum wheel
         run: |
           docker build \
             --tag phylum-ci \
@@ -87,13 +87,23 @@ jobs:
             --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
             .
 
-      - name: Test docker image with latest phylum wheel
+      - name: Test default docker image with latest phylum wheel
+        run: scripts/docker_tests.sh --image phylum-ci
+
+      - name: Build slim docker image with latest phylum wheel
         run: |
-          docker run --rm phylum-ci git --version
-          docker run --rm phylum-ci phylum-ci --version
-          docker run --rm phylum-ci phylum-ci --help
-          docker run --rm phylum-ci phylum-init --help
-          docker run --rm phylum-ci phylum --help
+          docker build \
+            --tag phylum-ci-slim \
+            --build-arg PKG_SRC=phylum-*.whl \
+            --build-arg PKG_NAME=phylum-*.whl \
+            --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --file Dockerfile.slim \
+            .
+
+      - name: Test slim docker image with latest phylum wheel
+        run: scripts/docker_tests.sh --image phylum-ci-slim --slim
 
       - name: Login to Docker Hub
         run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}
@@ -101,24 +111,32 @@ jobs:
       - name: Login to GitHub Container Registry
         run: docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-      - name: Tag and push unique docker image
+      - name: Create specific docker tags and push them
         run: |
-          export CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
-          docker tag phylum-ci phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
-          docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
-          docker push phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
-          docker push ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI$CLI_REL_VER
+          CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
+          docker tag phylum-ci "phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}"
+          docker tag phylum-ci-slim "phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}-slim"
+          docker tag phylum-ci "ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}"
+          docker tag phylum-ci-slim "ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}-slim"
+          docker push "phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}"
+          docker push "phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}-slim"
+          docker push "ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}"
+          docker push "ghcr.io/phylum-dev/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}-slim"
 
-      - name: Tag and push latest docker image
+      - name: Tag and push latest docker images
         # Only tag and push `latest` when it's not a CLI pre-release
         # NOTE: This is an instance where the expression syntax (`${{ }}`) is required for the `if` conditional,
         #       contrary to the GitHub workflow syntax documentation. Do not remove the expression syntax.
         if: ${{ !contains(github.event.client_payload.CLI_version, 'rc') }}
         run: |
           docker tag phylum-ci phylumio/phylum-ci:latest
+          docker tag phylum-ci-slim phylumio/phylum-ci:slim
           docker tag phylum-ci ghcr.io/phylum-dev/phylum-ci:latest
+          docker tag phylum-ci-slim ghcr.io/phylum-dev/phylum-ci:slim
           docker push phylumio/phylum-ci:latest
+          docker push phylumio/phylum-ci:slim
           docker push ghcr.io/phylum-dev/phylum-ci:latest
+          docker push ghcr.io/phylum-dev/phylum-ci:slim
 
       - name: Logout of Docker Hub
         if: always()
