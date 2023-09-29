@@ -70,6 +70,11 @@
 # specifying the `entrypoint.sh` script, providing extra parameters as a *quoted* string:
 #
 # $ docker run --rm --entrypoint entrypoint.sh phylumio/phylum-ci:latest "ls -alh /"
+#
+# Images built from this Dockerfile can be tested for basic functionality:
+#
+# $ docker build --tag phylum-ci .
+# $ scripts/docker_tests.sh --image phylum-ci --slim
 ##########################################################################################
 
 FROM python:3.11-slim-bookworm AS builder
