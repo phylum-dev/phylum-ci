@@ -163,7 +163,7 @@ jobs:
             .
 
       - name: Test default docker image with pre-built distributions
-        run: tests/docker_tests.sh --image phylum-ci
+        run: scripts/docker_tests.sh --image phylum-ci
 
       - name: Build slim docker image
         run: |
@@ -177,7 +177,7 @@ jobs:
             .
 
       - name: Test slim docker image with pre-built distributions
-        run: tests/docker_tests.sh --image phylum-ci-slim --slim
+        run: scripts/docker_tests.sh --image phylum-ci-slim --slim
 
       - name: Login to Docker Hub
         run: docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password ${{ secrets.DOCKER_HUB_TOKEN }}

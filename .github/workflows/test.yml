@@ -161,11 +161,11 @@ jobs:
 
       - name: Test slim docker image built from ${{ matrix.build }}
         if: ${{ matrix.dockerfile == 'Dockerfile.slim' }}
-        run: tests/docker_tests.sh --image phylum-ci --slim
+        run: scripts/docker_tests.sh --image phylum-ci --slim
 
       - name: Test full docker image built from ${{ matrix.build }}
         if: ${{ matrix.dockerfile  == 'Dockerfile' }}
-        run: tests/docker_tests.sh --image phylum-ci
+        run: scripts/docker_tests.sh --image phylum-ci
 
   # This job reports the results of the test jobs above and is used to enforce status checks in
   # the repo settings without needing to update those settings everytime the test jobs are updated.
