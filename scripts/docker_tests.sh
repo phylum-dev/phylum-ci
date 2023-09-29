@@ -62,7 +62,8 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ -z "${IMAGE:-}" ]; then
-    IMAGE="maxrake/phylum-ci:manifest_support"
+    IMAGE="phylumio/phylum-ci:latest"
+    echo " [!] \`--image\` option not specified. Attempting to use \`${IMAGE}\` ..."
 fi
 
 # These are the commands to ensure the base pre-requisites are available
@@ -76,7 +77,7 @@ EOF
 )
 
 # These are the commands to ensure lockfile generation is available by checking
-# for each required tools: https://docs.phylum.io/docs/lockfile_generation
+# for each required tool: https://docs.phylum.io/docs/lockfile_generation
 MANIFEST_COMMANDS=$(cat <<EOF
 set -eux
 type npm && npm --version || false
