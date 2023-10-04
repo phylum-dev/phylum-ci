@@ -100,17 +100,17 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         help="Decrease output verbosity (the maximum is -qq)",
     )
 
-    analysis_group = parser.add_argument_group(title="Lockfile Analysis Options")
+    analysis_group = parser.add_argument_group(title="Dependency File Analysis Options")
     analysis_group.add_argument(
         "-l",
         "--lockfile",
         type=pathlib.Path,
         action="append",
         nargs="*",
-        help="""Path to the package lockfile(s) to analyze. If not specified here or in the `.phylum_project` file, an
-            attempt will be made to automatically detect the lockfile(s). Some lockfile types (e.g., Python/pip
-            `requirements.txt`) are ambiguous in that they can be named differently and may or may not contain strict
-            dependencies. In these cases, it is best to specify an explicit lockfile path.""",
+        help="""Path to package dependency file(s) (lockfiles or manifests) to analyze. If not specified here or in the
+            `.phylum_project` file, an attempt will be made to automatically detect the file(s). Some lockfile types
+            (e.g., Python/pip `requirements.txt`) are ambiguous in that they can be named differently and may or may
+            not contain strict dependencies. In these cases, it is best to specify an explicit dependency file path.""",
     )
     analysis_group.add_argument(
         "-a",
@@ -122,7 +122,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-f",
         "--force-analysis",
         action="store_true",
-        help="Specify this flag to force analysis, even when no lockfile has changed.",
+        help="Specify this flag to force analysis, even when no dependency file has changed.",
     )
     analysis_group.add_argument(
         "-k",
@@ -192,15 +192,15 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
     # Bail early when possible
-    LOG.debug("Lockfiles in use: %s", ci_env.lockfiles)
+    LOG.debug("Dependency files in use: %s", ci_env.lockfiles)
     if ci_env.force_analysis:
         LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     elif ci_env.is_any_lockfile_changed:
-        LOG.info("A lockfile has changed. Proceeding with analysis ...")
+        LOG.info("A dependency file has changed. Proceeding with analysis ...")
     elif ci_env.phylum_comment_exists:
         LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
     else:
-        LOG.warning("No lockfile has changed. Nothing to do.")
+        LOG.warning("No dependency file has changed. Nothing to do.")
         return 0
 
     # Generate a label to use for analysis and report it

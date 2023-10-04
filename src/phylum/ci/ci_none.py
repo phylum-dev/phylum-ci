@@ -6,7 +6,6 @@ This is also the fallback implementation to use when no known CI platform is det
 """
 import argparse
 from functools import cached_property
-from pathlib import Path
 import re
 import subprocess
 from typing import Optional
@@ -28,16 +27,9 @@ class CINone(CIBase):
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for when no CI environments/platforms is detected:
-          * Run the script from the root of a git repository
+          * (None at this time)
         """
         super()._check_prerequisites()
-
-        git_dir = Path.cwd() / ".git"
-        if git_dir.is_dir():
-            LOG.debug("Existing [code].git[/] directory found at the current working directory", extra={"markup": True})
-        else:
-            msg = "This script expects to be run from the top level of a `git` repository"
-            raise SystemExit(msg)
 
     @cached_property
     def phylum_label(self) -> str:

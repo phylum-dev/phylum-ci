@@ -136,7 +136,7 @@ The options for `phylum-init`, automatically updated to be current for the lates
 
 #### `phylum-ci` Script Entry Point
 
-The `phylum-ci` script is for analyzing lockfile changes.
+The `phylum-ci` script is for analyzing dependency file (lockfiles and manifests) changes.
 The script can be used locally or from within a Continuous Integration (CI) environment.
 It will attempt to detect the CI platform based on the environment from which it is run and act accordingly.
 The current CI platforms/environments supported are:
@@ -150,8 +150,8 @@ The current CI platforms/environments supported are:
 |Git `pre-commit` Hooks|[Documentation][precommit_docs]|
 
 There is also support for local use. This is the "fall-through" case used when no other environment is detected.
-This can be useful to analyze lockfiles locally, prior to or after submitting a pull/merge request (PR/MR) to a CI
-system. It can also help in establishing a successful submission prior to submitting a PR/MR to a CI system.
+This can be useful to analyze dependency files locally, prior to or after submitting a pull/merge request (PR/MR) to a
+CI system. It can also help in establishing a successful submission prior to submitting a PR/MR to a CI system.
 Additionally, local use can aid troubleshooting after submitting a PR/MR to a CI system and getting unexpected results.
 
 The options for `phylum-ci`, automatically updated to be current for the latest release:
