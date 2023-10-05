@@ -4,7 +4,7 @@ A Phylum project can consist of multiple lockfiles.
 This module/class represents a single lockfile.
 
 For historical purposes, this module uses "lockfile" language instead of the
-more general term "dependency file." Both lockfiles and manifests are supported
+more general "dependency file" term. Both lockfiles and manifests are supported
 and the language has been changed where it is externally visible (e.g., log and
 help output) but kept as "lockfile" internally (e.g., code/variable names).
 """
