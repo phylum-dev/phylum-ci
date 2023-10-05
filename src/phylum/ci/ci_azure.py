@@ -348,10 +348,10 @@ def get_most_recent_phylum_comment_azure(azure_token: str) -> Optional[str]:
                 continue
             thread_comment_content: str = thread_comment.get("content", "")
             if thread_comment_content.lstrip().startswith(PHYLUM_HEADER.strip()):
-                LOG.debug("The most recently posted Phylum pull request comment was found.")
+                # The most recently posted Phylum pull request comment was found
                 return thread_comment_content
 
-    LOG.debug("No existing Phylum pull request comments found.")
+    # No existing Phylum pull request comments found
     return None
 
 

@@ -289,13 +289,13 @@ class CIBitbucket(CIBase):
         pr_comments_resp: Dict = req.json()
         pr_comments_values: List = pr_comments_resp.get("values", [])
         if pr_comments_values:
+            # The most recently posted Phylum pull request comment was found.
             # NOTE: The API call normally returns all the comments in chronological order. Query parameters are used to
             #       only return the most recent Phylum comment, if one exists, since this is the only one we care about.
-            LOG.debug("The most recently posted Phylum pull request comment was found.")
             most_recent_phylum_comment = pr_comments_values[0].get("content", {}).get("raw", "")
             return most_recent_phylum_comment
 
-        LOG.debug("No existing Phylum pull request comments found.")
+        # No existing Phylum pull request comments found
         return None
 
 

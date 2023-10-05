@@ -72,8 +72,8 @@ class CIBase(ABC):
         This is necessary because it is possible that user-provided values for the project and
         group are given, which causes the file to be overwritten when creating that project.
         """
+        cmd = [str(self.cli_path), "status", "--json"]
         try:
-            cmd = [str(self.cli_path), "status", "--json"]
             status_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             msg = "Phylum status check failed"
