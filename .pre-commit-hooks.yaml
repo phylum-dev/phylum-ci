@@ -3,8 +3,8 @@
 # See https://pre-commit.com for more information
 ---
 - id: phylum
-  name: analyze lockfiles with phylum
-  description: Run `phylum` on dependency lockfiles
+  name: analyze dependencies with phylum
+  description: Run `phylum` on dependency files
   entry: phylum-ci
   language: python
   stages: [commit]

@@ -240,10 +240,10 @@ class CIGitLab(CIBase):
         for mr_note in mr_notes:
             note_body: str = mr_note.get("body", "")
             if note_body.lstrip().startswith(PHYLUM_HEADER.strip()):
-                LOG.debug("The most recently posted Phylum merge request note was found.")
+                # The most recently posted Phylum merge request note was found
                 return note_body
 
-        LOG.debug("No existing Phylum merge request notes found.")
+        # No existing Phylum merge request notes found
         return None
 
 

@@ -54,23 +54,23 @@ class CIPreCommit(CIBase):
         if sorted(staged_files) == sorted(self.extra_args):
             LOG.debug("The extra args provided exactly match the list of staged files")
             if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-                LOG.info("Valid pre-commit scenario found: lockfile(s) found in extra arguments")
+                LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
-            LOG.warning("A lockfile is not included in extra args. Nothing to do. Exiting ...")
+            LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for a pre-commit config set up to filter the files sent to the hook
         if all(extra_arg in staged_files for extra_arg in self.extra_args):
             LOG.debug("All the extra args are staged files")
             if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-                LOG.info("Valid pre-commit scenario found: lockfile(s) found in extra arguments")
+                LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
-            LOG.warning("A lockfile is not included in extra args. Nothing to do. Exiting ...")
+            LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
         # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
         if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
-            LOG.info("A lockfile was included in the extra args")
+            LOG.info("A dependency file was included in the extra args")
         # NOTE: There is still the case where a lockfile is "accidentally" included as an extra argument. For example,
         #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
         #       nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not terrible; it
@@ -78,7 +78,7 @@ class CIPreCommit(CIBase):
         #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
         #       heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
-            LOG.warning("A lockfile was not included in the extra args...possible invalid pre-commit scenario")
+            LOG.warning("A dependency file was not included in the extra args...possible invalid pre-commit scenario")
             LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra={"markup": True})
             sys.exit(0)
 
@@ -112,10 +112,10 @@ class CIPreCommit(CIBase):
         staged_files = [Path(staged_file).resolve() for staged_file in self.extra_args]
         for lockfile in self.lockfiles:
             if lockfile.path in staged_files:
-                LOG.debug("The lockfile [code]%r[/] has changed", lockfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = True
             else:
-                LOG.debug("The lockfile [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
                 lockfile.is_lockfile_changed = False
         return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
 

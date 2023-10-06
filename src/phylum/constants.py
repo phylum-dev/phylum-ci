@@ -2,12 +2,14 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Support for CycloneDX lockfiles was added in v5.7.0
-MIN_CLI_VER_FOR_INSTALL = "v5.7.0"
+# The `phylum status` command for printing project and lockfile details was added in v5.1.0
+# but the fix to search for manifests' lockfiles in parent, rather than child directories was added in v5.6.0
+MIN_CLI_VER_FOR_INSTALL = "v5.6.0"
 
 # This is the minimum CLI version supported for existing installs.
-# Support for CycloneDX lockfiles was added in v5.7.0
-MIN_CLI_VER_INSTALLED = "v5.7.0"
+# The `phylum status` command for printing project and lockfile details was added in v5.1.0
+# but the fix to search for manifests' lockfiles in parent, rather than child directories was added in v5.6.0.
+MIN_CLI_VER_INSTALLED = "v5.6.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -23,41 +25,6 @@ SUPPORTED_ARCHES = {
 SUPPORTED_PLATFORMS = {
     "linux": "unknown-linux-gnu",
     "darwin": "apple-darwin",
-}
-
-# These are the currently supported lockfiles.
-# Keys are the standard lockfile filename, optionally specified with glob syntax.
-# Values are the name of the tool that generates the lockfile.
-SUPPORTED_LOCKFILES = {
-    # Javascript/Typescript
-    "package-lock.json": "npm",
-    "npm-shrinkwrap.json": "npm",
-    "yarn.lock": "yarn",
-    "pnpm-lock.yaml": "pnpm",
-    # Ruby
-    "Gemfile.lock": "gem",
-    # Python
-    "requirements*.txt": "pip",
-    "Pipfile.lock": "pipenv",
-    "poetry.lock": "poetry",
-    # C#
-    "*.csproj": "msbuild",
-    "packages.lock.json": "nuget",
-    "packages.*.lock.json": "nuget",
-    # Java
-    "effective-pom.xml": "mvn",
-    "gradle.lockfile": "gradle",
-    # Go
-    "go.sum": "go",
-    # Rust
-    "Cargo.lock": "cargo",
-    # SBOM
-    "*.spdx.json": "spdx",
-    "*.spdx.yaml": "spdx",
-    "*.spdx.yml": "spdx",
-    "*.spdx": "spdx",
-    "*bom.json": "cyclonedx",
-    "*bom.xml": "cyclonedx",
 }
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.

@@ -200,10 +200,10 @@ def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) 
     for pr_comment in reversed(pr_comments):
         comment_body: str = pr_comment.get("body", "")
         if comment_body.lstrip().startswith(PHYLUM_HEADER.strip()):
-            LOG.debug("The most recently posted Phylum pull request comment was found.")
+            # The most recently posted Phylum pull request comment was found
             return comment_body
 
-    LOG.debug("No existing Phylum pull request comments found.")
+    # No existing Phylum pull request comments found
     return None
 
 

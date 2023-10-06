@@ -1,10 +1,16 @@
 """Define a lockfile implementation.
 
 A Phylum project can consist of multiple lockfiles.
-This class represents a single lockfile.
+This module/class represents a single lockfile.
+
+For historical purposes, this module uses "lockfile" language instead of the
+more general "dependency file" term. Both lockfiles and manifests are supported
+and the language has been changed where it is externally visible (e.g., log and
+help output) but kept as "lockfile" internally (e.g., code/variable names).
 """
 from functools import cached_property, lru_cache
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -37,10 +43,11 @@ class Lockfile:
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Lockfile` object."""
+        # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but `os.path.relpath()` does not.
         # NOTE: Any change from this format should be made carefully as caller's
         #       may be relying on `repr(lockfile)` to provide the relative path.
         #       Example: print(f"Relative path to lockfile: `{lockfile!r}`")    # noqa: ERA001 ; commented code intended
-        return str(self.path.relative_to(Path.cwd()))
+        return os.path.relpath(self.path)
 
     def __str__(self) -> str:
         """Return the nicely printable string representation of the `Lockfile` object."""
@@ -85,7 +92,7 @@ class Lockfile:
         """
         prev_lockfile_object = self.previous_lockfile_object()
         if not prev_lockfile_object:
-            LOG.info("No previous lockfile object found for `%r`. Assuming no base dependencies.", self)
+            LOG.info("No previous dependency file object found for `%r`. Assuming no base dependencies.", self)
             return []
         prev_lockfile_packages = sorted(set(self.get_previous_lockfile_packages(prev_lockfile_object)))
         return prev_lockfile_packages
@@ -103,7 +110,7 @@ class Lockfile:
 
         prev_lockfile_object = self.previous_lockfile_object()
         if not prev_lockfile_object:
-            LOG.debug("No previous lockfile object found for `%r`. Assuming all current packages are new.", self)
+            LOG.debug("No previous dependency file object found for `%r`. Assuming all current packages are new.", self)
             return curr_lockfile_packages
 
         prev_lockfile_packages = self.get_previous_lockfile_packages(prev_lockfile_object)
@@ -125,7 +132,7 @@ class Lockfile:
             cmd = [str(self.cli_path), "parse", str(self.path)]
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = f"Is [reverse]{self!r}[/] a valid lockfile? If so, please report this as a bug."
+            msg = f"Is [reverse]{self!r}[/] a valid dependency file? If so, please report this as a bug."
             raise PhylumCalledProcessError(err, msg) from err
         parsed_pkgs = json.loads(parse_result)
         curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
@@ -147,8 +154,8 @@ class Lockfile:
         except subprocess.CalledProcessError as err:
             # There could be a true error, but the working assumption when here is a previous version does not exist
             msg = """\
-                There [italic]may[/] be an issue with the attempt to get the previous lockfile object.
-                Continuing with the assumption a previous lockfile version does not exist ..."""
+                There [italic]may[/] be an issue with the attempt to get the previous dependency file object.
+                Continuing with the assumption a previous dependency file version does not exist ..."""
             pprint_subprocess_error(err)
             LOG.warning(textwrap.dedent(msg), extra={"markup": True})
             prev_lockfile_object = None
@@ -170,7 +177,7 @@ class Lockfile:
                 prev_lockfile_fd.flush()
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
-                LOG.error("Due to error, assuming no previous lockfile packages. Please report this as a bug.")
+                LOG.error("Due to error, assuming no previous dependency file packages. Please report this as a bug.")
                 return []
             try:
                 cmd = [str(self.cli_path), "parse", prev_lockfile_fd.name]
@@ -183,9 +190,9 @@ class Lockfile:
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 msg = f"""\
-                    Due to error, assuming no previous lockfile packages.
+                    Due to error, assuming no previous dependency file packages.
                     Please report this as a bug if you believe [code]{self!r}[/]
-                    is a valid lockfile at revision [code]{self.common_ancestor_commit}[/]."""
+                    is a valid dependency file at revision [code]{self.common_ancestor_commit}[/]."""
                 LOG.warning(textwrap.dedent(msg), extra={"markup": True})
                 return []
 
