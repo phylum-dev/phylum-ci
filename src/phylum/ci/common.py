@@ -2,6 +2,8 @@
 import dataclasses
 from enum import IntEnum
 import json
+import os
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -27,6 +29,34 @@ class JobPolicyEvalResult:
     incomplete_count: int
     output: str
     report: str
+
+
+@dataclasses.dataclass()
+class LockfileEntry:
+    """Class for keeping track of an individual lockfile entry returned by the `phylum status` command."""
+
+    _path: dataclasses.InitVar[os.PathLike]
+    type: str = "auto"  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+    path: Path = dataclasses.field(init=False)
+
+    def __post_init__(self, _path):
+        """Ensure the `path` field is actually a `Path` object."""
+        if isinstance(_path, str):
+            self.path = Path(_path)
+        elif isinstance(_path, Path):
+            self.path = _path
+        else:
+            msg = "Provided lockfile path is not PathLike"
+            raise TypeError(msg)
+
+    def __repr__(self) -> str:
+        """Return a debug printable string representation of the `LockfileEntry` object."""
+        # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but `os.path.relpath()` does not.
+        return os.path.relpath(self.path)
+
+
+# Type alias
+LockfileEntries = List[LockfileEntry]
 
 
 class ReturnCode(IntEnum):

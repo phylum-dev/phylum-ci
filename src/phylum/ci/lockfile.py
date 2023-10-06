@@ -12,13 +12,14 @@ from functools import cached_property, lru_cache
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import tempfile
 import textwrap
 from typing import List, Optional, TypeVar
 
-from phylum.ci.common import PackageDescriptor, Packages
+from phylum.ci.common import LockfileEntry, PackageDescriptor, Packages
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG
 
@@ -30,9 +31,10 @@ Self = TypeVar("Self", bound="Lockfile")
 class Lockfile:
     """Provide methods for an instance of a lockfile."""
 
-    def __init__(self, provided_lockfile: Path, cli_path: Path, common_ancestor_commit: Optional[str]) -> None:
+    def __init__(self, provided_lockfile: LockfileEntry, cli_path: Path, common_ancestor_commit: Optional[str]) -> None:
         """Initialize a lockfile object."""
-        self._path = provided_lockfile.resolve()
+        self._path = provided_lockfile.path.resolve()
+        self._type = provided_lockfile.type
         self.cli_path = cli_path
         self._common_ancestor_commit = common_ancestor_commit
         self._is_lockfile_changed: Optional[bool] = None
@@ -64,6 +66,11 @@ class Lockfile:
     def path(self) -> Path:
         """Get the lockfile path."""
         return self._path
+
+    @property
+    def type(self) -> str:  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+        """Get the lockfile type."""
+        return self._type
 
     @property
     def is_lockfile_changed(self) -> Optional[bool]:
@@ -128,12 +135,18 @@ class Lockfile:
     @lru_cache(maxsize=1)
     def current_lockfile_packages(self) -> Packages:
         """Get the current lockfile packages."""
+        cmd = [str(self.cli_path), "parse", "--lockfile-type", self.type, str(self.path)]
+        LOG.info("Attempting to parse %s as current lockfile. Manifest files may take a while.", self.path)
+        LOG.debug("Using parse command: %s", shlex.join(cmd))
         try:
-            cmd = [str(self.cli_path), "parse", str(self.path)]
             parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = f"Is [reverse]{self!r}[/] a valid dependency file? If so, please report this as a bug."
-            raise PhylumCalledProcessError(err, msg) from err
+            msg = f"""\
+                If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
+                For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                Please report this as a bug if you believe [code]{self!r}[/] is a
+                valid [code]{self.type}[/] dependency file."""
+            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
         parsed_pkgs = json.loads(parse_result)
         curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return curr_lockfile_packages
@@ -164,23 +177,25 @@ class Lockfile:
     @lru_cache(maxsize=1)
     def get_previous_lockfile_packages(self, prev_lockfile_object: str) -> Packages:
         """Get the previous lockfile packages from the corresponding git object and return them."""
-        with tempfile.NamedTemporaryFile(mode="w+") as prev_lockfile_fd:
+        with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
+            prev_lockfile_path = Path(temp_dir) / self.path.name
+            cmd = ["git", "cat-file", "blob", prev_lockfile_object]
             try:
-                cmd = ["git", "cat-file", "blob", prev_lockfile_object]
                 prev_lockfile_contents = subprocess.run(
                     cmd,  # noqa: S603
                     check=True,
                     capture_output=True,
                     text=True,
                 ).stdout
-                prev_lockfile_fd.write(prev_lockfile_contents)
-                prev_lockfile_fd.flush()
+                prev_lockfile_path.write_text(prev_lockfile_contents, encoding="utf-8")
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 LOG.error("Due to error, assuming no previous dependency file packages. Please report this as a bug.")
                 return []
+            cmd = [str(self.cli_path), "parse", "--lockfile-type", self.type, str(prev_lockfile_path)]
+            LOG.info("Attempting to parse %s as previous lockfile. Manifest files may take a while.", self.path)
+            LOG.debug("Using parse command: %s", shlex.join(cmd))
             try:
-                cmd = [str(self.cli_path), "parse", prev_lockfile_fd.name]
                 parse_result = subprocess.run(
                     cmd,  # noqa: S603
                     check=True,
@@ -191,8 +206,10 @@ class Lockfile:
                 pprint_subprocess_error(err)
                 msg = f"""\
                     Due to error, assuming no previous dependency file packages.
-                    Please report this as a bug if you believe [code]{self!r}[/]
-                    is a valid dependency file at revision [code]{self.common_ancestor_commit}[/]."""
+                    If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Please report this as a bug if you believe [code]{self!r}[/] is a
+                    valid [code]{self.type}[/] dependency file at revision [code]{self.common_ancestor_commit}[/]."""
                 LOG.warning(textwrap.dedent(msg), extra={"markup": True})
                 return []
 
