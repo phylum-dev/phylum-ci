@@ -21,7 +21,7 @@ from typing import Dict, List, Optional
 from packaging.version import Version
 from rich.markdown import Markdown
 
-from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, ReturnCode
+from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
 from phylum.ci.git import git_hash_object, git_repo_name
 from phylum.ci.lockfile import Lockfile, Lockfiles
 from phylum.console import console
@@ -115,7 +115,7 @@ class CIBase(ABC):
         arg_lockfiles: Optional[List[List[Path]]] = self.args.lockfile
         if arg_lockfiles:
             # flatten the list of lists
-            provided_arg_lockfiles = [path for sub_list in arg_lockfiles for path in sub_list]
+            provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
             LOG.debug("Dependency files provided as arguments: %s", provided_arg_lockfiles)
             valid_lockfiles = self.filter_lockfiles(provided_arg_lockfiles)
             if valid_lockfiles:
@@ -124,8 +124,7 @@ class CIBase(ABC):
 
         LOG.info("No valid dependency files were provided as arguments. An attempt will be made to detect them.")
         lockfile_entries: List[OrderedDict] = self._project_settings.get("lockfiles", [])
-        lockfile_paths = [lockfile_entry.get("path") for lockfile_entry in lockfile_entries]
-        detected_lockfiles = [Path(lockfile) for lockfile in lockfile_paths if lockfile]
+        detected_lockfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in lockfile_entries]
         if lockfile_entries and self._project_settings.get("root"):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_lockfiles)
         else:
@@ -142,29 +141,34 @@ class CIBase(ABC):
         raise SystemExit(textwrap.dedent(msg))
 
     @progress_spinner("Filtering dependency files")
-    def filter_lockfiles(self, provided_lockfiles: List[Path]) -> Lockfiles:
+    def filter_lockfiles(self, provided_lockfiles: LockfileEntries) -> Lockfiles:
         """Filter potential lockfiles and return the valid ones in sorted order."""
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
-            if not provided_lockfile.exists():
-                LOG.warning("Provided dependency file does not exist: %s", provided_lockfile)
+            if not provided_lockfile.path.exists():
+                LOG.warning("Provided dependency file does not exist: %s", provided_lockfile.path)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
-            if not provided_lockfile.stat().st_size:
-                LOG.warning("Provided dependency file is an empty file: %s", provided_lockfile)
+            if not provided_lockfile.path.stat().st_size:
+                LOG.warning("Provided dependency file is an empty file: %s", provided_lockfile.path)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
-            cmd = [str(self.cli_path), "parse", str(provided_lockfile)]
-            LOG.info("Attempting to parse %s as lockfile. This may take a while for manifest files.", provided_lockfile)
+            cmd = [str(self.cli_path), "parse", "--lockfile-type", provided_lockfile.type, str(provided_lockfile.path)]
+            LOG.info(
+                "Attempting to parse %s as potential lockfile. Manifest files may take a while.",
+                provided_lockfile.path,
+            )
             LOG.debug("Using parse command: %s", shlex.join(cmd))
             try:
                 subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
+                _path, _type = provided_lockfile.path, provided_lockfile.type
                 msg = f"""\
-                    Provided dependency file failed to parse as a known lockfile type: [code]{provided_lockfile}[/]
-                    If this is a manifest, consider excluding it.
-                    Please report this as a bug if you think [code]{provided_lockfile}[/] is a valid dependency file."""
+                    Provided dependency file [code]{_path}[/] failed to parse as lockfile type [code]{_type}[/].
+                    If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Please report this as a bug if you believe [code]{_path}[/] is a valid {_type} dependency file."""
                 LOG.warning(textwrap.dedent(msg), extra={"markup": True})
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
@@ -467,7 +471,7 @@ class CIBase(ABC):
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)
-            cmd.extend(str(lockfile.path) for lockfile in self.lockfiles)
+            cmd.extend(f"{lockfile.path}:{lockfile.type}" for lockfile in self.lockfiles)
 
             LOG.info("Performing analysis. This may take a few seconds.")
             LOG.debug("Using analysis command: %s", shlex.join(cmd))

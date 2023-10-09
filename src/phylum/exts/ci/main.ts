@@ -4,7 +4,7 @@ import { Package, PhylumApi } from "phylum";
 const args = Deno.args.slice(0);
 if (args.length < 4) {
     console.error(
-        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <LOCKFILE...>",
+        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <LOCKFILE:TYPE...>",
     );
     Deno.exit(1);
 }
@@ -26,7 +26,9 @@ const lockfiles = args.splice(3);
 // Parse new lockfiles.
 let packages: Package[] = [];
 for (const lockfile of lockfiles) {
-    const lockfileDeps = await PhylumApi.parseLockfile(lockfile);
+    const lockfile_path = lockfile.substring(0, lockfile.lastIndexOf(":"));
+    const lockfile_type = lockfile.substring(lockfile.lastIndexOf(":") + 1, lockfile.length);
+    const lockfileDeps = await PhylumApi.parseLockfile(lockfile_path, lockfile_type);
     packages = packages.concat(lockfileDeps.packages);
 }
 
