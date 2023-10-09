@@ -10,7 +10,7 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9  # frozen: v4.4.0
+    rev: c4a0b883114b00d8d76b479c820ce7950211c99b  # frozen: v4.5.0
     hooks:
       - id: trailing-whitespace
         exclude_types: [svg]
@@ -28,7 +28,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 146c621c9fbe4727ca57be94779b7abecf5058ec  # frozen: v0.0.291
+    rev: 42f98979dbdfcd148dff424477552b8816a7cf01  # frozen: v0.0.292
     hooks:
       - id: ruff
 
@@ -38,7 +38,7 @@ repos:
       - id: refurb
 
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 77127eb0ac03900d0a552882f7c3b204a705c236  # frozen: v2.9.1
+    rev: 42ae1c1776f475a205bedeaf8dc6913c044e1440  # frozen: v2.10
     hooks:
       - id: vulture
 
