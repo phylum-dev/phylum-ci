@@ -3,6 +3,7 @@ import argparse
 import os
 import pathlib
 import sys
+import textwrap
 from typing import List, Optional, Sequence, Tuple
 
 from phylum import __version__
@@ -116,13 +117,17 @@ def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, 
         "-a",
         "--all-deps",
         action="store_true",
-        help="Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.",
+        help="""Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.
+            This is especially useful, when paired with the `--force-analysis` flag, for *workspace* manifest files
+            where there is no companion lockfile (e.g., libraries).""",
     )
     analysis_group.add_argument(
         "-f",
         "--force-analysis",
         action="store_true",
-        help="Specify this flag to force analysis, even when no dependency file has changed.",
+        help="""Specify this flag to force analysis, even when no dependency file has changed. This can be useful for
+            manifests, where the loosely specified dependencies may not change often but the completely resolved set of
+            strict dependencies does.""",
     )
     analysis_group.add_argument(
         "-k",
@@ -200,7 +205,13 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     elif ci_env.phylum_comment_exists:
         LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
     else:
-        LOG.warning("No dependency file has changed. Nothing to do.")
+        msg = """\
+            No dependency file has changed. Nothing to do.
+              If manifests were included, consider specifying the `--force-analysis` flag
+              to ensure updated dependencies are taken into account.
+              Further consider also specifying the `--all-deps` flag for workspace manifests.
+              For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
+        LOG.warning(textwrap.dedent(msg))
         return 0
 
     # Generate a label to use for analysis and report it
