@@ -88,18 +88,34 @@ type pipenv && pipenv --version || false
 type poetry && poetry --version || false
 type bundle && bundle --version || false
 type mvn && mvn --version || false
-type gradle && gradle -version || false
+type gradle && gradle --version || false
 type go && go version || false
 type cargo && cargo --version || false
+type rustup && rustup --version && rustup show || false
 type dotnet && dotnet --info || false
 EOF
 )
 
+# The tests are meant to run as a non-root user/group to ensure all the required
+# tools are available globally. This is an attempt to use the current user/group
+# like when provided via `--user $(id -u):$(id -g)` and fall back to hard coded
+# values when it happens to be run as `root:root`.
+USER=$(id -u)
+if [ "${USER}" -eq "0" ]; then
+    USER=1000;
+fi
+GROUP=$(id -g)
+if [ "${GROUP}" -eq "0" ]; then
+    GROUP=1000;
+fi
+
+echo " [+] Running with UID:GID of: ${USER}:${GROUP}"
+
 if [ -z "${SLIM:-}" ]; then
     echo " [+] \`--slim\` option not specified. Running all tests ..."
-    docker run --rm --entrypoint entrypoint.sh "${IMAGE}" "${SLIM_COMMANDS}"
-    docker run --rm --entrypoint entrypoint.sh "${IMAGE}" "${MANIFEST_COMMANDS}"
+    docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${SLIM_COMMANDS}"
+    docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${MANIFEST_COMMANDS}"
 else
     echo " [+] \`--slim\` option specified. Skipping the lockfile generation tests ..."
-    docker run --rm --entrypoint entrypoint.sh "${IMAGE}" "${SLIM_COMMANDS}"
+    docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${SLIM_COMMANDS}"
 fi
