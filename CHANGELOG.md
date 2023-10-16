@@ -10,6 +10,26 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.36.0 (2023-10-16)
+
+### Feature
+
+* Account for dependency file types ([#324](https://github.com/phylum-dev/phylum-ci/issues/324)) ([`918902d`](https://github.com/phylum-dev/phylum-ci/commit/918902dba1ca32bf67312c5ec8876cbffc95e1fe))
+* Replace lockfile detection with `phylum status` ([#322](https://github.com/phylum-dev/phylum-ci/issues/322)) ([`224e3a6`](https://github.com/phylum-dev/phylum-ci/commit/224e3a6e71d4c29593b7c6d3266fae5b5dc44bf7))
+* Add lockfile generation support ([#318](https://github.com/phylum-dev/phylum-ci/issues/318)) ([`f96ff48`](https://github.com/phylum-dev/phylum-ci/commit/f96ff48362de5dcf8bfd60291dbda6c47169fa6a))
+
+### Fix
+
+* Container tools broken when home-less ([#329](https://github.com/phylum-dev/phylum-ci/issues/329)) ([`f951e3c`](https://github.com/phylum-dev/phylum-ci/commit/f951e3c76e17502ea617470f7691503ac687b9a0))
+
+### Breaking
+
+* The `phylum-ci` docker image created from the default `Dockerfile` is much larger, containing *all* the required tools for lockfile generation across all supported ecosystems. To retain the previous functionality, a new `slim` tag is offered for those instances where *no* manifest files are present and/or *only* lockfiles are used. ([`f96ff48`](https://github.com/phylum-dev/phylum-ci/commit/f96ff48362de5dcf8bfd60291dbda6c47169fa6a))
+
+### Documentation
+
+* Add more detail for manifest file support ([#328](https://github.com/phylum-dev/phylum-ci/issues/328)) ([`3241d2d`](https://github.com/phylum-dev/phylum-ci/commit/3241d2dc35a7f774b634a24e51f5d72df040f88d))
+
 ## v0.35.2 (2023-09-18)
 
 ### Fix
