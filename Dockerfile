@@ -146,10 +146,31 @@ LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
 ENV PHYLUM_VENV="/opt/venv"
 
-ENV GRADLE_PATH="/opt/gradle/bin"
+# Some tools get installed and used based on a home directory. This can cause trouble
+# when using a container started from this image with a UID:GID that does not map to
+# a user/group account in the container. Examples include:
+#
+#   * The installation directory is `/root` and the container user has no access
+#   * The tool relies on the existence of a $HOME directory, which may not be true
+#     * https://medium.com/redbubble/running-a-docker-container-as-a-non-root-user-7d2e00f8ee15
+#
+# The following tools are susceptible to this issue and therefore have been provided
+# with explicit install/home directories that allow them to be globally accessible.
+#
+# Corepack, Yarn, and pnpm
+# Ref: https://github.com/nodejs/corepack#environment-variables
+ENV COREPACK_HOME="/usr/local/corepack/.cache/node/corepack"
+# Rust, Cargo, and rustup
+# Ref: https://rust-lang.github.io/rustup/installation/index.html#choosing-where-to-install
+ENV RUSTUP_HOME="/usr/local/rustup"
+ENV CARGO_HOME="/usr/local/cargo"
+# Gradle
+# Ref: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
+ENV GRADLE_HOME="/usr/local/gradle"
+ENV GRADLE_USER_HOME="${GRADLE_HOME}/.gradle"
+
 ENV GO_PATH="/usr/local/go/bin"
-ENV CARGO_PATH="/root/.cargo/bin"
-ENV PATH=${PHYLUM_VENV}/bin:$PATH:${GRADLE_PATH}:${GO_PATH}:${CARGO_PATH}
+ENV PATH=${PHYLUM_VENV}/bin:$PATH:${GRADLE_HOME}/bin:${GO_PATH}:${CARGO_HOME}/bin
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -199,10 +220,11 @@ RUN \
     GRADLE_DL_SHA256=$(curls "${GRADLE_DL}.sha256"); \
     curls -o gradle.zip "${GRADLE_DL}"; \
     printf "%s *gradle.zip" "${GRADLE_DL_SHA256}" | sha256sum -c -; \
-    mkdir /opt/gradle; \
-    unzip -d /opt/gradle gradle.zip; \
-    mv /opt/gradle/gradle-"${GRADLE_VERSION}"/* /opt/gradle/; \
-    rm gradle.zip && rmdir "/opt/gradle/gradle-${GRADLE_VERSION}/"; \
+    mkdir "${GRADLE_HOME}"; \
+    unzip -d "${GRADLE_HOME}" gradle.zip; \
+    mv "${GRADLE_HOME}/gradle-${GRADLE_VERSION}"/* "${GRADLE_HOME}/"; \
+    rm gradle.zip && rmdir "${GRADLE_HOME}/gradle-${GRADLE_VERSION}/"; \
+    mkdir --mode=777 "${GRADLE_USER_HOME}"; \
     #
     # Manual install of `go`
     # Ref: https://pkg.go.dev/golang.org/x/website/internal/dl
@@ -217,7 +239,7 @@ RUN \
     rm go.tgz; \
     #
     # Manual install of Rust to get `cargo` tool
-    curls https://sh.rustup.rs | sh -s -- -y --profile minimal; \
+    curls https://sh.rustup.rs | sh -s -- -v -y --default-toolchain stable --profile minimal; \
     #
     # Install .NET SDK to get `dotnet` tool
     # Ref: https://github.com/dotnet/core/tree/main/release-notes
