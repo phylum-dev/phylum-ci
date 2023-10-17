@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.11"]
+        python-version: ["3.12"]
     steps:
       - name: Checkout the repo
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.12"]
     steps:
       - name: Checkout the repo
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
@@ -101,7 +101,7 @@ jobs:
       fail-fast: false
       matrix:
         # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         dockerfile: ["Dockerfile", "Dockerfile.slim"]
         build: ["wheel", "source"]
     env:

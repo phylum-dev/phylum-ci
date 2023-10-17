@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 packages = [
     { include = "phylum", from = "src" },
@@ -45,7 +46,7 @@ phylum-init = "phylum.init.cli:main"
 phylum-ci = "phylum.ci.cli:script_main"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.9,<3.13"
 requests = "*"
 cryptography = "*"
 packaging = "*"
