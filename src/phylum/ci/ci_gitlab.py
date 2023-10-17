@@ -15,7 +15,7 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import Dict, List, Optional
+from typing import Optional
 
 import requests
 
@@ -227,7 +227,7 @@ class CIGitLab(CIBase):
         LOG.info("Getting all current merge request notes with GET URL: %s ...", url)
         req = requests.get(url, headers=self.headers, timeout=REQ_TIMEOUT)
         req.raise_for_status()
-        mr_notes: List = req.json()
+        mr_notes: list = req.json()
 
         if not mr_notes:
             LOG.debug("No existing merge request notes found.")
@@ -236,7 +236,7 @@ class CIGitLab(CIBase):
         # NOTE: The API defaults to returning the notes in descending order by the `created_at` field.
         #       Detecting Phylum notes is done simply by looking for notes that start with a known string value.
         #       We only care about the most recent Phylum note.
-        mr_note: Dict
+        mr_note: dict
         for mr_note in mr_notes:
             note_body: str = mr_note.get("body", "")
             if note_body.lstrip().startswith(PHYLUM_HEADER.strip()):

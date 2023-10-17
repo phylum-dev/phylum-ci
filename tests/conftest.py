@@ -1,5 +1,5 @@
 """Aggregate the pytest fixtures in one location."""
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 

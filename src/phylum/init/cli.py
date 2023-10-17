@@ -1,5 +1,6 @@
 """Console script for phylum-init."""
 import argparse
+from collections.abc import Sequence
 from functools import lru_cache
 import itertools
 import os
@@ -10,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Optional
 import zipfile
 
 from packaging.utils import canonicalize_version
@@ -54,7 +55,6 @@ def get_phylum_settings_path():
 def get_expected_phylum_bin_path():
     """Get the expected path to the Phylum CLI binary and return it."""
     phylum_bin_path = pathlib.Path.home() / ".local" / "bin" / "phylum"
-
     return phylum_bin_path
 
 
@@ -66,16 +66,11 @@ def get_phylum_cli_version(cli_path: Path) -> str:
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the Phylum CLI version"
         raise PhylumCalledProcessError(err, msg) from err
-
-    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-    prefix = "phylum "
-    if version.startswith(prefix):
-        version = version.replace(prefix, "", 1)
-
+    version = version.removeprefix("phylum ")
     return version
 
 
-def get_phylum_bin_path() -> Tuple[Optional[Path], Optional[str]]:
+def get_phylum_bin_path() -> tuple[Optional[Path], Optional[str]]:
     """Get the current path and corresponding version to the Phylum CLI binary and return them."""
     # Look for `phylum` on the PATH first
     which_cli_path = shutil.which("phylum")
@@ -112,7 +107,7 @@ def get_latest_version() -> str:
     """Get the "latest" version programmatically and return it."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-the-latest-release
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases/latest"
-    req_json: Dict = github_request(github_api_url)
+    req_json: dict = github_request(github_api_url)
 
     # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
     # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
@@ -125,17 +120,17 @@ def get_latest_version() -> str:
 
 
 @lru_cache(maxsize=1)
-def supported_releases() -> List[str]:
+def supported_releases() -> list[str]:
     """Get the most recent supported releases programmatically and return them in sorted order, latest first."""
     # API Reference: https://docs.github.com/en/rest/releases/releases#list-releases
     github_api_url = "https://api.github.com/repos/phylum-dev/cli/releases"
     query_params = {"per_page": 100}
     LOG.debug("Minimum supported Phylum CLI version required for install: %s", MIN_CLI_VER_FOR_INSTALL)
 
-    req_json: List = github_request(github_api_url, params=query_params)
+    req_json: list = github_request(github_api_url, params=query_params)
 
     cli_releases = {}
-    rel: Dict
+    rel: dict
     for rel in req_json:
         # The "name" entry stores the GitHub Release name, which could be set to something other than the version.
         # Using the "tag_name" entry is better since the tags are much more tightly coupled with the release version.
@@ -164,7 +159,7 @@ def is_supported_version(version: str) -> bool:
 
 
 @lru_cache(maxsize=1)
-def supported_targets(release_tag: str) -> List[str]:
+def supported_targets(release_tag: str) -> list[str]:
     """Get the supported Rust target triples programmatically for a given release tag and return them.
 
     Targets are identified by their "target triple" which is the string to inform the compiler what kind of output
@@ -183,15 +178,16 @@ def supported_targets(release_tag: str) -> List[str]:
     # API Reference: https://docs.github.com/en/rest/releases/releases#get-a-release-by-tag-name
     github_api_url = f"https://api.github.com/repos/phylum-dev/cli/releases/tags/{release_tag}"
 
-    req_json: Dict = github_request(github_api_url)
+    req_json: dict = github_request(github_api_url)
 
     assets = req_json.get("assets", [])
-    targets: List[str] = []
+    targets: list[str] = []
     prefix, suffix = "phylum-", ".zip"
+    asset: dict
     for asset in assets:
-        name = asset.get("name", "")
+        name: str = asset.get("name", "")
         if name.startswith(prefix) and name.endswith(suffix):
-            target = name.replace(prefix, "").replace(suffix, "")
+            target = name.removeprefix(prefix).removesuffix(suffix)
             targets.append(target)
 
     return list(set(targets))
@@ -309,7 +305,7 @@ def setup_token(token: str) -> None:
     phylum_settings_path = get_phylum_settings_path()
     ensure_settings_file()
     yaml = YAML()
-    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     settings.setdefault("auth_info", {})
     settings["auth_info"]["offline_access"] = token
     with phylum_settings_path.open("w", encoding="utf-8") as f:
@@ -350,7 +346,7 @@ def process_uri_option(args: argparse.Namespace) -> None:
     settings_file_existed = phylum_settings_path.exists()
     ensure_settings_file()
     yaml = YAML()
-    settings: Dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
+    settings: dict = yaml.load(phylum_settings_path.read_text(encoding="utf-8"))
     configured_uri = settings.get("connection", {}).get("uri")
 
     if api_uri:

@@ -3,7 +3,8 @@
 The `rich` library is used here for excellent control over the console.
 Reference: https://rich.readthedocs.io/en/latest/index.html
 """
-from typing import Mapping, Union
+from collections.abc import Mapping
+from typing import Union
 
 from rich.console import Console
 from rich.style import Style

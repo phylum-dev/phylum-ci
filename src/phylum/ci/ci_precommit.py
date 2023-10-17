@@ -14,7 +14,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-from typing import List, Optional
+from typing import Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name
@@ -25,7 +25,7 @@ from phylum.logger import LOG
 class CIPreCommit(CIBase):
     """Provide methods for operating within a pre-commit hook."""
 
-    def __init__(self, args: argparse.Namespace, remainder: List[str]) -> None:  # noqa: D107
+    def __init__(self, args: argparse.Namespace, remainder: list[str]) -> None:  # noqa: D107
         # The base __init__ docstring is better here
         self.extra_args = remainder
         super().__init__(args)
@@ -38,6 +38,7 @@ class CIPreCommit(CIBase):
           * The extra unparsed arguments passed to the CLI represent the staged files, no more and no less
         """
         super()._check_prerequisites()
+        self._backup_project_file()
 
         cmd = ["git", "diff", "--cached", "--name-only"]
         try:

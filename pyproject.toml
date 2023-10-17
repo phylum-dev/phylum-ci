@@ -27,7 +27,6 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Software Development :: Quality Assurance",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -46,7 +45,7 @@ phylum-init = "phylum.init.cli:main"
 phylum-ci = "phylum.ci.cli:script_main"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
+python = ">=3.9,<3.12"
 requests = "*"
 cryptography = "*"
 packaging = "*"
@@ -90,13 +89,13 @@ paths = ["src", "tests"]
 exclude = ["conftest.py"]
 
 [tool.refurb]
-python_version = "3.8"
+python_version = "3.9"
 format = "github"
 
 [tool.ruff]
 # Reference: https://beta.ruff.rs/docs/settings
 line-length = 120
-target-version = "py38"
+target-version = "py39"
 force-exclude = true
 src = ["src", "tests"]
 select = [
@@ -119,7 +118,7 @@ ignore = [
     "B019", # cached-instance-method
     # Assigning to a variable before a return statement is more readable and useful for debugging
     "RET504", # unnecessary-assign
-    # Allowing exception handling within loops improves readability with ony a negligible performance impact.
+    # Allowing exception handling within loops improves readability with only a negligible performance impact.
     "PERF203", # try-except-in-loop
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
     "ANN", # flake8-annotations
