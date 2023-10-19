@@ -4,7 +4,7 @@ from enum import IntEnum
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -18,7 +18,7 @@ class PackageDescriptor:
 
 
 # Type alias
-Packages = List[PackageDescriptor]
+Packages = list[PackageDescriptor]
 
 
 @dataclasses.dataclass()
@@ -56,7 +56,7 @@ class LockfileEntry:
 
 
 # Type alias
-LockfileEntries = List[LockfileEntry]
+LockfileEntries = list[LockfileEntry]
 
 
 class ReturnCode(IntEnum):

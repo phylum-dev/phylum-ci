@@ -4,13 +4,13 @@ from pathlib import Path
 import shlex
 import subprocess
 import textwrap
-from typing import List, Optional
+from typing import Optional
 
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG
 
 
-def git_base_cmd(git_c_path: Optional[Path] = None) -> List[str]:
+def git_base_cmd(git_c_path: Optional[Path] = None) -> list[str]:
     """Provide a normalized base command list for use in constructing git commands.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -133,14 +133,8 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
         except subprocess.CalledProcessError as inner_err:
             msg = "Failed to get the remote HEAD ref even after setting it."
             raise PhylumCalledProcessError(inner_err, msg) from outer_err
-
-    default_branch_name = default_branch_name.strip()
-    # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-    if default_branch_name.startswith(prefix):
-        default_branch_name = default_branch_name.replace(prefix, "", 1)
-
+    default_branch_name = default_branch_name.strip().removeprefix(prefix)
     LOG.debug("Default branch name: %s", default_branch_name)
-
     return default_branch_name
 
 

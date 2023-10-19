@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
-from typing import List, Optional, TypeVar
+from typing import Optional, TypeVar
 
 from phylum.ci.common import LockfileEntry, PackageDescriptor, Packages
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -219,4 +219,4 @@ class Lockfile:
 
 
 # Type alias
-Lockfiles = List[Lockfile]
+Lockfiles = list[Lockfile]

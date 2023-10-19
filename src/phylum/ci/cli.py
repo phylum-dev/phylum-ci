@@ -1,10 +1,11 @@
 """Console script for phylum-ci."""
 import argparse
+from collections.abc import Sequence
 import os
 import pathlib
 import sys
 import textwrap
-from typing import List, Optional, Sequence, Tuple
+from typing import Optional
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -21,7 +22,7 @@ from phylum.init.cli import get_target_triple, process_version
 from phylum.logger import LOG, set_logger_level
 
 
-def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase:
+def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase:
     """Detect CI platform via known CI-based environment variables.
 
     Reference: https://github.com/watson/ci-info/blob/master/vendors.json
@@ -70,7 +71,7 @@ def detect_ci_platform(args: argparse.Namespace, remainder: List[str]) -> CIBase
     return ci_env
 
 
-def get_args(args: Optional[Sequence[str]] = None) -> Tuple[argparse.Namespace, List[str]]:
+def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, list[str]]:
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,

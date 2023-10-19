@@ -23,7 +23,7 @@ import re
 import shlex
 import subprocess
 import textwrap
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 import urllib.parse
 
 import requests
@@ -152,11 +152,7 @@ class CIAzure(CIBase):
             pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTNUMBER")
             if pr_number is None:
                 pr_number = os.getenv("SYSTEM_PULLREQUEST_PULLREQUESTID", "unknown-number")
-            pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref")
-            ref_prefix = "refs/heads/"
-            # Starting with Python 3.9, the str.removeprefix() method was introduced to do this same thing
-            if pr_src_branch.startswith(ref_prefix):
-                pr_src_branch = pr_src_branch.replace(ref_prefix, "", 1)
+            pr_src_branch = os.getenv("SYSTEM_PULLREQUEST_SOURCEBRANCH", "unknown-ref").removeprefix("refs/heads/")
             label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
         else:
             current_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "unknown-branch")
@@ -279,7 +275,7 @@ class CIAzure(CIBase):
             post_github_comment(comments_url, self.github_token, self.analysis_report)
 
 
-def get_pr_branches() -> Tuple[str, str]:
+def get_pr_branches() -> tuple[str, str]:
     """Get the source and destination branches when in a PR context and return them as a tuple."""
     # There is no single predefined variable available to provide the PR base SHA.
     # Instead, it can be determined with a `git merge-base` command, like is done for the CINone implementation.
@@ -325,7 +321,7 @@ def get_most_recent_phylum_comment_azure(azure_token: str) -> Optional[str]:
     if resp.status_code != requests.codes.OK:
         msg = f"Are the permissions on the Azure token `AZURE_TOKEN` correct? {AZURE_PAT_ERR_MSG}"
         raise SystemExit(msg)
-    pr_threads_resp: Dict = resp.json()
+    pr_threads_resp: dict = resp.json()
 
     pr_threads_count = pr_threads_resp.get("count", 0)
     LOG.debug("PR threads found: %s", pr_threads_count)
@@ -334,14 +330,14 @@ def get_most_recent_phylum_comment_azure(azure_token: str) -> Optional[str]:
         return None
 
     LOG.info("Checking pull request threads for existing Phylum-generated comments ...")
-    pr_threads: List = pr_threads_resp.get("value", [])
+    pr_threads: list = pr_threads_resp.get("value", [])
     # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
     #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
     #       We only care about the most recent Phylum comment.
-    pr_thread: Dict
+    pr_thread: dict
     for pr_thread in reversed(pr_threads):
         thread_comments = pr_thread.get("comments", [])
-        thread_comment: Dict
+        thread_comment: dict
         for thread_comment in thread_comments:
             # All Phylum generated comments will be the first in their own thread
             if thread_comment.get("id", 0) != 1:
@@ -396,7 +392,7 @@ def post_azure_comment(azure_token: str, comment: str) -> None:
     resp.raise_for_status()
 
 
-def get_headers(azure_token: str) -> Dict[str, str]:
+def get_headers(azure_token: str) -> dict[str, str]:
     """Provide the headers to use when making Azure Pipelines API calls."""
     # To provide the personal access token through an HTTP header, you must first convert it to a base64 string.
     # NOTE: The colon (`:`) appended to the front of the PAT is intentional as it is expected by the endpoints.
@@ -408,7 +404,7 @@ def get_headers(azure_token: str) -> Dict[str, str]:
     return headers
 
 
-def get_query_params() -> Tuple[Dict, str]:
+def get_query_params() -> tuple[dict, str]:
     """Provide the query parameters to use when making Azure Pipelines API calls."""
     # This is the latest available API version a/o SEP 2023. While it is a "preview" version, it was chosen to
     # lean forward in an effort to maintain relevance and recency for a longer period of time going forward.

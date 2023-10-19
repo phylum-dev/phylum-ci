@@ -18,7 +18,7 @@ from pathlib import Path
 import re
 import subprocess
 import textwrap
-from typing import Dict, List, Optional
+from typing import Optional
 
 import requests
 
@@ -86,7 +86,7 @@ class CIGitHub(CIBase):
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
         # Instead, the full event webhook payload can be used to obtain the information. Reference:
-        # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+        # https://docs.github.com/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
         if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
             msg = "The workflow event must be `pull_request`"
             raise SystemExit(msg)
@@ -187,7 +187,7 @@ def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) 
     """
     query_params = {"per_page": 100}
     LOG.info("Getting all current pull request comments with GET URL: %s ...", comments_url)
-    pr_comments: List = github_request(comments_url, params=query_params, github_token=github_token)
+    pr_comments: list = github_request(comments_url, params=query_params, github_token=github_token)
 
     if not pr_comments:
         LOG.debug("No existing pull request comments found.")
@@ -196,7 +196,7 @@ def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) 
     # NOTE: The API call returns the comments in ascending order by ID...thus the need to reverse the list.
     #       Detecting Phylum comments is done simply by looking for those that start with a known string value.
     #       We only care about the most recent Phylum comment.
-    pr_comment: Dict
+    pr_comment: dict
     for pr_comment in reversed(pr_comments):
         comment_body: str = pr_comment.get("body", "")
         if comment_body.lstrip().startswith(PHYLUM_HEADER.strip()):

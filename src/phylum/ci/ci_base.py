@@ -7,7 +7,7 @@ designated as abstract methods to be defined in specific CI environments.
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
-from functools import cached_property
+from functools import cached_property, lru_cache
 import json
 import os
 from pathlib import Path
@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
-from typing import Dict, List, Optional
+from typing import Optional
 
 from packaging.version import Version
 from rich.markdown import Markdown
@@ -66,6 +66,7 @@ class CIBase(ABC):
 
         self._ensure_project_exists()
 
+    @lru_cache(maxsize=1)
     def _backup_project_file(self) -> None:
         """Create a copy of the original `.phylum_project` file values, when the file exists.
 
@@ -78,7 +79,7 @@ class CIBase(ABC):
         except subprocess.CalledProcessError as err:
             msg = "Phylum status check failed"
             raise PhylumCalledProcessError(err, msg) from err
-        self._project_settings: Dict = json.loads(status_output)
+        self._project_settings: dict = json.loads(status_output)
         project_root = self._project_settings.get("root")
         if project_root:
             self._phylum_project_file = Path(project_root).joinpath(".phylum_project").resolve()
@@ -112,7 +113,7 @@ class CIBase(ABC):
 
         When no valid lockfiles are provided otherwise, an attempt will be made to automatically detect them.
         """
-        arg_lockfiles: Optional[List[List[Path]]] = self.args.lockfile
+        arg_lockfiles: Optional[list[list[Path]]] = self.args.lockfile
         if arg_lockfiles:
             # flatten the list of lists
             provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
@@ -123,7 +124,7 @@ class CIBase(ABC):
                 return valid_lockfiles
 
         LOG.info("No valid dependency files were provided as arguments. An attempt will be made to detect them.")
-        lockfile_entries: List[OrderedDict] = self._project_settings.get("lockfiles", [])
+        lockfile_entries: list[OrderedDict] = self._project_settings.get("lockfiles", [])
         detected_lockfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in lockfile_entries]
         if lockfile_entries and self._project_settings.get("root"):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_lockfiles)
@@ -515,4 +516,4 @@ class CIBase(ABC):
 
 
 # Type alias
-CIEnvs = List[CIBase]
+CIEnvs = list[CIBase]

@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 from types import FunctionType, MethodType
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
@@ -188,8 +188,8 @@ def add_trace_logging() -> None:
     pkg_namespace = f"{PKG_NAME}."
     phylum_modules = (module for module in sys.modules if module.startswith(pkg_namespace))
 
-    phylum_funcs: Dict[str, FunctionType] = {}
-    phylum_classes: Dict[str, type] = {}
+    phylum_funcs: dict[str, FunctionType] = {}
+    phylum_classes: dict[str, type] = {}
     for module in phylum_modules:
         module_functions = inspect.getmembers(sys.modules[module], inspect.isfunction)
         if module_functions:
