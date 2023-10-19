@@ -10,6 +10,17 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.37.0 (2023-10-19)
+
+### Feature
+
+* Add Python 3.12 support and drop Python 3.8 support ([#335](https://github.com/phylum-dev/phylum-ci/issues/335)) ([`feb3502`](https://github.com/phylum-dev/phylum-ci/commit/feb35020ce1a49e50151422bd9e1b438d657c273))
+* Enforce strict engine control for `npm` ([#336](https://github.com/phylum-dev/phylum-ci/issues/336)) ([`4e69e3e`](https://github.com/phylum-dev/phylum-ci/commit/4e69e3e6da19a5a67c7eb574539f79deeae2ebef))
+
+### Breaking
+
+* Support for Python 3.8 was removed due to the change in CONTRIBUTING policy to support only the current/latest release plus the previous three minor versions of Python. ([`feb3502`](https://github.com/phylum-dev/phylum-ci/commit/feb35020ce1a49e50151422bd9e1b438d657c273))
+
 ## v0.36.0 (2023-10-16)
 
 ### Feature
