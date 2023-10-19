@@ -145,7 +145,7 @@ LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
 ENV PHYLUM_VENV="/opt/venv"
-ENV GLOBAL_HOME="/usr/local"
+ENV INSTALL_DIR="/usr/local"
 
 # Some tools get installed and used based on a home directory. This can cause trouble
 # when using a container started from this image with a UID:GID that does not map to
@@ -160,20 +160,20 @@ ENV GLOBAL_HOME="/usr/local"
 #
 # Node and npm
 # Ref: https://github.com/tj/n
-ENV N_PREFIX="${GLOBAL_HOME}/n"
+ENV N_PREFIX="${INSTALL_DIR}/n"
 # Corepack, Yarn, and pnpm
 # Ref: https://github.com/nodejs/corepack#environment-variables
-ENV COREPACK_HOME="${GLOBAL_HOME}/corepack"
+ENV COREPACK_HOME="${INSTALL_DIR}/corepack"
 # Rust, Cargo, and rustup
 # Ref: https://rust-lang.github.io/rustup/installation/index.html#choosing-where-to-install
-ENV RUSTUP_HOME="${GLOBAL_HOME}/rustup"
-ENV CARGO_HOME="${GLOBAL_HOME}/cargo"
+ENV RUSTUP_HOME="${INSTALL_DIR}/rustup"
+ENV CARGO_HOME="${INSTALL_DIR}/cargo"
 # Gradle
 # Ref: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
-ENV GRADLE_HOME="${GLOBAL_HOME}/gradle"
+ENV GRADLE_HOME="${INSTALL_DIR}/gradle"
 ENV GRADLE_USER_HOME="${GRADLE_HOME}/.gradle"
 
-ENV GO_PATH="${GLOBAL_HOME}/go"
+ENV GO_PATH="${INSTALL_DIR}/go"
 ENV PATH=$PATH:${PHYLUM_VENV}/bin:${N_PREFIX}/bin:${GRADLE_HOME}/bin:${CARGO_HOME}/bin:${GO_PATH}/bin
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -205,9 +205,9 @@ RUN \
     # Make ENTRYPOINT alternative script available
     chmod +x "${PHYLUM_VENV}/bin/entrypoint.sh"; \
     #
-    # Create an "alias" for `curl` with secure and common options
-    printf '#!/bin/bash\ncurl --proto "=https" --tlsv1.2 -sSfL "$@"\n' > /usr/bin/curls; \
-    chmod +x /usr/bin/curls; \
+    # Create a shell function instead of an alias for `curl`, with secure and common options
+    # Ref: https://github.com/koalaman/shellcheck/wiki/SC2262
+    curls() { curl --proto "=https" --tlsv1.2 -sSfL "$@"; }; \
     #
     # Install Phylum CLI
     phylum-init -vvv --phylum-release "${CLI_VER:-latest}" --global-install; \
@@ -244,8 +244,8 @@ RUN \
     GO_DL_SHA256=$(echo "${GO_DL_REL}" | jq -r '.sha256'); \
     curls -o go.tgz "https://go.dev/dl/${GO_DL_FILENAME}"; \
     printf "%s *go.tgz" "${GO_DL_SHA256}" | sha256sum -c -; \
-    rm -rf "${GLOBAL_HOME}/go"; \
-    tar -C "${GLOBAL_HOME}" -xzf go.tgz; \
+    rm -rf "${INSTALL_DIR}/go"; \
+    tar -C "${INSTALL_DIR}" -xzf go.tgz; \
     rm go.tgz; \
     #
     # Manual install of Rust to get `cargo` tool
@@ -265,7 +265,6 @@ RUN \
     apt-get install --yes --no-install-recommends "dotnet-sdk-${DOTNET_SDK_LATEST_CHANNEL_VER}"; \
     #
     # Final cleanup
-    rm /usr/bin/curls; \
     apt-get remove --yes --auto-remove \
         curl \
         unzip \
