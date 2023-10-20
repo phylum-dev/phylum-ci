@@ -468,7 +468,7 @@ class CIBase(ABC):
             new_packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
             LOG.debug("%s unique newly added dependencies", len(new_packages))
 
-        with tempfile.NamedTemporaryFile(mode="w+", prefix="base_", suffix=".json") as base_fd:
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)

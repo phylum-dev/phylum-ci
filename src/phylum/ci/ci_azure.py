@@ -118,7 +118,7 @@ class CIAzure(CIBase):
         self.triggering_repo = os.getenv("BUILD_REPOSITORY_PROVIDER", "unknown")
         LOG.debug("Triggering repository: %s", self.triggering_repo)
         # "TfsGit" is the legacy name for "Azure Repos Git"
-        if self.triggering_repo not in ("TfsGit", "GitHub"):
+        if self.triggering_repo not in {"TfsGit", "GitHub"}:
             msg = f"Triggering repository `{self.triggering_repo}` not supported"
             raise SystemExit(msg)
 
