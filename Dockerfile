@@ -145,7 +145,6 @@ LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
 ENV PHYLUM_VENV="/opt/venv"
-ENV INSTALL_DIR="/usr/local"
 
 # Some tools get installed and used based on a home directory. This can cause trouble
 # when using a container started from this image with a UID:GID that does not map to
@@ -158,6 +157,14 @@ ENV INSTALL_DIR="/usr/local"
 # The following tools are susceptible to this issue and therefore have been provided
 # with explicit install/home directories that allow them to be globally accessible.
 #
+# Specify a common, globally accessible directory to use instead of $HOME
+ENV INSTALL_DIR="/usr/local"
+# Phylum, pip, and any other tool that supports the XDG spec
+# Ref: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+ENV XDG_DATA_HOME="${INSTALL_DIR}/share"
+ENV XDG_CONFIG_HOME="${INSTALL_DIR}/.config"
+ENV XDG_STATE_HOME="${INSTALL_DIR}/state"
+ENV XDG_CACHE_HOME="${INSTALL_DIR}/.cache"
 # Node and npm
 # Ref: https://github.com/tj/n
 ENV N_PREFIX="${INSTALL_DIR}/n"
@@ -172,9 +179,16 @@ ENV CARGO_HOME="${INSTALL_DIR}/cargo"
 # Ref: https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_environment_variables
 ENV GRADLE_HOME="${INSTALL_DIR}/gradle"
 ENV GRADLE_USER_HOME="${GRADLE_HOME}/.gradle"
+# Dotnet
+# Ref: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables
+ENV DOTNET_ROOT="/usr/share/dotnet"
+ENV DOTNET_CLI_HOME="${XDG_DATA_HOME}"
+# Go
+# Ref: https://go.dev/doc/install/source#environment
+ENV GOROOT="${INSTALL_DIR}/go"
+ENV GOPATH="${XDG_DATA_HOME}/go"
 
-ENV GO_PATH="${INSTALL_DIR}/go"
-ENV PATH=$PATH:${PHYLUM_VENV}/bin:${N_PREFIX}/bin:${GRADLE_HOME}/bin:${CARGO_HOME}/bin:${GO_PATH}/bin
+ENV PATH=$PATH:${PHYLUM_VENV}/bin:${N_PREFIX}/bin:${GRADLE_HOME}/bin:${CARGO_HOME}/bin:${GOROOT}/bin
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -244,7 +258,7 @@ RUN \
     GO_DL_SHA256=$(echo "${GO_DL_REL}" | jq -r '.sha256'); \
     curls -o go.tgz "https://go.dev/dl/${GO_DL_FILENAME}"; \
     printf "%s *go.tgz" "${GO_DL_SHA256}" | sha256sum -c -; \
-    rm -rf "${INSTALL_DIR}/go"; \
+    rm -rf "${GOROOT}"; \
     tar -C "${INSTALL_DIR}" -xzf go.tgz; \
     rm go.tgz; \
     #
@@ -263,6 +277,12 @@ RUN \
     rm ms-prod.deb; \
     apt-get update; \
     apt-get install --yes --no-install-recommends "dotnet-sdk-${DOTNET_SDK_LATEST_CHANNEL_VER}"; \
+    # Create a git config file in a location accessible for $HOME-less users
+    # Ref: https://git-scm.com/docs/git-config#FILES
+    mkdir -vp "${XDG_CONFIG_HOME}/git" && touch "${XDG_CONFIG_HOME}/git/config"; \
+    # Ensure the XDG directories have permissions for non-root users
+    mkdir -vp "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
+    chmod -vR 777 "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
     #
     # Final cleanup
     apt-get remove --yes --auto-remove \
