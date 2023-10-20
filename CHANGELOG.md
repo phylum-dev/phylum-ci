@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.37.1 (2023-10-20)
+
+### Fix
+
+* More container tools broken when home-less ([#337](https://github.com/phylum-dev/phylum-ci/issues/337)) ([`403eb7d`](https://github.com/phylum-dev/phylum-ci/commit/403eb7d2326f915c36c743cd94f124a3fe5a61f2))
+
 ## v0.37.0 (2023-10-19)
 
 ### Feature
