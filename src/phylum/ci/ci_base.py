@@ -23,7 +23,7 @@ from rich.markdown import Markdown
 
 from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
 from phylum.ci.git import git_hash_object, git_repo_name
-from phylum.ci.lockfile import Lockfile, Lockfiles
+from phylum.ci.lockfile import Lockfile, Lockfiles, parse_current_depfile
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -146,22 +146,19 @@ class CIBase(ABC):
         """Filter potential lockfiles and return the valid ones in sorted order."""
         lockfiles = []
         for provided_lockfile in provided_lockfiles:
+            # Make sure it exists
             if not provided_lockfile.path.exists():
                 LOG.warning("Provided dependency file does not exist: %s", provided_lockfile.path)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
+            # Make sure it is not an empty file
             if not provided_lockfile.path.stat().st_size:
                 LOG.warning("Provided dependency file is an empty file: %s", provided_lockfile.path)
                 self.returncode = ReturnCode.LOCKFILE_FILTER
                 continue
-            cmd = [str(self.cli_path), "parse", "--lockfile-type", provided_lockfile.type, str(provided_lockfile.path)]
-            LOG.info(
-                "Attempting to parse %s as potential lockfile. Manifest files may take a while.",
-                provided_lockfile.path,
-            )
-            LOG.debug("Using parse command: %s", shlex.join(cmd))
+            # Make sure it can be parsed by Phylum CLI
             try:
-                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+                _ = parse_current_depfile(self.cli_path, provided_lockfile.type, provided_lockfile.path)
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 _path, _type = provided_lockfile.path, provided_lockfile.type

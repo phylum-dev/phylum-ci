@@ -8,7 +8,7 @@ more general "dependency file" term. Both lockfiles and manifests are supported
 and the language has been changed where it is externally visible (e.g., log and
 help output) but kept as "lockfile" internally (e.g., code/variable names).
 """
-from functools import cached_property, lru_cache
+from functools import cache, cached_property, lru_cache
 import json
 import os
 from pathlib import Path
@@ -135,11 +135,8 @@ class Lockfile:
     @lru_cache(maxsize=1)
     def current_lockfile_packages(self) -> Packages:
         """Get the current lockfile packages."""
-        cmd = [str(self.cli_path), "parse", "--lockfile-type", self.type, str(self.path)]
-        LOG.info("Attempting to parse %s as current lockfile. Manifest files may take a while.", self.path)
-        LOG.debug("Using parse command: %s", shlex.join(cmd))
         try:
-            parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            curr_lockfile_packages = parse_current_depfile(self.cli_path, self.type, self.path)
         except subprocess.CalledProcessError as err:
             msg = f"""\
                 If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
@@ -147,8 +144,6 @@ class Lockfile:
                 Please report this as a bug if you believe [code]{self!r}[/] is a
                 valid [code]{self.type}[/] dependency file."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
-        parsed_pkgs = json.loads(parse_result)
-        curr_lockfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return curr_lockfile_packages
 
     @lru_cache(maxsize=1)
@@ -220,3 +215,23 @@ class Lockfile:
 
 # Type alias
 Lockfiles = list[Lockfile]
+
+
+@cache
+def parse_current_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path) -> Packages:
+    """Parse a current dependency file and return its packages.
+
+    Callers of this function must catch `subprocess.CalledProcessError` exceptions and handle them.
+    """
+    LOG.info(
+        "Attempting to parse [code]%s[/] as a [code]%s[/] dependency file. Manifest files may take a while.",
+        os.path.relpath(depfile_path),
+        lockfile_type,
+        extra={"markup": True},
+    )
+    cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type, str(depfile_path)]
+    LOG.debug("Using parse command: %s", shlex.join(cmd))
+    parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+    parsed_pkgs = json.loads(parse_result)
+    curr_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+    return curr_depfile_packages

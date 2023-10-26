@@ -42,9 +42,9 @@ class LockfileEntry:
     def __post_init__(self, _path):
         """Ensure the `path` field is actually a `Path` object."""
         if isinstance(_path, str):
-            self.path = Path(_path)
+            self.path = Path(_path).resolve()
         elif isinstance(_path, Path):
-            self.path = _path
+            self.path = _path.resolve()
         else:
             msg = "Provided lockfile path is not PathLike"
             raise TypeError(msg)
