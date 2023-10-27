@@ -35,8 +35,8 @@ def is_in_mr() -> bool:
       * For merge requests (e.g., merge request pipelines)
 
     Knowing when the context is within a merge request helps to ensure the logic used
-    to determine the lockfile changes is correct. It also helps to ensure output is not
-    attempted to be posted when NOT in the context of a review.
+    to determine the dependency file changes is correct. It also helps to ensure output
+    is not attempted to be posted when NOT in the context of a review.
     """
     # References:
     # https://github.com/watson/ci-info/blob/master/vendors.json
@@ -95,7 +95,7 @@ class CIGitLab(CIBase):
             label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_src_branch}"
         else:
             current_branch = os.getenv("CI_COMMIT_BRANCH", "unknown-branch")
-            label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
+            label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
 
         label = re.sub(r"\s+", "-", label)
         return label
@@ -153,8 +153,8 @@ class CIGitLab(CIBase):
         return common_commit
 
     @property
-    def is_any_lockfile_changed(self) -> bool:
-        """Predicate for detecting if any lockfile has changed."""
+    def is_any_depfile_changed(self) -> bool:
+        """Predicate for detecting if any dependency file has changed."""
         diff_base_sha = self.common_ancestor_commit
         LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
@@ -165,9 +165,9 @@ class CIGitLab(CIBase):
         err_msg = """\
             Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history.
             Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
-        self.update_lockfiles_change_status(diff_base_sha, err_msg)
+        self.update_depfiles_change_status(diff_base_sha, err_msg)
 
-        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+        return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property
     def phylum_comment_exists(self) -> bool:

@@ -48,7 +48,7 @@ class CIGitHub(CIBase):
 
     def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         # This is the recommended workaround for container actions, to avoid the `unsafe repository` error.
-        # It is added before super().__init__(args) so that lockfile change detection will be set properly.
+        # It is added before super().__init__(args) so that dependency file change detection will be set properly.
         # See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765) for more detail.
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
         cmd = ["git", "config", "--global", "--add", "safe.directory", github_workspace]
@@ -136,8 +136,8 @@ class CIGitHub(CIBase):
         return self.pr_event.get("pull_request", {}).get("base", {}).get("sha")
 
     @property
-    def is_any_lockfile_changed(self) -> bool:
-        """Predicate for detecting if any lockfile has changed."""
+    def is_any_depfile_changed(self) -> bool:
+        """Predicate for detecting if any dependency file has changed."""
         pr_src_branch = os.getenv("GITHUB_HEAD_REF")
         pr_tgt_branch = os.getenv("GITHUB_BASE_REF")
         pr_base_sha = self.common_ancestor_commit
@@ -152,9 +152,9 @@ class CIGitHub(CIBase):
         err_msg = """\
             Consider changing the `fetch-depth` input during checkout to fetch more branch history.
             Reference: https://github.com/actions/checkout"""
-        self.update_lockfiles_change_status(pr_base_sha, err_msg)
+        self.update_depfiles_change_status(pr_base_sha, err_msg)
 
-        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+        return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property
     def phylum_comment_exists(self) -> bool:

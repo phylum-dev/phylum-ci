@@ -75,8 +75,8 @@ def is_in_pr() -> bool:
     Reference: https://learn.microsoft.com/azure/devops/pipelines/build/triggers
 
     Knowing when the context is within a pull request helps to ensure the logic used
-    to determine the lockfile changes is correct. It also helps to ensure output is not
-    attempted to be posted when NOT in the context of a review.
+    to determine the dependency file changes is correct. It also helps to ensure output
+    is not attempted to be posted when NOT in the context of a review.
     """
     # References:
     # https://github.com/watson/ci-info/blob/master/vendors.json
@@ -156,7 +156,7 @@ class CIAzure(CIBase):
             label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
         else:
             current_branch = os.getenv("BUILD_SOURCEBRANCHNAME", "unknown-branch")
-            label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
+            label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
 
         label = re.sub(r"\s+", "-", label)
         return label
@@ -183,8 +183,8 @@ class CIAzure(CIBase):
 
             # If the current commit is on the default branch, then the merge base will be the same
             # as the current commit and it won't be possible to provide a useful common ancestor
-            # commit. In this case, it is better to force analysis of the lockfile(s) and consider
-            # *all* dependencies in analysis results instead of just the newly added ones.
+            # commit. In this case, it is better to force analysis of the dependency file(s) and
+            # consider *all* dependencies in analysis results instead of just the newly added ones.
             if src_branch == git_default_branch_name(remote):
                 LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
                 self._force_analysis = True
@@ -228,8 +228,8 @@ class CIAzure(CIBase):
         return common_commit
 
     @property
-    def is_any_lockfile_changed(self) -> bool:
-        """Predicate for detecting if any lockfile has changed."""
+    def is_any_depfile_changed(self) -> bool:
+        """Predicate for detecting if any dependency file has changed."""
         diff_base_sha = self.common_ancestor_commit
         LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
@@ -240,9 +240,9 @@ class CIAzure(CIBase):
         err_msg = """\
             Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
             Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
-        self.update_lockfiles_change_status(diff_base_sha, err_msg)
+        self.update_depfiles_change_status(diff_base_sha, err_msg)
 
-        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+        return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property
     def phylum_comment_exists(self) -> bool:
