@@ -22,8 +22,8 @@ from packaging.version import Version
 from rich.markdown import Markdown
 
 from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
+from phylum.ci.depfile import Depfile, Depfiles, parse_current_depfile
 from phylum.ci.git import git_hash_object, git_repo_name
-from phylum.ci.lockfile import Lockfile, Lockfiles
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -105,36 +105,36 @@ class CIBase(ABC):
             self._returncode = value
 
     @cached_property
-    def lockfiles(self) -> Lockfiles:
-        """Get the package lockfile(s) in lexicographic order.
+    def depfiles(self) -> Depfiles:
+        """Get the package dependency file(s) in lexicographic order.
 
-        The package lockfile(s) can be specified as an option or contained in the `.phylum_project` file.
-        Lockfiles provided as an input option will be preferred over any entries in the `.phylum_project` file.
+        The package dependency file(s) can be specified as an option or contained in the `.phylum_project` file.
+        Dependency files provided as an input option will be preferred over any entries in the `.phylum_project` file.
 
-        When no valid lockfiles are provided otherwise, an attempt will be made to automatically detect them.
+        When no valid dependency files are provided otherwise, an attempt will be made to automatically detect them.
         """
         arg_lockfiles: Optional[list[list[Path]]] = self.args.lockfile
         if arg_lockfiles:
             # flatten the list of lists
             provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
             LOG.debug("Dependency files provided as arguments: %s", provided_arg_lockfiles)
-            valid_lockfiles = self.filter_lockfiles(provided_arg_lockfiles)
-            if valid_lockfiles:
-                LOG.debug("Valid provided dependency files: %s", valid_lockfiles)
-                return valid_lockfiles
+            valid_depfiles = self.filter_depfiles(provided_arg_lockfiles)
+            if valid_depfiles:
+                LOG.debug("Valid provided dependency files: %s", valid_depfiles)
+                return valid_depfiles
 
         LOG.info("No valid dependency files were provided as arguments. An attempt will be made to detect them.")
-        lockfile_entries: list[OrderedDict] = self._project_settings.get("lockfiles", [])
-        detected_lockfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in lockfile_entries]
-        if lockfile_entries and self._project_settings.get("root"):
-            LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_lockfiles)
+        depfile_entries: list[OrderedDict] = self._project_settings.get("lockfiles", [])
+        detected_depfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in depfile_entries]
+        if depfile_entries and self._project_settings.get("root"):
+            LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
         else:
-            LOG.debug("Detected dependency files: %s", detected_lockfiles)
-        if detected_lockfiles:
-            valid_lockfiles = self.filter_lockfiles(detected_lockfiles)
-            if valid_lockfiles:
-                LOG.debug("Valid detected dependency files: %s", valid_lockfiles)
-                return valid_lockfiles
+            LOG.debug("Detected dependency files: %s", detected_depfiles)
+        if detected_depfiles:
+            valid_depfiles = self.filter_depfiles(detected_depfiles)
+            if valid_depfiles:
+                LOG.debug("Valid detected dependency files: %s", valid_depfiles)
+                return valid_depfiles
 
         msg = """\
             No valid dependency files were detected.
@@ -142,39 +142,36 @@ class CIBase(ABC):
         raise SystemExit(textwrap.dedent(msg))
 
     @progress_spinner("Filtering dependency files")
-    def filter_lockfiles(self, provided_lockfiles: LockfileEntries) -> Lockfiles:
-        """Filter potential lockfiles and return the valid ones in sorted order."""
-        lockfiles = []
-        for provided_lockfile in provided_lockfiles:
-            if not provided_lockfile.path.exists():
-                LOG.warning("Provided dependency file does not exist: %s", provided_lockfile.path)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
+    def filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
+        """Filter potential dependency files and return the valid ones in sorted order."""
+        depfiles = []
+        for provided_depfile in provided_depfiles:
+            # Make sure it exists
+            if not provided_depfile.path.exists():
+                LOG.warning("Provided dependency file does not exist: %s", provided_depfile.path)
+                self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
-            if not provided_lockfile.path.stat().st_size:
-                LOG.warning("Provided dependency file is an empty file: %s", provided_lockfile.path)
-                self.returncode = ReturnCode.LOCKFILE_FILTER
+            # Make sure it is not an empty file
+            if not provided_depfile.path.stat().st_size:
+                LOG.warning("Provided dependency file is an empty file: %s", provided_depfile.path)
+                self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
-            cmd = [str(self.cli_path), "parse", "--lockfile-type", provided_lockfile.type, str(provided_lockfile.path)]
-            LOG.info(
-                "Attempting to parse %s as potential lockfile. Manifest files may take a while.",
-                provided_lockfile.path,
-            )
-            LOG.debug("Using parse command: %s", shlex.join(cmd))
+            # Make sure it can be parsed by Phylum CLI
             try:
-                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+                _ = parse_current_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
-                _path, _type = provided_lockfile.path, provided_lockfile.type
+                _path, _type = provided_depfile.path, provided_depfile.type
                 msg = f"""\
                     Provided dependency file [code]{_path}[/] failed to parse as lockfile type [code]{_type}[/].
                     If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
                     For more info, see: https://docs.phylum.io/docs/lockfile_generation
                     Please report this as a bug if you believe [code]{_path}[/] is a valid {_type} dependency file."""
                 LOG.warning(textwrap.dedent(msg), extra={"markup": True})
-                self.returncode = ReturnCode.LOCKFILE_FILTER
+                self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
-            lockfiles.append(Lockfile(provided_lockfile, self.cli_path, self.common_ancestor_commit))
-        return sorted(lockfiles)
+            depfiles.append(Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit))
+        return sorted(depfiles)
 
     @property
     def all_deps(self) -> bool:
@@ -301,23 +298,24 @@ class CIBase(ABC):
         raise NotImplementedError
 
     @property
-    def lockfile_hash_object(self) -> str:
-        """Get the lockfile hash object of the first changed lockfile and return it.
+    def depfile_hash_object(self) -> str:
+        """Get the dependency file hash object of the first changed dependency file and return it.
 
-        Since there can be many changed lockfiles, find and use only the hash object of the first changed lockfile.
-        Since it is possible that no lockfile has changed (e.g., when forcing analysis), default to first lockfile.
-        When found, only the first seven characters of the hash object will be returned, which is a git "short SHA-1".
+        Since there can be many changed dependency files, find and use only the hash object of the
+        first changed dependency file. Since it is possible that no dependency file has changed
+        (e.g., when forcing analysis), default to first dependency file. When found, only the first
+        seven characters of the hash object will be returned, which is a git "short SHA-1".
         Reference: https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection
         """
-        if not self.lockfiles:
+        if not self.depfiles:
             return "unknown"
-        first_changed_lockfile = self.lockfiles[0]
-        for lockfile in self.lockfiles:
-            if lockfile.is_lockfile_changed:
-                first_changed_lockfile = lockfile
+        first_changed_depfile = self.depfiles[0]
+        for depfile in self.depfiles:
+            if depfile.is_depfile_changed:
+                first_changed_depfile = depfile
                 break
-        lockfile_hash_object = git_hash_object(first_changed_lockfile.path)
-        return lockfile_hash_object[:7]
+        depfile_hash_object = git_hash_object(first_changed_depfile.path)
+        return depfile_hash_object[:7]
 
     @cached_property
     @abstractmethod
@@ -331,10 +329,10 @@ class CIBase(ABC):
 
     @property
     @abstractmethod
-    def is_any_lockfile_changed(self) -> bool:
-        """Get the lockfiles' collective modification status.
+    def is_any_depfile_changed(self) -> bool:
+        """Get the dependency files' collective modification status.
 
-        Implementations should return `True` if any lockfile has changed and `False` otherwise.
+        Implementations should return `True` if any dependency file has changed and `False` otherwise.
         """
         raise NotImplementedError
 
@@ -347,25 +345,25 @@ class CIBase(ABC):
         """
         raise NotImplementedError
 
-    def update_lockfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
-        """Update each lockfile's change status.
+    def update_depfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
+        """Update each dependency file's change status.
 
         The input `commit` is the one to use in a `git diff` command to view the changes relative to the working tree.
         The input `err_msg` is what will be printed when `git diff` fails. This is usually due to not having enough
         branch history...which can happen with shallow clones.
         """
-        for lockfile in self.lockfiles:
-            LOG.debug("Checking [code]%r[/] for changes ...", lockfile, extra={"markup": True})
+        for depfile in self.depfiles:
+            LOG.debug("Checking [code]%r[/] for changes ...", depfile, extra={"markup": True})
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
-            cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(lockfile.path)]
+            cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(depfile.path)]
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
-                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
-                lockfile.is_lockfile_changed = False
+                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra={"markup": True})
+                depfile.is_depfile_changed = False
             elif ret.returncode == 1:
-                LOG.debug("The dependency file [code]%r[/] has changed", lockfile, extra={"markup": True})
-                lockfile.is_lockfile_changed = True
+                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra={"markup": True})
+                depfile.is_depfile_changed = True
             else:
                 if err_msg:
                     LOG.error("%s", textwrap.dedent(err_msg))
@@ -427,8 +425,9 @@ class CIBase(ABC):
     def post_output(self) -> None:
         """Post the output of the analysis as markdown rendered for output to the terminal/logs.
 
-        Each implementation that offers analysis output in the form of comments on a pull/merge request should
-        ensure those comments are unique and not added multiple times as the review changes but no lockfile does.
+        Each implementation that offers analysis output in the form of comments
+        on a pull/merge request should ensure those comments are unique and not
+        added multiple times as the review changes but no dependency file does.
         """
         # Post the markdown output, rendered for terminal/log output
         LOG.debug("Analysis output:\n")
@@ -437,7 +436,7 @@ class CIBase(ABC):
 
     @progress_spinner("Analyzing dependencies with Phylum")
     def analyze(self) -> None:
-        """Analyze the results gathered from passing the lockfile(s) to the CLI."""
+        """Analyze the results gathered from passing the dependency file(s) to the CLI."""
         # Build up the command based on the provided inputs.
         cmd = [
             str(self.cli_path),
@@ -455,24 +454,24 @@ class CIBase(ABC):
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
             base_pkgs = []
-            total_packages = {pkg for lockfile in self.lockfiles for pkg in lockfile.current_lockfile_packages()}
+            total_packages = {pkg for depfile in self.depfiles for pkg in depfile.current_depfile_packages()}
             LOG.debug("%s unique current dependencies", len(total_packages))
         else:
             LOG.info("Only considering newly added dependencies ...")
-            # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is necessary
-            # to ensure the `is_lockfile_changed` property is set for each lockfile. Simply referencing
-            # the `is_any_lockfile_changed` property will ensure this happens.
-            if self.force_analysis and self.is_any_lockfile_changed:
+            # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is
+            # necessary to ensure the `is_depfile_changed` property is set for each dependency file.
+            # Simply referencing the `is_any_depfile_changed` property will ensure this happens.
+            if self.force_analysis and self.is_any_depfile_changed:
                 LOG.debug("Updated each dependency file's change status")
-            base_pkgs = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.base_deps})
-            new_packages = sorted({pkg for lockfile in self.lockfiles for pkg in lockfile.new_deps})
+            base_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.base_deps})
+            new_packages = sorted({pkg for depfile in self.depfiles for pkg in depfile.new_deps})
             LOG.debug("%s unique newly added dependencies", len(new_packages))
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)
-            cmd.extend(f"{lockfile.path}:{lockfile.type}" for lockfile in self.lockfiles)
+            cmd.extend(f"{depfile.path}:{depfile.type}" for depfile in self.depfiles)
 
             LOG.info("Performing analysis. This may take a few seconds.")
             LOG.debug("Using analysis command: %s", shlex.join(cmd))

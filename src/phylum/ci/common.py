@@ -33,7 +33,7 @@ class JobPolicyEvalResult:
 
 @dataclasses.dataclass()
 class LockfileEntry:
-    """Class for keeping track of an individual lockfile entry returned by the `phylum status` command."""
+    """Class for keeping track of an individual "lockfile" entry returned by the `phylum status` command."""
 
     _path: dataclasses.InitVar[os.PathLike]
     type: str = "auto"  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
@@ -42,11 +42,11 @@ class LockfileEntry:
     def __post_init__(self, _path):
         """Ensure the `path` field is actually a `Path` object."""
         if isinstance(_path, str):
-            self.path = Path(_path)
+            self.path = Path(_path).resolve()
         elif isinstance(_path, Path):
-            self.path = _path
+            self.path = _path.resolve()
         else:
-            msg = "Provided lockfile path is not PathLike"
+            msg = "Provided dependency file path is not PathLike"
             raise TypeError(msg)
 
     def __repr__(self) -> str:
@@ -66,7 +66,7 @@ class ReturnCode(IntEnum):
     FAILURE = 1
     INCOMPLETE = 5
     FAILURE_INCOMPLETE = 6
-    LOCKFILE_FILTER = 10
+    DEPFILE_FILTER = 10
 
 
 # Reference: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses

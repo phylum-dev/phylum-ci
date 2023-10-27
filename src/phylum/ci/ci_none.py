@@ -35,7 +35,7 @@ class CINone(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         current_branch = git_curent_branch_name()
-        label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
+        label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
         label = re.sub(r"\s+", "-", label)
         return label
 
@@ -53,22 +53,23 @@ class CINone(CIBase):
         return common_commit
 
     @property
-    def is_any_lockfile_changed(self) -> bool:
-        """Predicate for detecting if any lockfile has changed.
+    def is_any_depfile_changed(self) -> bool:
+        """Predicate for detecting if any dependency file has changed.
 
         For the case of operating outside of a CI platform, some assumptions are made:
           * There is only one remote configured for the repository
           * The diff is comparing against the remote and not another ref
           * The diff is comparing by using the files at the current HEAD
 
-        The usefulness of this approach is limited in that lockfile changes must already be committed to be detected.
+        The usefulness of this approach is limited in that dependency file changes
+        must already be committed to be detected.
 
         References:
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        self.update_lockfiles_change_status(f"refs/remotes/{remote}/HEAD...")
-        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+        self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+        return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property
     def phylum_comment_exists(self) -> bool:

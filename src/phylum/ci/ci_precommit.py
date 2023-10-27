@@ -54,7 +54,7 @@ class CIPreCommit(CIBase):
         # Allow for a pre-commit config set up to send all staged files to the hook
         if sorted(staged_files) == sorted(self.extra_args):
             LOG.debug("The extra args provided exactly match the list of staged files")
-            if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
+            if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
                 LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
             LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
@@ -63,21 +63,22 @@ class CIPreCommit(CIBase):
         # Allow for a pre-commit config set up to filter the files sent to the hook
         if all(extra_arg in staged_files for extra_arg in self.extra_args):
             LOG.debug("All the extra args are staged files")
-            if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
+            if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
                 LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
             LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
             sys.exit(0)
 
-        # Allow for cases where the lockfile is included or explicitly specified (e.g., `pre-commit run --all-files`)
-        if any(lockfile.path in extra_arg_paths for lockfile in self.lockfiles):
+        # Allow for cases where the dependency file is included or explicitly specified.
+        # Example: `pre-commit run --all-files`
+        if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
             LOG.info("A dependency file was included in the extra args")
-        # NOTE: There is still the case where a lockfile is "accidentally" included as an extra argument. For example,
-        #       `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad syntax but
-        #       nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not terrible; it
-        #       just might be a slightly confusing corner case. It might be possible to use a library like `psutil` to
-        #       acquire the command line from the parent process and inspect it for `pre-commit` usage. That is a
-        #       heavyweight solution and one that will not be pursued until the need for it is more clear.
+        # NOTE: There is still the case where a dependency file is "accidentally" included as an extra argument. For
+        #       example, `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad
+        #       syntax but nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not
+        #       terrible; it just might be a slightly confusing corner case. It might be possible to use a library like
+        #       `psutil` to acquire the command line from the parent process and inspect it for `pre-commit` usage.
+        #       That is a heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
             LOG.warning("A dependency file was not included in the extra args...possible invalid pre-commit scenario")
             LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra={"markup": True})
@@ -87,7 +88,7 @@ class CIPreCommit(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         current_branch = git_curent_branch_name()
-        label = f"{self.ci_platform_name}_{current_branch}_{self.lockfile_hash_object}"
+        label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
         label = re.sub(r"\s+", "-", label)
         return label
 
@@ -104,21 +105,21 @@ class CIPreCommit(CIBase):
         return common_commit
 
     @property
-    def is_any_lockfile_changed(self) -> bool:
-        """Predicate for detecting if any lockfile has changed.
+    def is_any_depfile_changed(self) -> bool:
+        """Predicate for detecting if any dependency file has changed.
 
         For the case of operating within a pre-commit hook, some assumptions are made:
           * The extra, unparsed, arguments provided to the CLI represent the list of staged files
         """
         staged_files = [Path(staged_file).resolve() for staged_file in self.extra_args]
-        for lockfile in self.lockfiles:
-            if lockfile.path in staged_files:
-                LOG.debug("The dependency file [code]%r[/] has changed", lockfile, extra={"markup": True})
-                lockfile.is_lockfile_changed = True
+        for depfile in self.depfiles:
+            if depfile.path in staged_files:
+                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra={"markup": True})
+                depfile.is_depfile_changed = True
             else:
-                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", lockfile, extra={"markup": True})
-                lockfile.is_lockfile_changed = False
-        return any(lockfile.is_lockfile_changed for lockfile in self.lockfiles)
+                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra={"markup": True})
+                depfile.is_depfile_changed = False
+        return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property
     def phylum_comment_exists(self) -> bool:

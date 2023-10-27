@@ -4,7 +4,7 @@ import { Package, PhylumApi } from "phylum";
 const args = Deno.args.slice(0);
 if (args.length < 4) {
     console.error(
-        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <LOCKFILE:TYPE...>",
+        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <DEPFILE:TYPE...>",
     );
     Deno.exit(1);
 }
@@ -21,15 +21,15 @@ if (groupArgsIndex != -1) {
 const project = args[0];
 const label = args[1];
 const base = args[2];
-const lockfiles = args.splice(3);
+const depfiles = args.splice(3);
 
-// Parse new lockfiles.
+// Parse new dependency files.
 let packages: Package[] = [];
-for (const lockfile of lockfiles) {
-    const lockfile_path = lockfile.substring(0, lockfile.lastIndexOf(":"));
-    const lockfile_type = lockfile.substring(lockfile.lastIndexOf(":") + 1, lockfile.length);
-    const lockfileDeps = await PhylumApi.parseLockfile(lockfile_path, lockfile_type);
-    packages = packages.concat(lockfileDeps.packages);
+for (const depfile of depfiles) {
+    const depfile_path = depfile.substring(0, depfile.lastIndexOf(":"));
+    const depfile_type = depfile.substring(depfile.lastIndexOf(":") + 1, depfile.length);
+    const depfileDeps = await PhylumApi.parseLockfile(depfile_path, depfile_type);
+    packages = packages.concat(depfileDeps.packages);
 }
 
 // Deserialize base dependencies.

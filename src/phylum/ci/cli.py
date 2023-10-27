@@ -198,10 +198,10 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     ci_env = detect_ci_platform(parsed_args, remainder_args)
 
     # Bail early when possible
-    LOG.debug("Dependency files in use: %s", ci_env.lockfiles)
+    LOG.debug("Dependency files in use: %s", ci_env.depfiles)
     if ci_env.force_analysis:
         LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
-    elif ci_env.is_any_lockfile_changed:
+    elif ci_env.is_any_depfile_changed:
         LOG.info("A dependency file has changed. Proceeding with analysis ...")
     elif ci_env.phylum_comment_exists:
         LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
@@ -218,7 +218,7 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Generate a label to use for analysis and report it
     LOG.info("Label to use for analysis: %s", ci_env.phylum_label)
 
-    # Analyze current project lockfile(s) with Phylum CLI
+    # Analyze current project dependency file(s) with Phylum CLI
     ci_env.analyze()
 
     # Output the results of the analysis

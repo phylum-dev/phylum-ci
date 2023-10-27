@@ -270,7 +270,7 @@ poetry run phylum-init -h
 ```
 
 To iterate during development of the `phylum-ci` integrations, it can be helpful to force the analysis of the
-lockfile(s), even when it has not changed. It can also be useful to ensure all dependencies are considered.
+dependency file(s), even when it has not changed. It can also be useful to ensure all dependencies are considered.
 To do so, use the flags:
 
 ```sh
