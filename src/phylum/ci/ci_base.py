@@ -208,6 +208,7 @@ class CIBase(ABC):
                     provided_depfile.path,
                     extra=MARKUP,
                 )
+                depfiles.append(Manifest(provided_depfile, self.cli_path, self.common_ancestor_commit))
             elif provided_depfile in self.potential_manifests:
                 LOG.debug("Provided dependency file [code]%s[/] is a manifest", provided_depfile.path, extra=MARKUP)
                 depfiles.append(Manifest(provided_depfile, self.cli_path, self.common_ancestor_commit))
