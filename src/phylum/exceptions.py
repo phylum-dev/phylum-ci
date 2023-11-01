@@ -6,7 +6,7 @@ from rich import print as rich_print
 from rich.console import RenderResult, group
 from rich.panel import Panel
 
-from phylum.logger import LOG
+from phylum.logger import LOG, MARKUP
 
 
 class PhylumCalledProcessError(Exception):
@@ -30,7 +30,7 @@ class PhylumCalledProcessError(Exception):
         ```
         """
         pprint_subprocess_error(err)
-        LOG.critical(msg, extra={"markup": True})
+        LOG.critical(msg, extra=MARKUP)
         raise SystemExit(err.returncode)
 
 

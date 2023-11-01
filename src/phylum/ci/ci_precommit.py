@@ -19,7 +19,7 @@ from typing import Optional
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_curent_branch_name
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
-from phylum.logger import LOG
+from phylum.logger import LOG, MARKUP
 
 
 class CIPreCommit(CIBase):
@@ -81,7 +81,7 @@ class CIPreCommit(CIBase):
         #       That is a heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
             LOG.warning("A dependency file was not included in the extra args...possible invalid pre-commit scenario")
-            LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra={"markup": True})
+            LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra=MARKUP)
             sys.exit(0)
 
     @cached_property
@@ -114,10 +114,10 @@ class CIPreCommit(CIBase):
         staged_files = [Path(staged_file).resolve() for staged_file in self.extra_args]
         for depfile in self.depfiles:
             if depfile.path in staged_files:
-                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = True
             else:
-                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = False
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 

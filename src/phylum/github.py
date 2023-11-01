@@ -89,12 +89,14 @@ def github_request(
     # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
     if resp.status_code == requests.codes.forbidden and rate_limit_remaining == "0":
         msg = f"""\
-            GitHub API rate limit of {rate_limit} requests/hour was exceeded for URL: {api_url}
-            The current time is:  {current_time}
-            Rate limit resets at: {reset_time}
-            Options include waiting to try again after the rate limit resets or to make authenticated
-            requests by providing a GitHub token in the `GITHUB_TOKEN` environment variable. Reference:
-            {PAT_REF}"""
+            GitHub API rate limit of {rate_limit} requests/hour was exceeded for
+              URL: {api_url}
+              The current time is:  {current_time}
+              Rate limit resets at: {reset_time}
+              Options include waiting to try again after the rate limit resets
+              or to make authenticated requests by providing a GitHub token in
+              the `GITHUB_TOKEN` environment variable. Reference:
+              {PAT_REF}"""
         raise SystemExit(textwrap.dedent(msg))
 
     LOG.debug("%s GitHub API requests remaining until window resets at: %s", rate_limit_remaining, reset_time)
@@ -105,8 +107,8 @@ def github_request(
     except requests.HTTPError as err:
         msg = f"""\
             A bad request was made to the GitHub API:
-            {err}
-            Response text: {resp.text.strip()}"""
+              {err}
+              Response text: {resp.text.strip()}"""
         raise SystemExit(textwrap.dedent(msg)) from err
 
     resp_json = resp.json()

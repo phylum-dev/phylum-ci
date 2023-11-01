@@ -31,6 +31,11 @@ LOG.addHandler(DEFAULT_RICH_HANDLER)
 # Install rich as the default traceback handler so that all uncaught exceptions will be rendered with highlighting
 rich.traceback.install(console=console, word_wrap=True, show_locals=True)
 
+# This is a shorter form of specifying the `rich` markup format as an "extra" argument in log calls
+MARKUP = {"markup": True}
+# This is a shorter form of specifying the `rich` markup format, w/o highlighting, as an "extra" argument in log calls
+MARKUP_NO_HI = {"markup": True, "highlighter": None}
+
 
 # This function was adapted from:
 #  * https://stackoverflow.com/a/35804945
@@ -131,7 +136,7 @@ def function_trace_logger(func: FunctionType) -> Callable:
             LOGGING_TRACE_LEVEL,
             "[dim]Entering [reverse]%s",
             func.__name__,
-            extra={"markup": True, "highlighter": None},
+            extra=MARKUP_NO_HI,
         )
         result = func(*args, **kwargs)
         LOG.log(
@@ -139,7 +144,7 @@ def function_trace_logger(func: FunctionType) -> Callable:
             "[dim]Exiting [reverse]%s[/] -> %s",
             func.__name__,
             result,
-            extra={"markup": True},
+            extra=MARKUP,
         )
         return result
 
@@ -161,7 +166,7 @@ def class_trace_logger(cls: type):
                 "[dim]Entering [reverse]%s->%s",
                 cls.__name__,
                 method_name,
-                extra={"markup": True, "highlighter": None},
+                extra=MARKUP_NO_HI,
             )
             result = method(*args, **kwargs)
             LOG.log(
@@ -170,7 +175,7 @@ def class_trace_logger(cls: type):
                 cls.__name__,
                 method_name,
                 result,
-                extra={"markup": True},
+                extra=MARKUP,
             )
             return result
 

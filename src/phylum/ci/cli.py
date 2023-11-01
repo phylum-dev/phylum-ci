@@ -4,7 +4,6 @@ from collections.abc import Sequence
 import os
 import pathlib
 import sys
-import textwrap
 from typing import Optional
 
 from phylum import __version__
@@ -119,16 +118,14 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         "--all-deps",
         action="store_true",
         help="""Specify this flag to consider all dependencies in analysis results instead of just the newly added ones.
-            This is especially useful, when paired with the `--force-analysis` flag, for *workspace* manifest files
-            where there is no companion lockfile (e.g., libraries).""",
+            This is especially useful for manifest files where there is no companion lockfile (e.g., libraries).""",
     )
     analysis_group.add_argument(
         "-f",
         "--force-analysis",
         action="store_true",
-        help="""Specify this flag to force analysis, even when no dependency file has changed. This can be useful for
-            manifests, where the loosely specified dependencies may not change often but the completely resolved set of
-            strict dependencies does.""",
+        help="""Specify this flag to force analysis, even when no dependency file has changed. This flag is implicitly
+            set when *any* manifest is included, to maximize the chance that updated dependencies are accounted.""",
     )
     analysis_group.add_argument(
         "-k",
@@ -202,17 +199,11 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     if ci_env.force_analysis:
         LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
     elif ci_env.is_any_depfile_changed:
-        LOG.info("A dependency file has changed. Proceeding with analysis ...")
+        LOG.info("A lockfile has changed. Proceeding with analysis ...")
     elif ci_env.phylum_comment_exists:
         LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
     else:
-        msg = """\
-            No dependency file has changed. Nothing to do.
-              If manifests were included, consider specifying the `--force-analysis` flag
-              to ensure updated dependencies are taken into account.
-              Further consider also specifying the `--all-deps` flag for workspace manifests.
-              For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
-        LOG.warning(textwrap.dedent(msg))
+        LOG.warning("No lockfile has changed. Nothing to do.")
         return 0
 
     # Generate a label to use for analysis and report it

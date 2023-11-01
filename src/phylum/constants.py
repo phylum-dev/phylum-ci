@@ -2,14 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# The `phylum status` command for printing project and lockfile details was added in v5.1.0
-# but the fix to search for manifests' lockfiles in parent, rather than child directories was added in v5.6.0
-MIN_CLI_VER_FOR_INSTALL = "v5.6.0"
+# The `phylum find-lockable-files` command was added in v5.8.0
+MIN_CLI_VER_FOR_INSTALL = "v5.8.0"
 
 # This is the minimum CLI version supported for existing installs.
-# The `phylum status` command for printing project and lockfile details was added in v5.1.0
-# but the fix to search for manifests' lockfiles in parent, rather than child directories was added in v5.6.0.
-MIN_CLI_VER_INSTALLED = "v5.6.0"
+# The `phylum find-lockable-files` command was added in v5.8.0
+MIN_CLI_VER_INSTALLED = "v5.8.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.

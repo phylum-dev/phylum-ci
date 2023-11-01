@@ -33,7 +33,10 @@ class JobPolicyEvalResult:
 
 @dataclasses.dataclass()
 class LockfileEntry:
-    """Class for keeping track of an individual "lockfile" entry returned by the `phylum status` command."""
+    """Class for keeping track of an individual "lockfile" entry returned by `phylum` commands.
+
+    Current commands that return entries in this format include `status` and `find-lockable-files`.
+    """
 
     _path: dataclasses.InitVar[os.PathLike]
     type: str = "auto"  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing

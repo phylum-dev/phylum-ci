@@ -144,8 +144,8 @@ class CIGitLab(CIBase):
         except subprocess.CalledProcessError as err:
             msg = """\
                 The common ancestor commit could not be found.
-                Ensure the git strategy is set to `clone` for repo checkouts:
-                https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
+                  Ensure the git strategy is set to `clone` for repo checkouts:
+                  https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
             pprint_subprocess_error(err)
             LOG.warning(textwrap.dedent(msg))
             common_commit = None
@@ -164,7 +164,7 @@ class CIGitLab(CIBase):
 
         err_msg = """\
             Consider changing the `GIT_DEPTH` variable in CI settings to clone/fetch more branch history.
-            Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
+              Reference: https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
         self.update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)

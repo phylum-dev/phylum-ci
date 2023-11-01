@@ -219,8 +219,8 @@ class CIAzure(CIBase):
         except subprocess.CalledProcessError as err:
             msg = """\
                 The common ancestor commit could not be found.
-                Ensure shallow fetch is disabled for repo checkouts:
-                https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"""
+                  Ensure shallow fetch is disabled for repo checkouts:
+                  https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"""
             pprint_subprocess_error(err)
             LOG.warning(textwrap.dedent(msg))
             common_commit = None
@@ -239,7 +239,7 @@ class CIAzure(CIBase):
 
         err_msg = """\
             Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
-            Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
+              Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
         self.update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)

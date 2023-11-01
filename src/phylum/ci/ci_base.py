@@ -22,15 +22,17 @@ from packaging.version import Version
 from rich.markdown import Markdown
 
 from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
-from phylum.ci.depfile import Depfile, Depfiles, parse_current_depfile
+from phylum.ci.depfile import Depfiles, parse_current_depfile
 from phylum.ci.git import git_hash_object, git_repo_name
+from phylum.ci.lockfile import Lockfile
+from phylum.ci.manifest import Manifest
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.exts.ci import CI_EXT_PATH
 from phylum.init.cli import get_phylum_bin_path
 from phylum.init.cli import main as phylum_init
-from phylum.logger import LOG, progress_spinner
+from phylum.logger import LOG, MARKUP, progress_spinner
 
 
 class CIBase(ABC):
@@ -64,6 +66,7 @@ class CIBase(ABC):
             os.environ[ENVVAR_NAME_TOKEN] = args.token
         self._args.token = token
 
+        self._find_potential_depfiles()
         self._ensure_project_exists()
 
     @lru_cache(maxsize=1)
@@ -104,6 +107,28 @@ class CIBase(ABC):
         if self._returncode == ReturnCode.SUCCESS or value != ReturnCode.SUCCESS:
             self._returncode = value
 
+    def _find_potential_depfiles(self) -> None:
+        """Find all the lockfiles and manifests at the current directory or below."""
+        cmd = [str(self.cli_path), "find-lockable-files"]
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = "Phylum `find-lockable-files` command failed"
+            raise PhylumCalledProcessError(err, msg) from err
+        lockable_files: dict = json.loads(result)
+        self._potential_manifests = [LockfileEntry(*entry) for entry in lockable_files.get("manifests", [])]
+        self._potential_lockfiles = [LockfileEntry(*entry) for entry in lockable_files.get("lockfiles", [])]
+
+    @property
+    def potential_manifests(self) -> LockfileEntries:
+        """Get all the potential manifests at the current directory or below."""
+        return self._potential_manifests
+
+    @property
+    def potential_lockfiles(self) -> LockfileEntries:
+        """Get all the potential lockfiles at the current directory or below."""
+        return self._potential_lockfiles
+
     @cached_property
     def depfiles(self) -> Depfiles:
         """Get the package dependency file(s) in lexicographic order.
@@ -138,24 +163,27 @@ class CIBase(ABC):
 
         msg = """\
             No valid dependency files were detected.
-            Consider specifying at least one with `--lockfile` argument or in `.phylum_project` file."""
+              Consider specifying at least one with
+              `--lockfile` argument or in `.phylum_project` file."""
         raise SystemExit(textwrap.dedent(msg))
 
     @progress_spinner("Filtering dependency files")
     def filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
         """Filter potential dependency files and return the valid ones in sorted order."""
-        depfiles = []
+        depfiles: Depfiles = []
         for provided_depfile in provided_depfiles:
             # Make sure it exists
             if not provided_depfile.path.exists():
                 LOG.warning("Provided dependency file does not exist: %s", provided_depfile.path)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
+
             # Make sure it is not an empty file
             if not provided_depfile.path.stat().st_size:
                 LOG.warning("Provided dependency file is an empty file: %s", provided_depfile.path)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
+
             # Make sure it can be parsed by Phylum CLI
             try:
                 _ = parse_current_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
@@ -163,14 +191,38 @@ class CIBase(ABC):
                 pprint_subprocess_error(err)
                 _path, _type = provided_depfile.path, provided_depfile.type
                 msg = f"""\
-                    Provided dependency file [code]{_path}[/] failed to parse as lockfile type [code]{_type}[/].
-                    If this is a manifest, consider supplying lockfile type explicitly in the `.phylum_project` file.
-                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                    Please report this as a bug if you believe [code]{_path}[/] is a valid {_type} dependency file."""
-                LOG.warning(textwrap.dedent(msg), extra={"markup": True})
+                    Provided dependency file [code]{_path}[/] failed to parse as
+                      lockfile type [code]{_type}[/]. If this is a manifest, consider
+                      supplying lockfile type explicitly in the `.phylum_project` file.
+                      For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                      Please report this as a bug if you believe [code]{_path}[/]
+                      is a valid [code]{_type}[/] dependency file."""
+                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
-            depfiles.append(Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit))
+
+            # Classify the file as a manifest or lockfile
+            if provided_depfile in self.potential_manifests and provided_depfile in self.potential_lockfiles:
+                LOG.warning(
+                    "Provided dependency file [code]%s[/] is a lockifest. It will be treated as a manifest.",
+                    provided_depfile.path,
+                    extra=MARKUP,
+                )
+            elif provided_depfile in self.potential_manifests:
+                LOG.debug("Provided dependency file [code]%s[/] is a manifest", provided_depfile.path, extra=MARKUP)
+                depfiles.append(Manifest(provided_depfile, self.cli_path, self.common_ancestor_commit))
+            elif provided_depfile in self.potential_lockfiles:
+                LOG.debug("Provided dependency file [code]%s[/] is a lockfile", provided_depfile.path, extra=MARKUP)
+                depfiles.append(Lockfile(provided_depfile, self.cli_path, self.common_ancestor_commit))
+
+        # Check for the presence of a manifest file
+        if any(isinstance(depfile, Manifest) for depfile in depfiles):
+            msg = """\
+                At least one manifest file was included.
+                  Forcing analysis to ensure updated dependencies are included."""
+            LOG.warning(textwrap.dedent(msg))
+            self._force_analysis = True
+
         return sorted(depfiles)
 
     @property
@@ -353,16 +405,16 @@ class CIBase(ABC):
         branch history...which can happen with shallow clones.
         """
         for depfile in self.depfiles:
-            LOG.debug("Checking [code]%r[/] for changes ...", depfile, extra={"markup": True})
+            LOG.debug("Checking [code]%r[/] for changes ...", depfile, extra=MARKUP)
             # `--exit-code` will make git exit with 1 if there were differences while 0 means no differences.
             # Any other exit code is an error and a reason to re-raise.
             cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(depfile.path)]
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
-                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = False
             elif ret.returncode == 1:
-                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra={"markup": True})
+                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = True
             else:
                 if err_msg:
@@ -415,8 +467,8 @@ class CIBase(ABC):
                 return
             msg = """\
                 There was a problem creating the project.
-                A PRO account is needed to create a project with a group.
-                If the command was expected to succeed, please report this as a bug."""
+                  A PRO account is needed to create a project with a group.
+                  If the command was expected to succeed, please report this as a bug."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
         LOG.info("Project %s created successfully", self.phylum_project)
         if self._project_file_already_existed:
@@ -454,18 +506,28 @@ class CIBase(ABC):
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
             base_pkgs = []
-            total_packages = {pkg for depfile in self.depfiles for pkg in depfile.current_depfile_packages()}
+            total_packages = {pkg for depfile in self.depfiles for pkg in depfile.current_deps}
             LOG.debug("%s unique current dependencies", len(total_packages))
         else:
             LOG.info("Only considering newly added dependencies ...")
-            # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is
-            # necessary to ensure the `is_depfile_changed` property is set for each dependency file.
-            # Simply referencing the `is_any_depfile_changed` property will ensure this happens.
-            if self.force_analysis and self.is_any_depfile_changed:
-                LOG.debug("Updated each dependency file's change status")
+            if self.force_analysis:
+                # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is
+                # necessary to ensure the `is_depfile_changed` property is set for each dependency file.
+                # Simply referencing the `is_any_depfile_changed` property will ensure this happens.
+                LOG.debug("Updating each dependency file's change status ...")
+                if self.is_any_depfile_changed:
+                    LOG.debug("A provided/detected dependency file has changed")
+                else:
+                    LOG.debug("No provided/detected dependency file has changed")
             base_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.base_deps})
-            new_packages = sorted({pkg for depfile in self.depfiles for pkg in depfile.new_deps})
-            LOG.debug("%s unique newly added dependencies", len(new_packages))
+            new_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.new_deps})
+            LOG.debug("%s unique newly added dependencies", len(new_pkgs))
+            if not new_pkgs and any(isinstance(depfile, Manifest) for depfile in self.depfiles):
+                msg = """\
+                    No new dependencies were found. Is this a library?
+                      If so, consider specifying the `--all-deps` flag to
+                      ensure updated dependencies are taken into account."""
+                LOG.warning(textwrap.dedent(msg))
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
@@ -486,8 +548,8 @@ class CIBase(ABC):
                 else:
                     msg = """\
                         There was a problem analyzing the project.
-                        A PRO account is needed to use groups.
-                        If the command was expected to succeed, please report this as a bug."""
+                          A PRO account is needed to use groups.
+                          If the command was expected to succeed, please report this as a bug."""
                     raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         self.parse_analysis_result(analysis_result)
