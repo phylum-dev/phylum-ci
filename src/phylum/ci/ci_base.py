@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
 from functools import cached_property, lru_cache
+from itertools import starmap
 import json
 import os
 from pathlib import Path
@@ -114,8 +115,8 @@ class CIBase(ABC):
             msg = "Phylum `find-lockable-files` command failed"
             raise PhylumCalledProcessError(err, msg) from err
         lockable_files: dict = json.loads(result)
-        self._potential_manifests = [LockfileEntry(*entry) for entry in lockable_files.get("manifests", [])]
-        self._potential_lockfiles = [LockfileEntry(*entry) for entry in lockable_files.get("lockfiles", [])]
+        self._potential_manifests = list(starmap(LockfileEntry, lockable_files.get("manifests", [])))
+        self._potential_lockfiles = list(starmap(LockfileEntry, lockable_files.get("lockfiles", [])))
 
     @property
     def potential_manifests(self) -> LockfileEntries:
@@ -141,7 +142,7 @@ class CIBase(ABC):
             # flatten the list of lists
             provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
             LOG.debug("Dependency files provided as arguments: %s", provided_arg_lockfiles)
-            valid_depfiles = self.filter_depfiles(provided_arg_lockfiles)
+            valid_depfiles = self._filter_depfiles(provided_arg_lockfiles)
             if valid_depfiles:
                 LOG.debug("Valid provided dependency files: %s", valid_depfiles)
                 return valid_depfiles
@@ -154,7 +155,7 @@ class CIBase(ABC):
         else:
             LOG.debug("Detected dependency files: %s", detected_depfiles)
         if detected_depfiles:
-            valid_depfiles = self.filter_depfiles(detected_depfiles)
+            valid_depfiles = self._filter_depfiles(detected_depfiles)
             if valid_depfiles:
                 LOG.debug("Valid detected dependency files: %s", valid_depfiles)
                 return valid_depfiles
@@ -166,7 +167,7 @@ class CIBase(ABC):
         raise SystemExit(textwrap.dedent(msg))
 
     @progress_spinner("Filtering dependency files")
-    def filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
+    def _filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
         """Filter potential dependency files and return the valid ones in sorted order."""
         depfiles: Depfiles = []
         for provided_depfile in provided_depfiles:
@@ -541,9 +542,9 @@ class CIBase(ABC):
                           If the command was expected to succeed, please report this as a bug."""
                     raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
-        self.parse_analysis_result(analysis_result)
+        self._parse_analysis_result(analysis_result)
 
-    def parse_analysis_result(self, analysis_result: str) -> None:
+    def _parse_analysis_result(self, analysis_result: str) -> None:
         """Parse the results of a Phylum analysis command output."""
         analysis = JobPolicyEvalResult(**json.loads(analysis_result))
 
