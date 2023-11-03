@@ -92,31 +92,6 @@ class Manifest(Depfile):
         prev_manifest_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
         return sorted(set(prev_manifest_packages))
 
-    @cached_property
-    def new_deps(self) -> Packages:
-        """Get the new dependencies added to the manifest and return them in sorted order."""
-        if self.is_depfile_changed is None:
-            LOG.warning("The `is_depfile_changed` property has not been set yet")
-        if not self.is_depfile_changed:
-            msg = f"""\
-                Continuing to determine new dependencies in manifest [code]{self!r}[/]
-                  even though it has not changed because it may be part of a workspace."""
-            LOG.info(textwrap.dedent(msg), extra=MARKUP)
-
-        if not self.common_ancestor_commit:
-            LOG.info("No common ancestor commit for `%r`. Assuming all current packages are new.", self)
-            return self.current_deps
-
-        prev_pkg_set = set(self.base_deps)
-        curr_pkg_set = set(self.current_deps)
-
-        # TODO(maxrake): Consider using these new dependencies to track the output findings...as mapped to a depfile.
-        #                https://github.com/phylum-dev/roadmap/issues/263
-        new_deps_set = curr_pkg_set.difference(prev_pkg_set)
-        new_deps_list = sorted(new_deps_set)
-        LOG.debug("New dependencies in `%r`: %s", self, new_deps_list)
-        return new_deps_list
-
 
 def remove_git_worktree(worktree: Path) -> None:
     """Remove a given git worktree.

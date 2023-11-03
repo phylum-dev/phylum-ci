@@ -47,34 +47,6 @@ class Lockfile(Depfile):
         prev_lockfile_packages = sorted(set(self.get_previous_lockfile_packages(prev_lockfile_object)))
         return prev_lockfile_packages
 
-    @cached_property
-    def new_deps(self) -> Packages:
-        """Get the new dependencies added to the lockfile and return them in sorted order."""
-        # Only consider newly added dependencies
-        if self.is_depfile_changed is None:
-            LOG.warning("The `is_depfile_changed` property has not been set yet")
-        if not self.is_depfile_changed:
-            return []
-
-        curr_lockfile_packages = self.current_deps
-
-        prev_lockfile_object = self.previous_lockfile_object()
-        if not prev_lockfile_object:
-            LOG.debug("No previous lockfile object found for `%r`. Assuming all current packages are new.", self)
-            return curr_lockfile_packages
-
-        prev_lockfile_packages = self.get_previous_lockfile_packages(prev_lockfile_object)
-
-        prev_pkg_set = set(prev_lockfile_packages)
-        curr_pkg_set = set(curr_lockfile_packages)
-
-        # TODO(maxrake): Consider using these new dependencies to track the output findings...as mapped to a depfile.
-        #                https://github.com/phylum-dev/roadmap/issues/263
-        new_deps_set = curr_pkg_set.difference(prev_pkg_set)
-        new_deps_list = sorted(new_deps_set)
-        LOG.debug("New dependencies in `%r`: %s", self, new_deps_list)
-        return new_deps_list
-
     @lru_cache(maxsize=1)
     def previous_lockfile_object(self) -> Optional[str]:
         """Get the previous git object for the lockfile.

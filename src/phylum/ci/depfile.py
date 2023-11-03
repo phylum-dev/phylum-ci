@@ -103,12 +103,6 @@ class Depfile(ABC):
         """
         raise NotImplementedError
 
-    @cached_property
-    @abstractmethod
-    def new_deps(self) -> Packages:
-        """Get the new dependencies added to the dependency file and return them in sorted order."""
-        raise NotImplementedError
-
 
 # Type alias
 Depfiles = list[Depfile]

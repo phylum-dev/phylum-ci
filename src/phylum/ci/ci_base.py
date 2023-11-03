@@ -511,24 +511,7 @@ class CIBase(ABC):
             LOG.debug("%s unique current dependencies", len(total_packages))
         else:
             LOG.info("Only considering newly added dependencies ...")
-            if self.force_analysis:
-                # When the `--force-analysis` flag is specified without the `--all-deps` flag, it is
-                # necessary to ensure the `is_depfile_changed` property is set for each dependency file.
-                # Simply referencing the `is_any_depfile_changed` property will ensure this happens.
-                LOG.debug("Updating each dependency file's change status ...")
-                if self.is_any_depfile_changed:
-                    LOG.debug("A provided/detected dependency file has changed")
-                else:
-                    LOG.debug("No provided/detected dependency file has changed")
             base_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.base_deps})
-            new_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.new_deps})
-            LOG.debug("%s unique newly added dependencies", len(new_pkgs))
-            if not new_pkgs and any(isinstance(depfile, Manifest) for depfile in self.depfiles):
-                msg = """\
-                    No new dependencies were found. Is this a library?
-                      If so, consider specifying the `--all-deps` flag to
-                      ensure updated dependencies are taken into account."""
-                LOG.warning(textwrap.dedent(msg))
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
