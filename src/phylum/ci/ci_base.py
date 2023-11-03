@@ -22,10 +22,8 @@ from packaging.version import Version
 from rich.markdown import Markdown
 
 from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
-from phylum.ci.depfile import Depfiles, parse_current_depfile
+from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_current_depfile
 from phylum.ci.git import git_hash_object, git_repo_name
-from phylum.ci.lockfile import Lockfile
-from phylum.ci.manifest import Manifest
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -203,21 +201,28 @@ class CIBase(ABC):
 
             # Classify the file as a manifest or lockfile
             if provided_depfile in self.potential_manifests and provided_depfile in self.potential_lockfiles:
-                LOG.warning(
-                    "Provided dependency file [code]%s[/] is a lockifest. It will be treated as a manifest.",
-                    provided_depfile.path,
-                    extra=MARKUP,
-                )
-                depfiles.append(Manifest(provided_depfile, self.cli_path, self.common_ancestor_commit))
+                msg = f"""\
+                    Provided dependency file [code]{provided_depfile.path}[/] is a lockifest.
+                      It will be treated as a manifest.
+                      For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
+                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.LOCKIFEST)
             elif provided_depfile in self.potential_manifests:
                 LOG.debug("Provided dependency file [code]%s[/] is a manifest", provided_depfile.path, extra=MARKUP)
-                depfiles.append(Manifest(provided_depfile, self.cli_path, self.common_ancestor_commit))
+                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.MANIFEST)
             elif provided_depfile in self.potential_lockfiles:
                 LOG.debug("Provided dependency file [code]%s[/] is a lockfile", provided_depfile.path, extra=MARKUP)
-                depfiles.append(Lockfile(provided_depfile, self.cli_path, self.common_ancestor_commit))
+                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.LOCKFILE)
+            else:
+                msg = f"""\
+                    Provided dependency file [code]{provided_depfile.path}[/] is an unknown type.
+                      It will be treated as a manifest."""
+                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.UNKNOWN)
+            depfiles.append(depfile)
 
         # Check for the presence of a manifest file
-        if any(isinstance(depfile, Manifest) for depfile in depfiles):
+        if any(depfile.is_manifest for depfile in depfiles):
             msg = """\
                 At least one manifest file was included.
                   Forcing analysis to ensure updated dependencies are included."""

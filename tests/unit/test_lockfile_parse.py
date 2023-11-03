@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from phylum.ci.common import LockfileEntry, PackageDescriptor
-from phylum.ci.lockfile import Lockfile
+from phylum.ci.depfile import Depfile, DepfileType
 
 EXPECTED_NUM_PACKAGES = 2
 
@@ -33,7 +33,7 @@ def test_current_deps(mock_run):
     provided_lockfile_type = "cargo"
     cli_path = Path("dummy_cli_path")
     lockfile_entry = LockfileEntry(depfile_path, provided_lockfile_type)
-    depfile = Lockfile(lockfile_entry, cli_path, None)
+    depfile = Depfile(lockfile_entry, cli_path, None, DepfileType.LOCKFILE)
 
     # Test the `current_deps` property
     packages = depfile.current_deps

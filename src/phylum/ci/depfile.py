@@ -3,11 +3,8 @@
 A Phylum project can consist of multiple dependency files.
 Dependency files can be either lockfiles or manifests.
 This module/class represents a single dependency file.
-
-Common functionality is provided where possible and unique functionality is designated
-as abstract methods to be defined in either the `Lockfile` or `Manifest` classes.
 """
-from abc import ABC, abstractmethod
+from enum import Enum
 from functools import cache, cached_property
 import json
 import os
@@ -15,9 +12,12 @@ from pathlib import Path
 import shlex
 import shutil
 import subprocess
+import tempfile
+import textwrap
 from typing import Optional, TypeVar
 
 from phylum.ci.common import LockfileEntry, PackageDescriptor, Packages
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG, MARKUP
 
 # Starting with Python 3.11, the `typing.Self` type was introduced to do this same thing.
@@ -25,15 +25,39 @@ from phylum.logger import LOG, MARKUP
 Self = TypeVar("Self", bound="Depfile")
 
 
-class Depfile(ABC):
+class DepfileType(Enum):
+    """Enumeration to track dependency file types.
+
+    A lockfile contains the completely resolved collection of the project dependencies,
+    often from abstract declarations in one or more manifest files.
+
+    A manifest contains project dependencies in their loose, unresolved form.
+
+    Lockifests are manifests that, for historical reasons, can also be used as lockfiles.
+    """
+
+    LOCKFILE = "lockfile"
+    MANIFEST = "manifest"
+    LOCKIFEST = "lockifest"
+    UNKNOWN = "unknown"
+
+
+class Depfile:
     """Provide methods for an instance of a dependency file."""
 
-    def __init__(self, provided_depfile: LockfileEntry, cli_path: Path, common_ancestor_commit: Optional[str]) -> None:
+    def __init__(
+        self,
+        provided_depfile: LockfileEntry,
+        cli_path: Path,
+        common_ancestor_commit: Optional[str],
+        depfile_type: DepfileType,
+    ) -> None:
         """Initialize a `Depfile` object."""
         self._path = provided_depfile.path.resolve()
         self._type = provided_depfile.type
         self.cli_path = cli_path
         self._common_ancestor_commit = common_ancestor_commit
+        self._depfile_type = depfile_type
         self._is_depfile_changed: Optional[bool] = None
 
         if not shutil.which("git"):
@@ -66,7 +90,7 @@ class Depfile(ABC):
 
     @property
     def type(self) -> str:  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
-        """Get the dependency file type."""
+        """Get the dependency file ecosystem type."""
         return self._type
 
     @property
@@ -88,20 +112,101 @@ class Depfile(ABC):
         """
         return self._common_ancestor_commit
 
-    @cached_property
-    @abstractmethod
-    def current_deps(self) -> Packages:
-        """Get the dependencies from the current iteration of the dependency file and return them in sorted order."""
-        raise NotImplementedError
+    @property
+    def depfile_type(self) -> DepfileType:
+        """Get the dependency file type."""
+        return self._depfile_type
+
+    @property
+    def is_lockfile(self) -> bool:
+        """Predicate to specify if the dependency file is a lockfile."""
+        return self.depfile_type == DepfileType.LOCKFILE
+
+    @property
+    def is_manifest(self) -> bool:
+        """Predicate to specify if the dependency file is a manifest.
+
+        Lockifests and unknown types are also treated as manifests.
+        """
+        return self.depfile_type in {DepfileType.MANIFEST, DepfileType.LOCKIFEST, DepfileType.UNKNOWN}
 
     @cached_property
-    @abstractmethod
+    def current_deps(self) -> Packages:
+        """Get the dependencies from the current iteration of the dependency file and return them in sorted order."""
+        try:
+            curr_depfile_packages = parse_current_depfile(self.cli_path, self.type, self.path)
+        except subprocess.CalledProcessError as err:
+            if self.is_lockfile:
+                msg = f"""\
+                    Please report this as a bug if you believe [code]{self!r}[/]
+                    is a valid [code]{self.type}[/] lockfile."""
+            else:
+                msg = f"""\
+                    Consider supplying lockfile type explicitly in the `.phylum_project` file.
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Please report this as a bug if you believe [code]{self!r}[/]
+                    is a valid [code]{self.type}[/] manifest file."""
+            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+        return sorted(set(curr_depfile_packages))
+
+    @cached_property
     def base_deps(self) -> Packages:
         """Get the dependencies from the base iteration of the dependency file and return them in sorted order.
 
         The base iteration is determined by the common ancestor commit.
         """
-        raise NotImplementedError
+        if not self.common_ancestor_commit:
+            LOG.info("No common ancestor commit for `%r`. Assuming no base dependencies.", self)
+            return []
+
+        with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
+            cmd = ["git", "worktree", "add", "--detach", temp_dir, self.common_ancestor_commit]
+            LOG.debug("Adding a git worktree for the base iteration in a temporary directory ...")
+            LOG.debug("Using command: %s", shlex.join(cmd))
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            except subprocess.CalledProcessError as err:
+                pprint_subprocess_error(err)
+                LOG.error("Due to error, assuming no base dependencies. Please report this as a bug.")
+                return []
+
+            temp_dir_path = Path(temp_dir).resolve()
+            prev_depfile_path = temp_dir_path / self.path.relative_to(Path.cwd())
+            cmd = [str(self.cli_path), "parse", "--lockfile-type", self.type, str(prev_depfile_path)]
+            LOG.info(
+                "Attempting to parse [code]%s[/] as previous [code]%s[/] %s. This may take a while.",
+                self.path,
+                self.type,
+                self.depfile_type.value,
+                extra=MARKUP,
+            )
+            LOG.debug("Using parse command: %s", shlex.join(cmd))
+            try:
+                parse_result = subprocess.run(
+                    cmd,  # noqa: S603
+                    cwd=temp_dir_path,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+            except subprocess.CalledProcessError as err:
+                pprint_subprocess_error(err)
+                msg = f"""\
+                    Due to error, assuming no previous {self.depfile_type.value} packages.
+                      Consider supplying lockfile type explicitly in `.phylum_project` file.
+                      For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                      Please report this as a bug if you believe [code]{self!r}[/]
+                      is a valid [code]{self.type}[/] {self.depfile_type.value} at revision
+                      [code]{self.common_ancestor_commit}[/]."""
+                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                remove_git_worktree(temp_dir_path)
+                return []
+
+            remove_git_worktree(temp_dir_path)
+
+        parsed_pkgs = json.loads(parse_result)
+        prev_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+        return sorted(set(prev_depfile_packages))
 
 
 # Type alias
@@ -126,3 +231,22 @@ def parse_current_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path
     parsed_pkgs = json.loads(parse_result)
     curr_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
     return curr_depfile_packages
+
+
+def remove_git_worktree(worktree: Path) -> None:
+    """Remove a given git worktree.
+
+    If a working tree is deleted without using `git worktree remove`, then its associated administrative files, which
+    reside in the repository, will eventually be removed automatically.
+    Ref: https://git-scm.com/docs/git-worktree
+
+    Use this function to remove the worktree now since the default for the `gc.worktreePruneExpire` setting is 3 months.
+    """
+    cmd = ["git", "worktree", "remove", "--force", str(worktree)]
+    LOG.debug("Removing the git worktree for the base iteration ...")
+    LOG.debug("Using command: %s", shlex.join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        pprint_subprocess_error(err)
+        LOG.warning("Unable to remove the git worktree. Try running `git worktree prune` manually.")
