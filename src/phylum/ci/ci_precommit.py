@@ -38,7 +38,10 @@ class CIPreCommit(CIBase):
           * The extra unparsed arguments passed to the CLI represent the staged files, no more and no less
         """
         super()._check_prerequisites()
+
+        # "Repeat" these calls from the base class to ensure properties are set before using them
         self._backup_project_file()
+        self._find_potential_depfiles()
 
         cmd = ["git", "diff", "--cached", "--name-only"]
         try:

@@ -33,10 +33,10 @@ def test_current_deps(mock_run):
     provided_lockfile_type = "cargo"
     cli_path = Path("dummy_cli_path")
     lockfile_entry = LockfileEntry(depfile_path, provided_lockfile_type)
-    depfile = Depfile(lockfile_entry, cli_path, None, DepfileType.LOCKFILE)
+    depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE)
 
     # Test the `current_deps` property
-    packages = depfile.current_deps
+    packages = depfile.deps
     expected_cargo_package = PackageDescriptor("quote", "1.0.21", "cargo", "Cargo.lock")
     expected_npm_package = PackageDescriptor("example", "0.1.0", "npm")
 

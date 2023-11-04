@@ -22,9 +22,17 @@ from typing import Optional
 from packaging.version import Version
 from rich.markdown import Markdown
 
-from phylum.ci.common import DataclassJSONEncoder, JobPolicyEvalResult, LockfileEntries, LockfileEntry, ReturnCode
+from phylum.ci.common import (
+    DataclassJSONEncoder,
+    JobPolicyEvalResult,
+    LockfileEntries,
+    LockfileEntry,
+    PackageDescriptor,
+    Packages,
+    ReturnCode,
+)
 from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_current_depfile
-from phylum.ci.git import git_hash_object, git_repo_name
+from phylum.ci.git import git_hash_object, git_repo_name, remove_git_worktree
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -173,13 +181,13 @@ class CIBase(ABC):
         for provided_depfile in provided_depfiles:
             # Make sure it exists
             if not provided_depfile.path.exists():
-                LOG.warning("Provided dependency file does not exist: %s", provided_depfile.path)
+                LOG.warning("Provided dependency file does not exist: %r", provided_depfile)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
 
             # Make sure it is not an empty file
             if not provided_depfile.path.stat().st_size:
-                LOG.warning("Provided dependency file is an empty file: %s", provided_depfile.path)
+                LOG.warning("Provided dependency file is an empty file: %r", provided_depfile)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
 
@@ -188,14 +196,13 @@ class CIBase(ABC):
                 _ = parse_current_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
-                _path, _type = provided_depfile.path, provided_depfile.type
                 msg = f"""\
-                    Provided dependency file [code]{_path}[/] failed to parse as
-                      lockfile type [code]{_type}[/]. If this is a manifest, consider
+                    Provided dependency file [code]{provided_depfile!r}[/] failed to parse as
+                      lockfile type [code]{provided_depfile.type}[/]. If this is a manifest, consider
                       supplying lockfile type explicitly in the `.phylum_project` file.
                       For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                      Please report this as a bug if you believe [code]{_path}[/]
-                      is a valid [code]{_type}[/] dependency file."""
+                      Please report this as a bug if you believe [code]{provided_depfile!r}[/]
+                      is a valid [code]{provided_depfile.type}[/] dependency file."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
@@ -203,23 +210,23 @@ class CIBase(ABC):
             # Classify the file as a manifest or lockfile
             if provided_depfile in self.potential_manifests and provided_depfile in self.potential_lockfiles:
                 msg = f"""\
-                    Provided dependency file [code]{provided_depfile.path}[/] is a lockifest.
-                      It will be treated as a manifest.
+                    Provided dependency file [code]{provided_depfile!r}[/] is a [b]lockifest[/].
+                      It will be treated as a [b]manifest[/].
                       For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.LOCKIFEST)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST)
             elif provided_depfile in self.potential_manifests:
-                LOG.debug("Provided dependency file [code]%s[/] is a manifest", provided_depfile.path, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.MANIFEST)
+                LOG.debug("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST)
             elif provided_depfile in self.potential_lockfiles:
-                LOG.debug("Provided dependency file [code]%s[/] is a lockfile", provided_depfile.path, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.LOCKFILE)
+                LOG.debug("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE)
             else:
                 msg = f"""\
-                    Provided dependency file [code]{provided_depfile.path}[/] is an unknown type.
-                      It will be treated as a manifest."""
+                    Provided dependency file [code]{provided_depfile!r}[/] is an [b]unknown[/] type.
+                      It will be treated as a [b]manifest[/]."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, self.common_ancestor_commit, DepfileType.UNKNOWN)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.UNKNOWN)
             depfiles.append(depfile)
 
         # Check for the presence of a manifest file
@@ -512,15 +519,15 @@ class CIBase(ABC):
 
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
-            base_pkgs = []
-            total_packages = {pkg for depfile in self.depfiles for pkg in depfile.current_deps}
-            LOG.debug("%s unique current dependencies", len(total_packages))
+            base_packages = []
+            current_packages = {pkg for depfile in self.depfiles for pkg in depfile.deps}
+            LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
         else:
             LOG.info("Only considering newly added dependencies ...")
-            base_pkgs = sorted({pkg for depfile in self.depfiles for pkg in depfile.base_deps})
+            base_packages = self._get_base_packages()
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
-            json.dump(base_pkgs, base_fd, cls=DataclassJSONEncoder)
+            json.dump(base_packages, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)
             cmd.extend(f"{depfile.path}:{depfile.type}" for depfile in self.depfiles)
@@ -543,6 +550,67 @@ class CIBase(ABC):
                     raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         self._parse_analysis_result(analysis_result)
+
+    def _get_base_packages(self) -> Packages:
+        """Get the dependencies from the common ancestor commit and return them in sorted order."""
+        if not self.common_ancestor_commit:
+            LOG.info("No common ancestor commit for `%r`. Assuming no base dependencies.", self)
+            return []
+
+        with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
+            cmd = ["git", "worktree", "add", "--detach", temp_dir, self.common_ancestor_commit]
+            LOG.debug("Adding a git worktree for the base iteration in a temporary directory ...")
+            LOG.debug("Using command: %s", shlex.join(cmd))
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            except subprocess.CalledProcessError as err:
+                pprint_subprocess_error(err)
+                LOG.error("Due to error, assuming no base dependencies. Please report this as a bug.")
+                return []
+
+            temp_dir_path = Path(temp_dir).resolve()
+            base_packages = set()
+            for depfile in self.depfiles:
+                prev_depfile_path = temp_dir_path / depfile.path.relative_to(Path.cwd())
+                cmd = [str(self.cli_path), "parse", "--lockfile-type", depfile.type, str(prev_depfile_path)]
+                LOG.info(
+                    "Parsing [code]%r[/] as previous [code]%s[/] [b]%s[/] ...",
+                    depfile,
+                    depfile.type,
+                    depfile.depfile_type.value,
+                    extra=MARKUP,
+                )
+                if depfile.is_manifest:
+                    LOG.info("  This may take a while")
+                LOG.debug("Using parse command: %s", shlex.join(cmd))
+                try:
+                    parse_result = subprocess.run(
+                        cmd,  # noqa: S603
+                        cwd=temp_dir_path,
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                except subprocess.CalledProcessError as err:
+                    pprint_subprocess_error(err)
+                    msg = f"""\
+                        Due to error, assuming no previous [b]{depfile.depfile_type.value}[/] packages.
+                          Consider supplying lockfile type explicitly in `.phylum_project` file.
+                          For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                          Please report this as a bug if you believe [code]{depfile!r}[/]
+                          is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
+                          [code]{self.common_ancestor_commit}[/]."""
+                    LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                    remove_git_worktree(temp_dir_path)
+                    return []
+
+                parsed_pkgs = json.loads(parse_result)
+                prev_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+                base_packages.update(prev_depfile_packages)
+
+            remove_git_worktree(temp_dir_path)
+
+        return sorted(base_packages)
 
     def _parse_analysis_result(self, analysis_result: str) -> None:
         """Parse the results of a Phylum analysis command output."""

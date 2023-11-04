@@ -214,3 +214,26 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
         repo_name = full_repo_path.stem
 
     return repo_name
+
+
+def remove_git_worktree(worktree: Path, git_c_path: Optional[Path] = None) -> None:
+    """Remove a given git worktree.
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+
+    If a working tree is deleted without using `git worktree remove`, then its associated
+    administrative files, which reside in the repository, will eventually be removed automatically.
+    Ref: https://git-scm.com/docs/git-worktree
+
+    Use this function to remove the worktree now since the default for the `gc.worktreePruneExpire` setting is 3 months.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "worktree", "remove", "--force", str(worktree)]
+    LOG.debug("Removing the git worktree for the base iteration ...")
+    LOG.debug("Using command: %s", shlex.join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        pprint_subprocess_error(err)
+        LOG.warning("Unable to remove the git worktree. Try running `git worktree prune` manually.")
