@@ -1,4 +1,4 @@
-"""Test the `current_deps` property from the `Depfile` class."""
+"""Test the `deps` property from the `Depfile` class."""
 
 from pathlib import Path
 from unittest.mock import patch
@@ -10,8 +10,8 @@ EXPECTED_NUM_PACKAGES = 2
 
 
 @patch("subprocess.run")
-def test_current_deps(mock_run):
-    """Test the `current_deps` property of the `Depfile` class."""
+def test_deps(mock_run):
+    """Test the `deps` property of the `Depfile` class."""
     # Prepare the mock
     mock_run.return_value.stdout = """
     [
@@ -35,7 +35,7 @@ def test_current_deps(mock_run):
     lockfile_entry = LockfileEntry(depfile_path, provided_lockfile_type)
     depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE)
 
-    # Test the `current_deps` property
+    # Test the `deps` property
     packages = depfile.deps
     expected_cargo_package = PackageDescriptor("quote", "1.0.21", "cargo", "Cargo.lock")
     expected_npm_package = PackageDescriptor("example", "0.1.0", "npm")
