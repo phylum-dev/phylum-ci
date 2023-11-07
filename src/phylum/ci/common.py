@@ -57,6 +57,18 @@ class LockfileEntry:
         # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but `os.path.relpath()` does not.
         return os.path.relpath(self.path)
 
+    def __eq__(self, other: object) -> bool:
+        """Provide an equality comparison method to override the default.
+
+        Since "auto" could be any value, exclude it from comparisons when
+        either side of the equality contains an "auto" `type` value.
+        """
+        if not isinstance(other, LockfileEntry):
+            return NotImplemented
+        if "auto" in (self.type, other.type):
+            return self.path == other.path
+        return (self.type, self.path) == (other.type, other.path)
+
 
 # Type alias
 LockfileEntries = list[LockfileEntry]
