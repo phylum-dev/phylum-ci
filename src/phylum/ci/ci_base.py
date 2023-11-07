@@ -594,15 +594,14 @@ class CIBase(ABC):
                 except subprocess.CalledProcessError as err:
                     pprint_subprocess_error(err)
                     msg = f"""\
-                        Due to error, assuming no previous [b]{depfile.depfile_type.value}[/] packages.
+                        Due to error, assuming no previous packages in [code]{depfile!r}[/].
                           Consider supplying lockfile type explicitly in `.phylum_project` file.
                           For more info, see: https://docs.phylum.io/docs/lockfile_generation
                           Please report this as a bug if you believe [code]{depfile!r}[/]
                           is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
                           [code]{self.common_ancestor_commit}[/]."""
                     LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                    remove_git_worktree(temp_dir_path)
-                    return []
+                    continue
 
                 parsed_pkgs = json.loads(parse_result)
                 prev_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
