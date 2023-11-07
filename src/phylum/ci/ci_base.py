@@ -32,7 +32,7 @@ from phylum.ci.common import (
     ReturnCode,
 )
 from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_current_depfile
-from phylum.ci.git import git_hash_object, git_repo_name, remove_git_worktree
+from phylum.ci.git import git_hash_object, git_repo_name, git_worktree
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -559,21 +559,10 @@ class CIBase(ABC):
             LOG.info("No common ancestor commit for `%r`. Assuming no base dependencies.", self)
             return []
 
-        with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
-            cmd = ["git", "worktree", "add", "--detach", temp_dir, self.common_ancestor_commit]
-            LOG.debug("Adding a git worktree for the base iteration in a temporary directory ...")
-            LOG.debug("Using command: %s", shlex.join(cmd))
-            try:
-                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-            except subprocess.CalledProcessError as err:
-                pprint_subprocess_error(err)
-                LOG.error("Due to error, assuming no base dependencies. Please report this as a bug.")
-                return []
-
-            temp_dir_path = Path(temp_dir).resolve()
-            base_packages = set()
+        base_packages = set()
+        with git_worktree(self.common_ancestor_commit) as temp_dir:
             for depfile in self.depfiles:
-                prev_depfile_path = temp_dir_path / depfile.path.relative_to(Path.cwd())
+                prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())
                 cmd = [str(self.cli_path), "parse", "--lockfile-type", depfile.type, str(prev_depfile_path)]
                 LOG.info(
                     "Parsing [code]%r[/] as previous [code]%s[/] [b]%s[/] ...",
@@ -588,7 +577,7 @@ class CIBase(ABC):
                 try:
                     parse_result = subprocess.run(
                         cmd,  # noqa: S603
-                        cwd=temp_dir_path,
+                        cwd=temp_dir,
                         check=True,
                         capture_output=True,
                         text=True,
@@ -608,8 +597,6 @@ class CIBase(ABC):
                 parsed_pkgs = json.loads(parse_result)
                 prev_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
                 base_packages.update(prev_depfile_packages)
-
-            remove_git_worktree(temp_dir_path)
 
         return sorted(base_packages)
 

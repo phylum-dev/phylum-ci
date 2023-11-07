@@ -58,16 +58,26 @@ class LockfileEntry:
         return os.path.relpath(self.path)
 
     def __eq__(self, other: object) -> bool:
-        """Provide an equality comparison method to override the default.
+        """Provide an equality "rich comparison" method to override the default.
 
         Since "auto" could be any value, exclude it from comparisons when
         either side of the equality contains an "auto" `type` value.
         """
         if not isinstance(other, LockfileEntry):
             return NotImplemented
-        if "auto" in (self.type, other.type):
+        if "auto" in {self.type, other.type}:
             return self.path == other.path
         return (self.type, self.path) == (other.type, other.path)
+
+    def __hash__(self) -> int:
+        """Provide a custom hash method to go with the equality "rich comparison" method.
+
+        Objects which compare equal should have the same hash value.
+        """
+        if self.type == "auto":
+            # Since "auto" could be any value, exclude it from hashing.
+            return hash(self.path)
+        return hash((self.type, self.path))
 
 
 # Type alias

@@ -1,8 +1,11 @@
 """Provide common git functions."""
 
+from collections.abc import Generator
+import contextlib
 from pathlib import Path
 import shlex
 import subprocess
+import tempfile
 import textwrap
 from typing import Optional
 
@@ -214,6 +217,39 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
         repo_name = full_repo_path.stem
 
     return repo_name
+
+
+@contextlib.contextmanager
+def git_worktree(commit: str, git_c_path: Optional[Path] = None) -> Generator[Path, None, None]:
+    """Create a git worktree at the given commit.
+
+    This is a context manager that yields a `Path` to the worktree, created in a temporary directory.
+
+    Example:
+    ```
+    with git_worktree(commit) as temp_dir:
+        # Analyze files in the worktree.
+        # The worktree will be removed at the end of the block.
+    ```
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
+        cmd = [*base_cmd, "worktree", "add", "--detach", temp_dir, commit]
+        LOG.debug("Adding a git worktree for the base iteration in a temporary directory ...")
+        LOG.debug("Using command: %s", shlex.join(cmd))
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            msg = f"Unable to create a git worktree at commit: {commit}"
+            raise PhylumCalledProcessError(err, msg) from err
+        temp_dir_path = Path(temp_dir).resolve()
+        try:
+            yield temp_dir_path
+        finally:
+            remove_git_worktree(temp_dir_path)
 
 
 def remove_git_worktree(worktree: Path, git_c_path: Optional[Path] = None) -> None:
