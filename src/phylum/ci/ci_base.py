@@ -27,11 +27,10 @@ from phylum.ci.common import (
     JobPolicyEvalResult,
     LockfileEntries,
     LockfileEntry,
-    PackageDescriptor,
     Packages,
     ReturnCode,
 )
-from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_current_depfile
+from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_depfile
 from phylum.ci.git import git_hash_object, git_repo_name, git_worktree
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
@@ -193,7 +192,7 @@ class CIBase(ABC):
 
             # Make sure it can be parsed by Phylum CLI
             try:
-                _ = parse_current_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
+                _ = parse_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 msg = f"""\
@@ -563,25 +562,8 @@ class CIBase(ABC):
         with git_worktree(self.common_ancestor_commit) as temp_dir:
             for depfile in self.depfiles:
                 prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())
-                cmd = [str(self.cli_path), "parse", "--lockfile-type", depfile.type, str(prev_depfile_path)]
-                LOG.info(
-                    "Parsing [code]%r[/] as previous [code]%s[/] [b]%s[/] ...",
-                    depfile,
-                    depfile.type,
-                    depfile.depfile_type.value,
-                    extra=MARKUP,
-                )
-                if depfile.is_manifest:
-                    LOG.info("  This may take a while")
-                LOG.debug("Using parse command: %s", shlex.join(cmd))
                 try:
-                    parse_result = subprocess.run(
-                        cmd,  # noqa: S603
-                        cwd=temp_dir,
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                    ).stdout.strip()
+                    prev_depfile_pkgs = parse_depfile(self.cli_path, depfile.type, prev_depfile_path, start=temp_dir)
                 except subprocess.CalledProcessError as err:
                     pprint_subprocess_error(err)
                     msg = f"""\
@@ -593,10 +575,7 @@ class CIBase(ABC):
                           [code]{self.common_ancestor_commit}[/]."""
                     LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                     continue
-
-                parsed_pkgs = json.loads(parse_result)
-                prev_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-                base_packages.update(prev_depfile_packages)
+                base_packages.update(prev_depfile_pkgs)
 
         return sorted(base_packages)
 

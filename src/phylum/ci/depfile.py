@@ -115,7 +115,7 @@ class Depfile:
     def deps(self) -> Packages:
         """Get the dependencies from the current iteration of the dependency file and return them in sorted order."""
         try:
-            curr_depfile_packages = parse_current_depfile(self.cli_path, self.type, self.path)
+            curr_depfile_packages = parse_depfile(self.cli_path, self.type, self.path)
         except subprocess.CalledProcessError as err:
             if self.is_lockfile:
                 msg = f"""\
@@ -136,20 +136,24 @@ Depfiles = list[Depfile]
 
 
 @cache
-def parse_current_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path) -> Packages:
-    """Parse a current dependency file and return its packages.
+def parse_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path, start: Optional[Path] = None) -> Packages:
+    """Parse a dependency file and return its packages.
 
-    Callers of this function must catch `subprocess.CalledProcessError` exceptions and handle them.
+    `start` is an optional `Path` where the parsing command should be executed.
+    When not specified, it will default to the current working directory.
+
+    Callers of this function *MUST* catch `subprocess.CalledProcessError` exceptions and handle them.
     """
-    LOG.info(
-        "Attempting to parse [code]%s[/] as a [code]%s[/] dependency file. Manifests may take a while.",
-        os.path.relpath(depfile_path),
-        lockfile_type,
-        extra=MARKUP,
-    )
+    if start is None:
+        start = Path.cwd()
+    msg = f"""\
+        Parsing [code]{os.path.relpath(depfile_path, start=start)}[/] as [code]{lockfile_type}[/] dependency file.
+          Manifests may take a while."""
+    LOG.info(textwrap.dedent(msg), extra=MARKUP)
     cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type, str(depfile_path)]
     LOG.debug("Using parse command: %s", shlex.join(cmd))
-    parse_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
-    parsed_pkgs = json.loads(parse_result)
-    curr_depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-    return curr_depfile_packages
+    LOG.debug("Running command from: %s", start)
+    result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+    parsed_pkgs = json.loads(result)
+    depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
+    return depfile_packages
