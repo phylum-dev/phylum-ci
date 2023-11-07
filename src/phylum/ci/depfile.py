@@ -13,15 +13,11 @@ import shlex
 import shutil
 import subprocess
 import textwrap
-from typing import Optional, TypeVar
+from typing import Optional
 
 from phylum.ci.common import LockfileEntry, PackageDescriptor, Packages
 from phylum.exceptions import PhylumCalledProcessError
 from phylum.logger import LOG, MARKUP
-
-# Starting with Python 3.11, the `typing.Self` type was introduced to do this same thing.
-# Reference: https://peps.python.org/pep-0673/
-Self = TypeVar("Self", bound="Depfile")
 
 
 class DepfileType(Enum):
@@ -71,8 +67,10 @@ class Depfile:
         # Example: print(f"Path to dependency file: `{depfile}`")   # noqa: ERA001 ; commented code intended
         return str(self.path)
 
-    def __lt__(self: Self, other: Self) -> bool:
+    def __lt__(self, other: object) -> bool:
         """Provide a less than "rich comparison" method to enable sorting class objects."""
+        if not isinstance(other, Depfile):
+            return NotImplemented
         return self.path < other.path
 
     @property

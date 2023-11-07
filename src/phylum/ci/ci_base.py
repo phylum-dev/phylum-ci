@@ -517,14 +517,16 @@ class CIBase(ABC):
         if self.phylum_group:
             cmd.extend(["--group", self.phylum_group])
 
+        current_packages = {pkg for depfile in self.depfiles for pkg in depfile.deps}
+        LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
             base_packages = []
-            current_packages = {pkg for depfile in self.depfiles for pkg in depfile.deps}
-            LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
         else:
             LOG.info("Only considering newly added dependencies ...")
             base_packages = self._get_base_packages()
+            new_packages = sorted(set(current_packages).difference(set(base_packages)))
+            LOG.debug("%s new dependencies: %s", len(new_packages), new_packages)
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
             json.dump(base_packages, base_fd, cls=DataclassJSONEncoder)

@@ -12,8 +12,12 @@ import rich.traceback
 from phylum import PKG_NAME
 from phylum.console import console
 
+# Import and use this throughout the `phylum` package to write consistent log entries
 LOG = logging.getLogger(PKG_NAME)
-
+# This is a shorter form of specifying the `rich` markup format as an "extra" argument in log calls
+MARKUP = {"markup": True}
+# This is a shorter form of specifying the `rich` markup format, w/o highlighting, as an "extra" argument in log calls
+MARKUP_NO_HI = {"markup": True, "highlighter": None}
 # This is a custom logging level, defined relative to existing logging.DEBUG level as suggested in the
 # Python `logging` library documentation: https://docs.python.org/3/library/logging.html#logging-levels
 LOGGING_TRACE_LEVEL = logging.DEBUG - 5
@@ -30,11 +34,6 @@ LOG.addHandler(DEFAULT_RICH_HANDLER)
 
 # Install rich as the default traceback handler so that all uncaught exceptions will be rendered with highlighting
 rich.traceback.install(console=console, word_wrap=True, show_locals=True)
-
-# This is a shorter form of specifying the `rich` markup format as an "extra" argument in log calls
-MARKUP = {"markup": True}
-# This is a shorter form of specifying the `rich` markup format, w/o highlighting, as an "extra" argument in log calls
-MARKUP_NO_HI = {"markup": True, "highlighter": None}
 
 
 # This function was adapted from:
