@@ -47,6 +47,7 @@ def test_deps(mock_run):
     # Ensure the mock was called correctly
     mock_run.assert_called_once_with(
         [str(depfile.cli_path), "parse", "--lockfile-type", provided_lockfile_type, str(depfile.path)],
+        cwd=Path.cwd(),
         check=True,
         capture_output=True,
         text=True,
