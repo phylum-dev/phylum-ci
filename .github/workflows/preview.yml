@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install poetry
-        run: pipx install poetry==1.6.1
+        run: pipx install poetry==1.7.0
 
       - name: Configure poetry
         run: |
