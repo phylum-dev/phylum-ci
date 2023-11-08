@@ -238,7 +238,7 @@ def git_worktree(commit: str, git_c_path: Optional[Path] = None) -> Generator[Pa
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     with tempfile.TemporaryDirectory(prefix="phylum_") as temp_dir:
         cmd = [*base_cmd, "worktree", "add", "--detach", temp_dir, commit]
-        LOG.debug("Adding a git worktree for the base iteration in a temporary directory ...")
+        LOG.debug("Adding git worktree for base iteration in a temporary directory ...")
         LOG.debug("Using command: %s", shlex.join(cmd))
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603

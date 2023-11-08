@@ -197,11 +197,13 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Bail early when possible
     LOG.debug("Dependency files in use: %s", ci_env.depfiles)
     if ci_env.force_analysis:
-        LOG.info("Forced analysis specified with flag or otherwise set. Proceeding with analysis ...")
+        LOG.info("Forced analysis specified or otherwise set. Proceeding with analysis.")
     elif ci_env.is_any_depfile_changed:
-        LOG.info("A lockfile has changed. Proceeding with analysis ...")
+        # "lockfile" language is used from here forward because the existence
+        # of even a single manifest means the forced analysis branch is taken
+        LOG.info("A lockfile has changed. Proceeding with analysis.")
     elif ci_env.phylum_comment_exists:
-        LOG.info("Existing Phylum comment found. Proceeding with analysis ...")
+        LOG.info("Existing Phylum comment found. Proceeding with analysis.")
     else:
         LOG.warning("No lockfile has changed. Nothing to do.")
         return 0

@@ -29,13 +29,21 @@ from phylum.github import get_headers, github_request
 from phylum.logger import LOG
 
 PAT_ERR_MSG = """
-A GitHub token with API access is required to use the API (e.g., to post comments).
-This can be the default `GITHUB_TOKEN` provided automatically at the start of each workflow run.
-It can also be either a classic or fine-grained personal access token (PAT).
-A `GITHUB_TOKEN` needs at least write access for `pull-requests` scope (even though the `issues` API is used).
-A classic PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
-A fine-grained PAT needs read access to `metadata` and read/write access to `pull requests`.
-See the GitHub Token Documentation for more info:
+A GitHub token with API access is required to use the API
+(e.g., to post comments). This can be the default `GITHUB_TOKEN`
+provided automatically at the start of each workflow run. It can also
+be either a classic or fine-grained personal access token (PAT).
+
+A `GITHUB_TOKEN` needs at least write access for `pull-requests`
+scope (even though the `issues` API is used).
+
+A classic PAT needs the `repo` scope or minimally the `public_repo`
+scope if private repositories are not used.
+
+A fine-grained PAT needs read access to `metadata` and read/write
+access to `pull requests`.
+
+See GitHub Token Documentation for more info:
   * https://docs.github.com/actions/security-guides/automatic-token-authentication
   * https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
   * https://docs.github.com/rest/overview/permissions-required-for-fine-grained-personal-access-tokens
@@ -57,10 +65,10 @@ class CIGitHub(CIBase):
         except subprocess.CalledProcessError as err:
             msg = f"""\
                 Adding the GitHub workspace `{github_workspace}` as a safe
-                  directory in the git config failed. This is the recommended workaround
-                  for container actions, to avoid the `unsafe repository` error.
-                  See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765)
-                  for more detail."""
+                directory in the git config failed. This is the recommended workaround
+                for container actions, to avoid the `unsafe repository` error.
+                See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765)
+                for more detail."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         super().__init__(args)
@@ -153,7 +161,7 @@ class CIGitHub(CIBase):
 
         err_msg = """\
             Consider changing the `fetch-depth` input during checkout to fetch more branch history.
-              Reference: https://github.com/actions/checkout"""
+            Reference: https://github.com/actions/checkout"""
         self.update_depfiles_change_status(pr_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)

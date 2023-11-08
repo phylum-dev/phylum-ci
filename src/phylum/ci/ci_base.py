@@ -169,8 +169,8 @@ class CIBase(ABC):
 
         msg = """\
             No valid dependency files were detected.
-              Consider specifying at least one with
-              `--lockfile` argument or in `.phylum_project` file."""
+            Consider specifying at least one with
+            `--lockfile` argument or in `.phylum_project` file."""
         raise SystemExit(textwrap.dedent(msg))
 
     @progress_spinner("Filtering dependency files")
@@ -197,11 +197,11 @@ class CIBase(ABC):
                 pprint_subprocess_error(err)
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] failed to parse as
-                      lockfile type [code]{provided_depfile.type}[/]. If this is a manifest, consider
-                      supplying lockfile type explicitly in the `.phylum_project` file.
-                      For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                      Please report this as a bug if you believe [code]{provided_depfile!r}[/]
-                      is a valid [code]{provided_depfile.type}[/] dependency file."""
+                    lockfile type [code]{provided_depfile.type}[/]. If this is a manifest, consider
+                    supplying lockfile type explicitly in the `.phylum_project` file.
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Please report this as a bug if you believe [code]{provided_depfile!r}[/]
+                    is a valid [code]{provided_depfile.type}[/] dependency file."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
@@ -210,20 +210,20 @@ class CIBase(ABC):
             if provided_depfile in self.potential_manifests and provided_depfile in self.potential_lockfiles:
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is a [b]lockifest[/].
-                      It will be treated as a [b]manifest[/].
-                      For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
+                    It will be treated as a [b]manifest[/].
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST)
             elif provided_depfile in self.potential_manifests:
-                LOG.debug("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
+                LOG.info("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST)
             elif provided_depfile in self.potential_lockfiles:
-                LOG.debug("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
+                LOG.info("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE)
             else:
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is an [b]unknown[/] type.
-                      It will be treated as a [b]manifest[/]."""
+                    It will be treated as a [b]manifest[/]."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.UNKNOWN)
             depfiles.append(depfile)
@@ -232,7 +232,7 @@ class CIBase(ABC):
         if any(depfile.is_manifest for depfile in depfiles):
             msg = """\
                 At least one manifest file was included.
-                  Forcing analysis to ensure updated dependencies are included."""
+                Forcing analysis to ensure updated dependencies are included."""
             LOG.warning(textwrap.dedent(msg))
             self._force_analysis = True
 
@@ -480,8 +480,8 @@ class CIBase(ABC):
                 return
             msg = """\
                 There was a problem creating the project.
-                  A PRO account is needed to create a project with a group.
-                  If the command was expected to succeed, please report this as a bug."""
+                A PRO account is needed to create a project with a group.
+                If the command was expected to succeed, please report this as a bug."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
         LOG.info("Project %s created successfully", self.phylum_project)
         if self._project_file_already_existed:
@@ -546,8 +546,8 @@ class CIBase(ABC):
                 else:
                     msg = """\
                         There was a problem analyzing the project.
-                          A PRO account is needed to use groups.
-                          If the command was expected to succeed, please report this as a bug."""
+                        A PRO account is needed to use groups.
+                        If the command was expected to succeed, please report this as a bug."""
                     raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
         self._parse_analysis_result(analysis_result)
@@ -568,11 +568,11 @@ class CIBase(ABC):
                     pprint_subprocess_error(err)
                     msg = f"""\
                         Due to error, assuming no previous packages in [code]{depfile!r}[/].
-                          Consider supplying lockfile type explicitly in `.phylum_project` file.
-                          For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                          Please report this as a bug if you believe [code]{depfile!r}[/]
-                          is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
-                          [code]{self.common_ancestor_commit}[/]."""
+                        Consider supplying lockfile type explicitly in `.phylum_project` file.
+                        For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                        Please report this as a bug if you believe [code]{depfile!r}[/]
+                        is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
+                        [code]{self.common_ancestor_commit}[/]."""
                     LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                     continue
                 base_packages.update(prev_depfile_pkgs)

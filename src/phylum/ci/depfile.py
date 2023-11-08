@@ -120,13 +120,13 @@ class Depfile:
             if self.is_lockfile:
                 msg = f"""\
                     Please report this as a bug if you believe [code]{self!r}[/]
-                      is a valid [code]{self.type}[/] lockfile."""
+                    is a valid [code]{self.type}[/] lockfile."""
             else:
                 msg = f"""\
                     Consider supplying lockfile type explicitly in the `.phylum_project` file.
-                      For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                      Please report this as a bug if you believe [code]{self!r}[/]
-                      is a valid [code]{self.type}[/] manifest file."""
+                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Please report this as a bug if you believe [code]{self!r}[/]
+                    is a valid [code]{self.type}[/] manifest file."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
         return sorted(set(curr_depfile_packages))
 
@@ -146,10 +146,12 @@ def parse_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path, start:
     """
     if start is None:
         start = Path.cwd()
-    msg = f"""\
-        Parsing [code]{os.path.relpath(depfile_path, start=start)}[/] as [code]{lockfile_type}[/] dependency file.
-          Manifests may take a while."""
-    LOG.info(textwrap.dedent(msg), extra=MARKUP)
+    LOG.info(
+        "Parsing [code]%s[/] as [code]%s[/] dependency file. Manifests take longer.",
+        os.path.relpath(depfile_path, start=start),
+        lockfile_type,
+        extra=MARKUP,
+    )
     cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type, str(depfile_path)]
     LOG.debug("Using parse command: %s", shlex.join(cmd))
     LOG.debug("Running command from: %s", start)
