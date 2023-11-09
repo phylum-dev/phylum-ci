@@ -4,7 +4,7 @@ from enum import IntEnum
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -38,7 +38,7 @@ class LockfileEntry:
     Current commands that return entries in this format include `status` and `find-lockable-files`.
     """
 
-    _path: dataclasses.InitVar[os.PathLike]
+    _path: dataclasses.InitVar[Union[str, Path]]
     type: str = "auto"  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
     path: Path = dataclasses.field(init=False)
 
@@ -49,7 +49,7 @@ class LockfileEntry:
         elif isinstance(_path, Path):
             self.path = _path.resolve()
         else:
-            msg = "Provided dependency file path is not PathLike"
+            msg = "Provided dependency file path is not `str` or `Path`"
             raise TypeError(msg)
 
     def __repr__(self) -> str:
@@ -74,10 +74,10 @@ class LockfileEntry:
 
         Objects which compare equal should have the same hash value.
         """
-        if self.type == "auto":
-            # Since "auto" could be any value, exclude it from hashing.
-            return hash(self.path)
-        return hash((self.type, self.path))
+        # Since "auto" could be any value, and the Python data model for this magic method requires objects that
+        # compare equal have the same hash value, the `self.type` property must be excluded from hashing.
+        # Ref: https://docs.python.org/3/reference/datamodel.html#object.__hash__
+        return hash(self.path)
 
 
 # Type alias
