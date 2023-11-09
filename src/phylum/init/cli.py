@@ -36,7 +36,7 @@ from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
-from phylum.logger import LOG, progress_spinner, set_logger_level
+from phylum.logger import LOG, MARKUP_NO_HI, progress_spinner, set_logger_level
 
 
 def get_phylum_settings_path():
@@ -546,7 +546,7 @@ def main(args=None):
     process_uri_option(args)
     process_token_option(args)
     confirm_setup()
-    LOG.warning(":white_check_mark: Installed Phylum CLI %s", tag_name, extra={"markup": True, "highlighter": False})
+    LOG.warning(":white_check_mark: Installed Phylum CLI %s", tag_name, extra=MARKUP_NO_HI)
 
     return 0
 

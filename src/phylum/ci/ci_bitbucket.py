@@ -35,9 +35,11 @@ from phylum.exceptions import pprint_subprocess_error
 from phylum.logger import LOG
 
 BITBUCKET_TOK_ERR_MSG = """
-A Bitbucket access token with API access is required to use the API (e.g., to post comments).
-This can be a repository, project, or workspace token with at least the `pullrequest` scope.
-See the Bitbucket documentation for using access tokens:
+A Bitbucket access token with API access is required to use the
+API (e.g., to post comments). This can be a repository, project,
+or workspace token with at least the `pullrequest` scope.
+
+See Bitbucket documentation for using access tokens:
   * https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens
 """
 

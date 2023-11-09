@@ -36,24 +36,36 @@ from phylum.exceptions import pprint_subprocess_error
 from phylum.logger import LOG
 
 AZURE_PAT_ERR_MSG = """
-An Azure DevOps token with API access is required to use the API (e.g., to post comments).
-This can be the default `System.AccessToken` provided automatically at the start
-of each build for the scoped build identity or a personal access token (PAT).
+An Azure DevOps token with API access is required to use the API
+(e.g., to post comments). This can be the default `System.AccessToken`
+provided automatically at the start of each build for the scoped
+build identity or a personal access token (PAT).
+
 A PAT needs at least the `Pull Request Threads` scope (read & write).
-See the Azure DevOps documentation for using personal access tokens:
+
+See Azure DevOps documentation for using personal access tokens:
   * https://learn.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
-The `System.AccessToken` scoped build identity needs at least the `Contribute to pull requests` permission.
-See the Azure DevOps documentation for using the `System.AccessToken`:
+
+The `System.AccessToken` scoped build identity needs
+at least the `Contribute to pull requests` permission.
+
+See Azure DevOps documentation for using the `System.AccessToken`:
   * https://learn.microsoft.com/azure/devops/pipelines/build/variables#systemaccesstoken
   * https://learn.microsoft.com/azure/devops/pipelines/process/access-tokens#job-authorization-scope
 """
 
 GITHUB_PAT_ERR_MSG = """
-A GitHub token with API access is required to use the API (e.g., to post comments).
-This can be either a classic or fine-grained personal access token (PAT).
-A classic PAT needs the `repo` scope or minimally the `public_repo` scope if private repositories are not used.
-A fine-grained PAT needs read access to `metadata` and read/write access to `pull requests`.
-See the GitHub Token Documentation for more info:
+A GitHub token with API access is required to use the
+API (e.g., to post comments). This can be either a
+classic or fine-grained personal access token (PAT).
+
+A classic PAT needs the `repo` scope or minimally the
+`public_repo` scope if private repositories are not used.
+
+A fine-grained PAT needs read access to `metadata` and
+read/write access to `pull requests`.
+
+See GitHub Token Documentation for more info:
   * https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
   * https://docs.github.com/rest/overview/permissions-required-for-fine-grained-personal-access-tokens
   * https://docs.github.com/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
