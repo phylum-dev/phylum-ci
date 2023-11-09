@@ -10,6 +10,17 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.38.0 (2023-11-09)
+
+### Feature
+
+* Support workspace projects for all lockfile types ([#344](https://github.com/phylum-dev/phylum-ci/issues/344)) ([`2bf66c7`](https://github.com/phylum-dev/phylum-ci/commit/2bf66c77f8d39fb3b870d48279045bcf4741219b))
+* Cache parsing results of current dependency files ([#342](https://github.com/phylum-dev/phylum-ci/issues/342)) ([`1ceff86`](https://github.com/phylum-dev/phylum-ci/commit/1ceff860a2828c65cc3c92f41938a8816d250119))
+
+### Breaking
+
+* CLI installs prior to v5.8.0 are no longer supported. A Phylum CLI version with the `find-lockable-files` command is needed. ([`2bf66c7`](https://github.com/phylum-dev/phylum-ci/commit/2bf66c77f8d39fb3b870d48279045bcf4741219b))
+
 ## v0.37.1 (2023-10-20)
 
 ### Fix
