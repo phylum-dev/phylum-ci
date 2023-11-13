@@ -32,12 +32,10 @@ repos:
     hooks:
       - id: ruff
 
-  # TODO: Restore `refurb` once https://github.com/dosisod/refurb/issues/305 is resolved.
-  #       https://github.com/phylum-dev/phylum-ci/issues/348
-  # - repo: https://github.com/dosisod/refurb
-  #   rev: b5f9f11fa01afc34884349ebf42c999dc208ee01  # frozen: v1.22.2
-  #   hooks:
-  #     - id: refurb
+  - repo: https://github.com/dosisod/refurb
+    rev: 63209fc1735ef2497dd9c00774ba72a23bb1cdf9  # frozen: v1.23.0
+    hooks:
+      - id: refurb
 
   - repo: https://github.com/jendrikseipp/vulture
     rev: 42ae1c1776f475a205bedeaf8dc6913c044e1440  # frozen: v2.10
