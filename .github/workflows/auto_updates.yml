@@ -58,13 +58,15 @@ jobs:
       # NOTE: Specific repos are specified for update since the autoupdated/frozen version here may not always be the
       # latest version. This is the case for `poetry`, which has described the limitations of `pre-commit` here:
       # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
+      #
+      # TODO: Put `refurb` back in this list once https://github.com/dosisod/refurb/issues/305 is resolved.
+      #       https://github.com/phylum-dev/phylum-ci/issues/348
       - name: Update pre-commit hooks
         run: |
           poetry run pre-commit autoupdate --freeze \
           --repo https://github.com/pre-commit/pre-commit-hooks \
           --repo https://github.com/psf/black \
           --repo https://github.com/charliermarsh/ruff-pre-commit \
-          --repo https://github.com/dosisod/refurb \
           --repo https://github.com/jendrikseipp/vulture \
           --repo https://github.com/adrienverge/yamllint
 
