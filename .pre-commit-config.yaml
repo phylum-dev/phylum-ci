@@ -23,17 +23,17 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: 744d23b34800c06e10272149b70752396e90eeb8  # frozen: 23.10.1
+    rev: 2a1c67e0b2f81df602ec1f6e7aeb030b9709dc7c  # frozen: 23.11.0
     hooks:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 3dacd83b1ee8fb950dbdd1001f9b5851728b6077  # frozen: v0.1.4
+    rev: 3d440bd6c67653f33f1c89ff9d6d450685ef9bfc  # frozen: v0.1.5
     hooks:
       - id: ruff
 
   - repo: https://github.com/dosisod/refurb
-    rev: 229e7ea1c2ef7b4b0c0910f94bb46f44e2fd4dd1  # frozen: v1.22.1
+    rev: 63209fc1735ef2497dd9c00774ba72a23bb1cdf9  # frozen: v1.23.0
     hooks:
       - id: refurb
 
@@ -43,7 +43,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: b05e028c5881819161d11cb543fd96a30c06cceb  # frozen: v1.32.0
+    rev: 8713140e99914c0cb6e07364daedfb140847c3c5  # frozen: v1.33.0
     hooks:
       - id: yamllint
 
