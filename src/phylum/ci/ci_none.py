@@ -11,8 +11,8 @@ import subprocess
 from typing import Optional
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.git import git_curent_branch_name, git_remote
-from phylum.exceptions import pprint_subprocess_error
+from phylum.ci.git import git_curent_branch_name, git_remote, git_set_remote_head
+from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG
 
 
@@ -45,12 +45,20 @@ class CINone(CIBase):
         remote = git_remote()
         cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/HEAD"]
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
-        except subprocess.CalledProcessError as err:
-            pprint_subprocess_error(err)
-            LOG.warning("The common ancestor commit could not be found")
-            common_commit = None
-        return common_commit
+            commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+        except subprocess.CalledProcessError as outer_err:
+            # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
+            # the except block, is due to wanting to minimize calling commands that require git credentials.
+            pprint_subprocess_error(outer_err)
+            LOG.warning("Failed to get commit. Remote HEAD ref likely not set. Attempting to set it and try again ...")
+            git_set_remote_head(remote)
+            try:
+                commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            except subprocess.CalledProcessError as inner_err:
+                pprint_subprocess_error(inner_err)
+                LOG.warning("The common ancestor commit could not be found")
+                commit = None
+        return commit
 
     @property
     def is_any_depfile_changed(self) -> bool:
@@ -68,7 +76,20 @@ class CINone(CIBase):
         https://git-scm.com/docs/git-diff#Documentation/git-diff.txt-emgitdiffemltoptionsgtltcommitgtltcommitgt--ltpathgt82308203
         """
         remote = git_remote()
-        self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+        try:
+            self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+        except subprocess.CalledProcessError as outer_err:
+            # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
+            # the except block, is due to wanting to minimize calling commands that require git credentials.
+            pprint_subprocess_error(outer_err)
+            LOG.warning("Failed to get diff. Remote HEAD ref likely not set. Attempting to set it and try again ...")
+            git_set_remote_head(remote)
+            try:
+                self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+            except subprocess.CalledProcessError as inner_err:
+                msg = "Failed to get diff with remote HEAD ref even after setting it."
+                raise PhylumCalledProcessError(inner_err, msg) from outer_err
+
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
     @property

@@ -12,8 +12,12 @@ import rich.traceback
 from phylum import PKG_NAME
 from phylum.console import console
 
+# Import and use this throughout the `phylum` package to write consistent log entries
 LOG = logging.getLogger(PKG_NAME)
-
+# This is a shorter form of specifying the `rich` markup format as an "extra" argument in log calls
+MARKUP = {"markup": True}
+# This is a shorter form of specifying the `rich` markup format, w/o highlighting, as an "extra" argument in log calls
+MARKUP_NO_HI = {"markup": True, "highlighter": None}
 # This is a custom logging level, defined relative to existing logging.DEBUG level as suggested in the
 # Python `logging` library documentation: https://docs.python.org/3/library/logging.html#logging-levels
 LOGGING_TRACE_LEVEL = logging.DEBUG - 5
@@ -21,7 +25,7 @@ LOGGING_TRACE_LEVEL = logging.DEBUG - 5
 DEFAULT_RICH_HANDLER = RichHandler(
     console=console,
     show_time=False,
-    show_level=False,
+    show_level=True,
     show_path=False,
     rich_tracebacks=True,
     tracebacks_show_locals=False,
@@ -131,7 +135,7 @@ def function_trace_logger(func: FunctionType) -> Callable:
             LOGGING_TRACE_LEVEL,
             "[dim]Entering [reverse]%s",
             func.__name__,
-            extra={"markup": True, "highlighter": None},
+            extra=MARKUP_NO_HI,
         )
         result = func(*args, **kwargs)
         LOG.log(
@@ -139,7 +143,7 @@ def function_trace_logger(func: FunctionType) -> Callable:
             "[dim]Exiting [reverse]%s[/] -> %s",
             func.__name__,
             result,
-            extra={"markup": True},
+            extra=MARKUP,
         )
         return result
 
@@ -161,7 +165,7 @@ def class_trace_logger(cls: type):
                 "[dim]Entering [reverse]%s->%s",
                 cls.__name__,
                 method_name,
-                extra={"markup": True, "highlighter": None},
+                extra=MARKUP_NO_HI,
             )
             result = method(*args, **kwargs)
             LOG.log(
@@ -170,7 +174,7 @@ def class_trace_logger(cls: type):
                 cls.__name__,
                 method_name,
                 result,
-                extra={"markup": True},
+                extra=MARKUP,
             )
             return result
 
