@@ -174,6 +174,12 @@ class CIGitLab(CIBase):
         """Predicate for detecting whether a Phylum-generated note (comment) exists."""
         return bool(self.most_recent_phylum_note)
 
+    @property
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata."""
+        # Ref: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        return os.getenv("CI_PROJECT_URL")
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 

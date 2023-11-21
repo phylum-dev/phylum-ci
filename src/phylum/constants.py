@@ -2,11 +2,11 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# The `phylum find-lockable-files` command was added in v5.8.0
+# The ability to query/set the repository URL and `phylum find-lockable-files` command was added in v5.8.0
 MIN_CLI_VER_FOR_INSTALL = "v5.8.0"
 
 # This is the minimum CLI version supported for existing installs.
-# The `phylum find-lockable-files` command was added in v5.8.0
+# The ability to query/set the repository URL and `phylum find-lockable-files` command was added in v5.8.0
 MIN_CLI_VER_INSTALLED = "v5.8.0"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.

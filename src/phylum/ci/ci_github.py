@@ -1,7 +1,7 @@
 """Define an implementation for the GitHub Actions platform.
 
 GitHub References:
-  * https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+  * https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
   * https://docs.github.com/en/actions/security-guides/automatic-token-authentication
   * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
   * https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
@@ -170,6 +170,16 @@ class CIGitHub(CIBase):
     def phylum_comment_exists(self) -> bool:
         """Predicate for detecting whether a Phylum-generated comment exists."""
         return bool(get_most_recent_phylum_comment_github(self.comments_url, self.github_token))
+
+    @property
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata."""
+        # Ref: https://docs.github.com/actions/learn-github-actions/variables#default-environment-variables
+        server_url = os.getenv("GITHUB_SERVER_URL")
+        repo = os.getenv("GITHUB_REPOSITORY")
+        if server_url is None or repo is None:
+            return None
+        return f"{server_url}/{repo}"
 
     def post_output(self) -> None:
         """Post the output of the analysis.
