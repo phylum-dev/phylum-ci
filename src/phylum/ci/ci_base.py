@@ -544,8 +544,7 @@ class CIBase(ABC):
                     Repository URL differs from what would be set! Keeping existing value.
                     Existing: {repo_url}
                     Proposed: {self.repo_url}
-                    Use CLI to override: https://docs.phylum.io/docs/phylum_project_update
-                    """
+                    Use CLI to override: https://docs.phylum.io/docs/phylum_project_update"""
                 LOG.warning(textwrap.dedent(msg))
                 return
             LOG.info("Repository URL matches what would be set. Nothing to do.")
