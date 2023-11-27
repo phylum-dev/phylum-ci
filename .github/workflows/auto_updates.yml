@@ -35,7 +35,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.7.0
+        run: pipx install poetry==1.7.1
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -84,7 +84,7 @@ jobs:
 
       - name: Create Pull Request
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
           github-token: ${{ secrets.GH_RELEASE_PAT }}

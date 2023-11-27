@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.39.0 (2023-11-27)
+
+### Feature
+
+* Set repository URL for CI environments ([#355](https://github.com/phylum-dev/phylum-ci/issues/355)) ([`28cf1a9`](https://github.com/phylum-dev/phylum-ci/commit/28cf1a9dd687f1912943e70775692e8babea223b))
+* Ensure remote `HEAD` set for `CINone` implementation ([#351](https://github.com/phylum-dev/phylum-ci/issues/351)) ([`e303919`](https://github.com/phylum-dev/phylum-ci/commit/e30391908d9a50f0d68bd8cc9c717f51f22d74a0))
+
 ## v0.38.0 (2023-11-09)
 
 ### Feature
