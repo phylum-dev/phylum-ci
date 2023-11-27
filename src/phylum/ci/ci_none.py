@@ -97,3 +97,9 @@ class CINone(CIBase):
         """Predicate for detecting whether a Phylum-generated comment exists."""
         # There are no historical comments in this implementation
         return False
+
+    @property
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata."""
+        # There is no repository URL in this implementation
+        return None

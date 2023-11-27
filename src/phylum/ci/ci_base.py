@@ -122,18 +122,8 @@ class CIBase(ABC):
             msg = "Phylum `find-lockable-files` command failed"
             raise PhylumCalledProcessError(err, msg) from err
         lockable_files: dict = json.loads(result)
-        self._potential_manifests = list(starmap(LockfileEntry, lockable_files.get("manifests", [])))
-        self._potential_lockfiles = list(starmap(LockfileEntry, lockable_files.get("lockfiles", [])))
-
-    @property
-    def potential_manifests(self) -> LockfileEntries:
-        """Get all the potential manifests at the current directory or below."""
-        return self._potential_manifests
-
-    @property
-    def potential_lockfiles(self) -> LockfileEntries:
-        """Get all the potential lockfiles at the current directory or below."""
-        return self._potential_lockfiles
+        self._potential_manifests: LockfileEntries = list(starmap(LockfileEntry, lockable_files.get("manifests", [])))
+        self._potential_lockfiles: LockfileEntries = list(starmap(LockfileEntry, lockable_files.get("lockfiles", [])))
 
     @cached_property
     def depfiles(self) -> Depfiles:
@@ -207,17 +197,17 @@ class CIBase(ABC):
                 continue
 
             # Classify the file as a manifest or lockfile
-            if provided_depfile in self.potential_manifests and provided_depfile in self.potential_lockfiles:
+            if provided_depfile in self._potential_manifests and provided_depfile in self._potential_lockfiles:
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is a [b]lockifest[/].
                     It will be treated as a [b]manifest[/].
                     For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST)
-            elif provided_depfile in self.potential_manifests:
+            elif provided_depfile in self._potential_manifests:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST)
-            elif provided_depfile in self.potential_lockfiles:
+            elif provided_depfile in self._potential_lockfiles:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
                 depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE)
             else:
@@ -363,6 +353,19 @@ class CIBase(ABC):
         raise NotImplementedError
 
     @property
+    @abstractmethod
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata.
+
+        The value should only exist for implementations that make use of a web hosted CI environment. The local use
+        cases should not set this value. The expected format of the repository URL is the "URL of the web UI for the
+        project root." This is not the URL to clone the repository.
+
+        `None` should be returned when the repository URL can't be found, shouldn't be set, or there is an error.
+        """
+        raise NotImplementedError
+
+    @property
     def depfile_hash_object(self) -> str:
         """Get the dependency file hash object of the first changed dependency file and return it.
 
@@ -462,10 +465,14 @@ class CIBase(ABC):
         file that already exists. Continue on without error when the specified project already exists.
         """
         LOG.info("Attempting to create a Phylum project with the name: %s ...", self.phylum_project)
-        cmd = [str(self.cli_path), "project", "create", self.phylum_project]
+        cmd = [str(self.cli_path), "project", "create"]
         if self.phylum_group:
             LOG.debug("Using Phylum group: %s", self.phylum_group)
-            cmd = [str(self.cli_path), "project", "create", "--group", self.phylum_group, self.phylum_project]
+            cmd.extend(["--group", self.phylum_group])
+        if self.repo_url:
+            LOG.debug("Using repository URL: %s", self.repo_url)
+            cmd.extend(["--repository-url", self.repo_url])
+        cmd.append(self.phylum_project)
         if not Path.cwd().joinpath(".git").is_dir():
             LOG.warning("Attempting to create a Phylum project outside the top level of a `git` repository")
         try:
@@ -477,6 +484,7 @@ class CIBase(ABC):
             cli_exit_code_project_already_exists = 14
             if err.returncode == cli_exit_code_project_already_exists:
                 LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
+                self._set_repo_url()
                 return
             msg = """\
                 There was a problem creating the project.
@@ -486,6 +494,73 @@ class CIBase(ABC):
         LOG.info("Project %s created successfully", self.phylum_project)
         if self._project_file_already_existed:
             LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
+
+    def _set_repo_url(self) -> None:
+        """Set the repository URL for the project.
+
+        The value is meant to be the Web UI URL for where the project is hosted.
+        It should not be set or changed if a value already exists.
+        """
+        if self.repo_url is None:
+            LOG.debug("Repository URL not available to set")
+            return
+
+        # This block can be simplified after https://github.com/phylum-dev/cli/issues/1300
+        LOG.info("Checking project for existing repository URL ...")
+        LOG.debug("Finding ID for Phylum project: %s", self.phylum_project)
+        cmd = [str(self.cli_path), "project", "list", "--json"]
+        if self.phylum_group:
+            LOG.debug("Using Phylum group: %s", self.phylum_group)
+            cmd.extend(["--group", self.phylum_group])
+        try:
+            projects_list = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            pprint_subprocess_error(err)
+            msg = """\
+                Phylum project listing failed. Skipping repository URL check. Use CLI
+                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+            LOG.warning(textwrap.dedent(msg))
+            return
+        projects: list[dict] = json.loads(projects_list)
+        project = next(filter(lambda project: project.get("name") == self.phylum_project, projects), {})
+        project_id = project.get("id")
+        repo_url = project.get("repository_url")
+        if not project_id:
+            msg = """\
+                Could not find the project ID. Skipping repository URL check. Use CLI
+                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+            LOG.warning(textwrap.dedent(msg))
+            return
+        LOG.debug("Found project ID: %s", project_id)
+
+        if repo_url is not None:
+            LOG.info("Repository URL already set: %s", repo_url)
+            if repo_url != self.repo_url:
+                msg = f"""\
+                    Repository URL differs from what would be set! Keeping existing value.
+                    Existing: {repo_url}
+                    Proposed: {self.repo_url}
+                    Use CLI to override: https://docs.phylum.io/docs/phylum_project_update"""
+                LOG.warning(textwrap.dedent(msg))
+                return
+            LOG.info("Repository URL matches what would be set. Nothing to do.")
+            return
+
+        LOG.info("Repository URL not set. Setting it to: %s", self.repo_url)
+        cmd = [str(self.cli_path), "project", "update", "--project-id", project_id, "--repository-url", self.repo_url]
+        if self.phylum_group:
+            cmd.extend(["--group", self.phylum_group])
+        LOG.debug("Using command: %s", shlex.join(cmd))
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        except subprocess.CalledProcessError as err:
+            pprint_subprocess_error(err)
+            msg = """\
+                Phylum project update failed. Skipping repository URL check. Use CLI
+                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+            LOG.warning(textwrap.dedent(msg))
+            return
+        LOG.info("Repository URL successfully set")
 
     def post_output(self) -> None:
         """Post the output of the analysis as markdown rendered for output to the terminal/logs.

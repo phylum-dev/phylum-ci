@@ -269,6 +269,26 @@ class CIAzure(CIBase):
             return bool(get_most_recent_phylum_comment_github(comments_url, self.github_token))
         return False
 
+    @property
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata."""
+        # Ref: https://learn.microsoft.com/azure/devops/pipelines/build/variables
+        if self.triggering_repo == "TfsGit":
+            # SYSTEM_TEAMPROJECT provides the name that corresponds to SYSTEM_TEAMPROJECTID.
+            # Even though the ID will never change while the name might, the name is used for better human consumption.
+            if team_project_id := os.getenv("SYSTEM_TEAMPROJECT") is None:
+                LOG.debug("`SYSTEM_TEAMPROJECT` missing. Can't get repository URL.")
+            if instance := os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI") is None:
+                LOG.debug("`SYSTEM_TEAMFOUNDATIONCOLLECTIONURI` missing. Can't get repository URL.")
+            if team_project_id is None or instance is None:
+                return None
+            # This format is correct regardless of the pipeline context
+            return f"{instance}{team_project_id}"
+        if self.triggering_repo == "GitHub":
+            # BUILD_REPOSITORY_URI will have the correct format regardless of the pipeline context
+            return os.getenv("BUILD_REPOSITORY_URI")
+        return None
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 

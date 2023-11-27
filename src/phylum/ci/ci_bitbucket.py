@@ -211,6 +211,14 @@ class CIBitbucket(CIBase):
         """Predicate for detecting whether a Phylum-generated comment exists."""
         return bool(self.most_recent_phylum_comment)
 
+    @property
+    def repo_url(self) -> Optional[str]:
+        """Get the repository URL for reference in Phylum project metadata."""
+        # This is the "URL for the origin", which uses `HTTP:` instead of
+        # `HTTPS:`, even though the value redirects to the `HTTPS:` site.
+        # Ref: https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
+        return os.getenv("BITBUCKET_GIT_HTTP_ORIGIN")
+
     def post_output(self) -> None:
         """Post the output of the analysis.
 
