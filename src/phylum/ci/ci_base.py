@@ -495,7 +495,7 @@ class CIBase(ABC):
         if self._project_file_already_existed:
             LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
 
-    def _set_repo_url(self) -> None:  # noqa: C901 ; can remove after https://github.com/phylum-dev/cli/issues/1300
+    def _set_repo_url(self) -> None:
         """Set the repository URL for the project.
 
         The value is meant to be the Web UI URL for where the project is hosted.
@@ -521,14 +521,10 @@ class CIBase(ABC):
                 to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
             LOG.warning(textwrap.dedent(msg))
             return
-        projects: list = json.loads(projects_list)
-        project_id, repo_url = None, None
-        project: dict
-        for project in projects:
-            if project.get("name") == self.phylum_project:
-                project_id = project.get("id")
-                repo_url = project.get("repository_url")
-                break
+        projects: list[dict] = json.loads(projects_list)
+        project = next(filter(lambda project: project.get("name") == self.phylum_project, projects), {})
+        project_id = project.get("id")
+        repo_url = project.get("repository_url")
         if not project_id:
             msg = """\
                 Could not find the project ID. Skipping repository URL check. Use CLI
