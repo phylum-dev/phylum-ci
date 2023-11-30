@@ -74,6 +74,15 @@ class CIGitHub(CIBase):
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
 
+        if os.getenv("GITHUB_EVENT_NAME") == "pull_request_target":
+            msg = """\
+                Using `pull_request_target` events for forked repositories has security
+                implications if done improperly. Lockfile generation has been disabled
+                to prevent arbitrary code execution in an untrusted context.
+                See https://docs.phylum.io/docs/github_actions for more detail."""
+            LOG.warning(textwrap.dedent(msg))
+            self.no_gen = True
+
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 

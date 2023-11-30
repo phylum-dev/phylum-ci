@@ -2,12 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# The ability to query/set the repository URL and `phylum find-lockable-files` command was added in v5.8.0
-MIN_CLI_VER_FOR_INSTALL = "v5.8.0"
+# Support for disabling lockfile generation and skipping sandbox usage was added in v5.9.0-rc2
+MIN_CLI_VER_FOR_INSTALL = "v5.9.0-rc2"
 
 # This is the minimum CLI version supported for existing installs.
-# The ability to query/set the repository URL and `phylum find-lockable-files` command was added in v5.8.0
-MIN_CLI_VER_INSTALLED = "v5.8.0"
+# Support for disabling lockfile generation and skipping sandbox usage was added in v5.9.0-rc2
+MIN_CLI_VER_INSTALLED = "v5.9.0-rc2"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.

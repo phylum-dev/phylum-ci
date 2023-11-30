@@ -23,6 +23,7 @@ from packaging.version import Version
 from rich.markdown import Markdown
 
 from phylum.ci.common import (
+    CLIExitCode,
     DataclassJSONEncoder,
     JobPolicyEvalResult,
     LockfileEntries,
@@ -58,6 +59,7 @@ class CIBase(ABC):
         self._returncode = ReturnCode.SUCCESS
         self._analysis_report = "No analysis output yet"
         self.ci_platform_name = "Unknown"
+        self.no_gen = False  # AKA disable_lockfile_generation
 
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
@@ -135,6 +137,7 @@ class CIBase(ABC):
         When no valid dependency files are provided otherwise, an attempt will be made to automatically detect them.
         """
         arg_lockfiles: Optional[list[list[Path]]] = self.args.lockfile
+        provided_arg_lockfiles: LockfileEntries = []
         if arg_lockfiles:
             # flatten the list of lists
             provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
@@ -151,6 +154,10 @@ class CIBase(ABC):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
         else:
             LOG.debug("Detected dependency files: %s", detected_depfiles)
+        if arg_lockfiles:
+            # Ensure any lockfiles provided as arguments that were already filtered out are not included again here
+            detected_depfiles = list(set(detected_depfiles).difference(set(provided_arg_lockfiles)))
+            LOG.debug("Unique new dependency files: %s", detected_depfiles)
         if detected_depfiles:
             valid_depfiles = self._filter_depfiles(detected_depfiles)
             if valid_depfiles:
@@ -161,7 +168,10 @@ class CIBase(ABC):
             No valid dependency files were detected.
             Consider specifying at least one with
             `--lockfile` argument or in `.phylum_project` file."""
-        raise SystemExit(textwrap.dedent(msg))
+        LOG.error(textwrap.dedent(msg))
+        if not self.returncode:
+            self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
+        raise SystemExit(self.returncode)
 
     @progress_spinner("Filtering dependency files")
     def _filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
@@ -182,18 +192,32 @@ class CIBase(ABC):
 
             # Make sure it can be parsed by Phylum CLI
             try:
-                _ = parse_depfile(self.cli_path, provided_depfile.type, provided_depfile.path)
+                _ = parse_depfile(self.cli_path, provided_depfile.type, provided_depfile.path, no_gen=self.no_gen)
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
-                msg = f"""\
-                    Provided dependency file [code]{provided_depfile!r}[/] failed to parse as
-                    lockfile type [code]{provided_depfile.type}[/]. If this is a manifest, consider
-                    supplying lockfile type explicitly in the `.phylum_project` file.
-                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                    Please report this as a bug if you believe [code]{provided_depfile!r}[/]
-                    is a valid [code]{provided_depfile.type}[/] dependency file."""
+                # The Phylum CLI will return a unique error code when a manifest is attempted to be parsed but
+                # lockfile generation has been disabled. This situation is recognized with a distinct return code
+                # to signal that a manifest may have new resolved dependencies that have not been analyzed by Phylum.
+                if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
+                    msg = f"""\
+                        Provided manifest [code]{provided_depfile!r}[/] requires lockfile
+                        generation to parse but it was disabled to prevent running arbitrary
+                        code in untrusted contexts, like PRs from forks. The resolved
+                        dependencies from the manifest have NOT been analyzed by Phylum. Care
+                        should be taken to inspect changes manually before allowing the manifest
+                        to be used in a trusted context. For automatic analysis, consider adding
+                        a lockfile instead of or along with the manifest, even for libraries."""
+                    self.returncode = ReturnCode.MANIFEST_WITHOUT_GENERATION
+                else:
+                    msg = f"""\
+                        Provided dependency file [code]{provided_depfile!r}[/] failed to parse
+                        as lockfile type [code]{provided_depfile.type}[/]. If this is a manifest,
+                        consider supplying lockfile type explicitly in a `.phylum_project` file.
+                        For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                        Please report this as a bug if you believe [code]{provided_depfile!r}[/]
+                        is a valid [code]{provided_depfile.type}[/] dependency file."""
+                    self.returncode = ReturnCode.DEPFILE_FILTER
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                self.returncode = ReturnCode.DEPFILE_FILTER
                 continue
 
             # Classify the file as a manifest or lockfile
@@ -203,19 +227,19 @@ class CIBase(ABC):
                     It will be treated as a [b]manifest[/].
                     For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST, no_gen=self.no_gen)
             elif provided_depfile in self._potential_manifests:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST, no_gen=self.no_gen)
             elif provided_depfile in self._potential_lockfiles:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE, no_gen=self.no_gen)
             else:
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is an [b]unknown[/] type.
                     It will be treated as a [b]manifest[/]."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.UNKNOWN)
+                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.UNKNOWN, no_gen=self.no_gen)
             depfiles.append(depfile)
 
         # Check for the presence of a manifest file
@@ -481,8 +505,7 @@ class CIBase(ABC):
             # The Phylum CLI will return a unique error code when a project that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
             # since it means the project exists as expected. Any other exit code is an error.
-            cli_exit_code_project_already_exists = 14
-            if err.returncode == cli_exit_code_project_already_exists:
+            if err.returncode == CLIExitCode.PROJECT_ALREADY_EXISTS.value:
                 LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
                 self._set_repo_url()
                 return
@@ -505,26 +528,23 @@ class CIBase(ABC):
             LOG.debug("Repository URL not available to set")
             return
 
-        # This block can be simplified after https://github.com/phylum-dev/cli/issues/1300
         LOG.info("Checking project for existing repository URL ...")
-        LOG.debug("Finding ID for Phylum project: %s", self.phylum_project)
-        cmd = [str(self.cli_path), "project", "list", "--json"]
+        cmd = [str(self.cli_path), "project", "status", "--project", self.phylum_project, "--json"]
         if self.phylum_group:
             LOG.debug("Using Phylum group: %s", self.phylum_group)
             cmd.extend(["--group", self.phylum_group])
         try:
-            projects_list = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            cmd_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             msg = """\
-                Phylum project listing failed. Skipping repository URL check. Use CLI
+                Phylum project status failed. Skipping repository URL check. Use CLI
                 to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
             LOG.warning(textwrap.dedent(msg))
             return
-        projects: list[dict] = json.loads(projects_list)
-        project = next(filter(lambda project: project.get("name") == self.phylum_project, projects), {})
-        project_id = project.get("id")
-        repo_url = project.get("repository_url")
+        project_status: dict = json.loads(cmd_output)
+        project_id = project_status.get("id")
+        repo_url = project_status.get("repository_url")
         if not project_id:
             msg = """\
                 Could not find the project ID. Skipping repository URL check. Use CLI
@@ -638,16 +658,32 @@ class CIBase(ABC):
             for depfile in self.depfiles:
                 prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())
                 try:
-                    prev_depfile_pkgs = parse_depfile(self.cli_path, depfile.type, prev_depfile_path, start=temp_dir)
+                    prev_depfile_pkgs = parse_depfile(
+                        self.cli_path,
+                        depfile.type,
+                        prev_depfile_path,
+                        start=temp_dir,
+                        no_gen=self.no_gen,
+                    )
                 except subprocess.CalledProcessError as err:
                     pprint_subprocess_error(err)
-                    msg = f"""\
-                        Due to error, assuming no previous packages in [code]{depfile!r}[/].
-                        Consider supplying lockfile type explicitly in `.phylum_project` file.
-                        For more info, see: https://docs.phylum.io/docs/lockfile_generation
-                        Please report this as a bug if you believe [code]{depfile!r}[/]
-                        is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
-                        [code]{self.common_ancestor_commit}[/]."""
+                    # The Phylum CLI will return a unique error code when a manifest is attempted to be parsed but
+                    # lockfile generation has been disabled. This situation is recognized and allowed to continue, but
+                    # with a message explaining the reason why no packages from the previous manifest version are used.
+                    if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
+                        msg = f"""\
+                            Provided manifest [code]{depfile!r}[/] requires lockfile
+                            generation to parse but it was disabled to prevent running arbitrary
+                            code in untrusted contexts, like PRs from forks. Therefore, no previous
+                            packages will be assumed from the manifest."""
+                    else:
+                        msg = f"""\
+                            Due to error, assuming no previous packages in [code]{depfile!r}[/].
+                            Consider supplying lockfile type explicitly in `.phylum_project` file.
+                            For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                            Please report this as a bug if you believe [code]{depfile!r}[/]
+                            is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
+                            [code]{self.common_ancestor_commit}[/]."""
                     LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                     continue
                 base_packages.update(prev_depfile_pkgs)
@@ -664,7 +700,7 @@ class CIBase(ABC):
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
                 LOG.error("The analysis is complete and there were failures")
-                self.returncode = ReturnCode.FAILURE
+                self.returncode = ReturnCode.POLICY_FAILURE
             else:
                 LOG.info("The analysis is complete and there were NO failures")
                 self.returncode = ReturnCode.SUCCESS
