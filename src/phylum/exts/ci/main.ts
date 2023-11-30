@@ -4,7 +4,7 @@ import { Package, PhylumApi } from "phylum";
 const args = Deno.args.slice(0);
 if (args.length < 4) {
     console.error(
-        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <DEPFILE:TYPE...>",
+        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <CURRENT>",
     );
     Deno.exit(1);
 }
@@ -21,30 +21,25 @@ if (groupArgsIndex != -1) {
 const project = args[0];
 const label = args[1];
 const base = args[2];
-const depfiles = args.splice(3);
+const current = args[3];
 
-// Parse new dependency files.
-let packages: Package[] = [];
-for (const depfile of depfiles) {
-    const depfile_path = depfile.substring(0, depfile.lastIndexOf(":"));
-    const depfile_type = depfile.substring(depfile.lastIndexOf(":") + 1, depfile.length);
-    const depfileDeps = await PhylumApi.parseLockfile(depfile_path, depfile_type);
-    packages = packages.concat(depfileDeps.packages);
-}
+// Deserialize current dependencies.
+const currDepsJson = await Deno.readTextFile(current);
+const currDeps: Package[] = JSON.parse(currDepsJson);
 
-// Deserialize base dependencies.
-const baseDepsJson = await Deno.readTextFile(base);
-const baseDeps = JSON.parse(baseDepsJson);
-
-// Short-circuit if there are no dependencies.
-if (packages.length == 0) {
+// Short-circuit if there are no current dependencies.
+if (currDeps.length == 0) {
     console.log("{}");
     Deno.exit(0);
 }
 
+// Deserialize base dependencies.
+const baseDepsJson = await Deno.readTextFile(base);
+const baseDeps: Package[] = JSON.parse(baseDepsJson);
+
 // Submit analysis job.
 const jobID = await PhylumApi.analyze(
-    packages,
+    currDeps,
     project,
     group,
     label,

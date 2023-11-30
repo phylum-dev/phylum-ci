@@ -352,7 +352,7 @@ class CIBase(ABC):
         # Ensure stdout is piped to DEVNULL, to keep the token from being printed in (CI log) output.
         # We want the return code here and don't want to raise when non-zero.
         cmd = [str(cli_path), "auth", "token"]
-        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL).returncode):  # noqa: S603, PLW1510
+        if bool(subprocess.run(cmd, stdout=subprocess.DEVNULL, check=False).returncode):  # noqa: S603
             msg = "A Phylum API key is required to continue."
             raise SystemExit(msg)
 
@@ -611,7 +611,7 @@ class CIBase(ABC):
         if self.phylum_group:
             cmd.extend(["--group", self.phylum_group])
 
-        current_packages = {pkg for depfile in self.depfiles for pkg in depfile.deps}
+        current_packages = sorted({pkg for depfile in self.depfiles for pkg in depfile.deps})
         LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
@@ -622,11 +622,26 @@ class CIBase(ABC):
             new_packages = sorted(set(current_packages).difference(set(base_packages)))
             LOG.debug("%s new dependencies: %s", len(new_packages), new_packages)
 
-        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd:
+        # TODO(maxrake): Better formatting with parenthesized context managers is available in Python 3.10+
+        #     https://github.com/phylum-dev/phylum-ci/issues/357
+        #     https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
+        with tempfile.NamedTemporaryFile(
+            mode="w+",
+            encoding="utf-8",
+            prefix="base_",
+            suffix=".json",
+        ) as base_fd, tempfile.NamedTemporaryFile(
+            mode="w+",
+            encoding="utf-8",
+            prefix="curr_",
+            suffix=".json",
+        ) as curr_fd:
             json.dump(base_packages, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)
-            cmd.extend(f"{depfile.path}:{depfile.type}" for depfile in self.depfiles)
+            json.dump(current_packages, curr_fd, cls=DataclassJSONEncoder)
+            curr_fd.flush()
+            cmd.append(curr_fd.name)
 
             LOG.info("Performing analysis. This may take a few seconds.")
             LOG.debug("Using analysis command: %s", shlex.join(cmd))
@@ -696,7 +711,8 @@ class CIBase(ABC):
 
         self._analysis_report = analysis.report
 
-        # The logic below would make for a good match statement, which was introduced in Python 3.10
+        # TODO(maxrake): The logic below would make for a good match statement, which was introduced in Python 3.10
+        #     https://github.com/phylum-dev/phylum-ci/issues/357
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
                 LOG.error("The analysis is complete and there were failures")
