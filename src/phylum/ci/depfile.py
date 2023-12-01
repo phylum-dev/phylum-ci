@@ -46,13 +46,13 @@ class Depfile:
         cli_path: Path,
         depfile_type: DepfileType,
         *,
-        no_gen: bool = False,
+        disable_lockfile_generation: bool = False,
     ) -> None:
         """Initialize a `Depfile` object."""
         self._path = provided_depfile.path.resolve()
         self._type = provided_depfile.type
         self.cli_path = cli_path
-        self.no_gen = no_gen  # AKA disable_lockfile_generation
+        self.disable_lockfile_generation = disable_lockfile_generation
         self._depfile_type = depfile_type
         self._is_depfile_changed: Optional[bool] = None
 
@@ -123,7 +123,12 @@ class Depfile:
     def deps(self) -> Packages:
         """Get the dependencies from the current iteration of the dependency file and return them in sorted order."""
         try:
-            curr_depfile_packages = parse_depfile(self.cli_path, self.type, self.path, no_gen=self.no_gen)
+            curr_depfile_packages = parse_depfile(
+                self.cli_path,
+                self.type,
+                self.path,
+                disable_lockfile_generation=self.disable_lockfile_generation,
+            )
         except subprocess.CalledProcessError as err:
             if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
                 msg = f"""\
@@ -158,14 +163,14 @@ def parse_depfile(
     depfile_path: Path,
     *,
     start: Optional[Path] = None,
-    no_gen: bool = False,
+    disable_lockfile_generation: bool = False,
 ) -> Packages:
     """Parse a dependency file and return its packages.
 
     `start` is an optional `Path` where the parsing command should be executed.
     When not specified, it will default to the current working directory.
 
-    Specify `no_gen` as True to disable lockfile generation and False to allow it.
+    Specify `disable_lockfile_generation` as True to disable lockfile generation and False to allow it.
 
     Callers of this function *MUST* catch `subprocess.CalledProcessError` exceptions and handle them.
     Of note, an exit code of 20 indicates lockfile generation is required but was disabled.
@@ -181,7 +186,7 @@ def parse_depfile(
     cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type]
     if not _is_sandbox_possible(cli_path):
         cmd.append("--skip-sandbox")
-    if no_gen:
+    if disable_lockfile_generation:
         cmd.append("--no-generation")
     cmd.append(str(depfile_path))
     LOG.debug("Using parse command: %s", shlex.join(cmd))

@@ -59,7 +59,7 @@ class CIBase(ABC):
         self._returncode = ReturnCode.SUCCESS
         self._analysis_report = "No analysis output yet"
         self.ci_platform_name = "Unknown"
-        self.no_gen = False  # AKA disable_lockfile_generation
+        self.disable_lockfile_generation = False
 
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
@@ -192,7 +192,12 @@ class CIBase(ABC):
 
             # Make sure it can be parsed by Phylum CLI
             try:
-                _ = parse_depfile(self.cli_path, provided_depfile.type, provided_depfile.path, no_gen=self.no_gen)
+                _ = parse_depfile(
+                    self.cli_path,
+                    provided_depfile.type,
+                    provided_depfile.path,
+                    disable_lockfile_generation=self.disable_lockfile_generation,
+                )
             except subprocess.CalledProcessError as err:
                 pprint_subprocess_error(err)
                 # The Phylum CLI will return a unique error code when a manifest is attempted to be parsed but
@@ -227,19 +232,39 @@ class CIBase(ABC):
                     It will be treated as a [b]manifest[/].
                     For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKIFEST, no_gen=self.no_gen)
+                depfile = Depfile(
+                    provided_depfile,
+                    self.cli_path,
+                    DepfileType.LOCKIFEST,
+                    disable_lockfile_generation=self.disable_lockfile_generation,
+                )
             elif provided_depfile in self._potential_manifests:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]manifest[/]", provided_depfile, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.MANIFEST, no_gen=self.no_gen)
+                depfile = Depfile(
+                    provided_depfile,
+                    self.cli_path,
+                    DepfileType.MANIFEST,
+                    disable_lockfile_generation=self.disable_lockfile_generation,
+                )
             elif provided_depfile in self._potential_lockfiles:
                 LOG.info("Provided dependency file [code]%r[/] is a [b]lockfile[/]", provided_depfile, extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.LOCKFILE, no_gen=self.no_gen)
+                depfile = Depfile(
+                    provided_depfile,
+                    self.cli_path,
+                    DepfileType.LOCKFILE,
+                    disable_lockfile_generation=self.disable_lockfile_generation,
+                )
             else:
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is an [b]unknown[/] type.
                     It will be treated as a [b]manifest[/]."""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
-                depfile = Depfile(provided_depfile, self.cli_path, DepfileType.UNKNOWN, no_gen=self.no_gen)
+                depfile = Depfile(
+                    provided_depfile,
+                    self.cli_path,
+                    DepfileType.UNKNOWN,
+                    disable_lockfile_generation=self.disable_lockfile_generation,
+                )
             depfiles.append(depfile)
 
         # Check for the presence of a manifest file
@@ -678,7 +703,7 @@ class CIBase(ABC):
                         depfile.type,
                         prev_depfile_path,
                         start=temp_dir,
-                        no_gen=self.no_gen,
+                        disable_lockfile_generation=self.disable_lockfile_generation,
                     )
                 except subprocess.CalledProcessError as err:
                     pprint_subprocess_error(err)

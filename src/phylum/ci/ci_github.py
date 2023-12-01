@@ -81,7 +81,7 @@ class CIGitHub(CIBase):
                 to prevent arbitrary code execution in an untrusted context.
                 See https://docs.phylum.io/docs/github_actions for more detail."""
             LOG.warning(textwrap.dedent(msg))
-            self.no_gen = True
+            self.disable_lockfile_generation = True
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.

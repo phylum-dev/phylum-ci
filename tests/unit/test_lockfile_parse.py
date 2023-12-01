@@ -69,7 +69,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     mock_run.side_effect = CalledProcessError(returncode=CLIExitCode.MANIFEST_WITHOUT_GENERATION.value, cmd=cmd)
     assert isinstance(mock_run.side_effect, CalledProcessError)
     mock_sandbox_check.return_value = False
-    depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE, no_gen=True)
+    depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE, disable_lockfile_generation=True)
     packages = depfile.deps
     assert packages == []
     mock_sandbox_check.assert_called_once()
