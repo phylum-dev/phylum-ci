@@ -276,9 +276,9 @@ class CIAzure(CIBase):
         if self.triggering_repo == "TfsGit":
             # SYSTEM_TEAMPROJECT provides the name that corresponds to SYSTEM_TEAMPROJECTID.
             # Even though the ID will never change while the name might, the name is used for better human consumption.
-            if team_project_id := os.getenv("SYSTEM_TEAMPROJECT") is None:
+            if (team_project_id := os.getenv("SYSTEM_TEAMPROJECT")) is None:
                 LOG.debug("`SYSTEM_TEAMPROJECT` missing. Can't get repository URL.")
-            if instance := os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI") is None:
+            if (instance := os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")) is None:
                 LOG.debug("`SYSTEM_TEAMFOUNDATIONCOLLECTIONURI` missing. Can't get repository URL.")
             if team_project_id is None or instance is None:
                 return None
