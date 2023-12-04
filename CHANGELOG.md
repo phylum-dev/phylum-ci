@@ -10,6 +10,16 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.40.0 (2023-12-04)
+
+### Feature
+
+* Parse current dependencies only once ([#359](https://github.com/phylum-dev/phylum-ci/issues/359)) ([`a96dccb`](https://github.com/phylum-dev/phylum-ci/commit/a96dccb53560967ab561cba8a17f561a88a508aa))
+
+### Fix
+
+* Repository URL sometimes formatted with `False` ([#361](https://github.com/phylum-dev/phylum-ci/issues/361)) ([`195136d`](https://github.com/phylum-dev/phylum-ci/commit/195136d68883efd4a1fe264f29b1607fb4ae922b))
+
 ## v0.39.0 (2023-11-27)
 
 ### Feature

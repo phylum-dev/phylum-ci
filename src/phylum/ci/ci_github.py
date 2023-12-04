@@ -189,9 +189,9 @@ class CIGitHub(CIBase):
     def repo_url(self) -> Optional[str]:
         """Get the repository URL for reference in Phylum project metadata."""
         # Ref: https://docs.github.com/actions/learn-github-actions/variables#default-environment-variables
-        if server_url := os.getenv("GITHUB_SERVER_URL") is None:
+        if (server_url := os.getenv("GITHUB_SERVER_URL")) is None:
             LOG.debug("`GITHUB_SERVER_URL` missing. Can't get repository URL.")
-        if repo := os.getenv("GITHUB_REPOSITORY") is None:
+        if (repo := os.getenv("GITHUB_REPOSITORY")) is None:
             LOG.debug("`GITHUB_REPOSITORY` missing. Can't get repository URL.")
         if server_url is None or repo is None:
             return None
