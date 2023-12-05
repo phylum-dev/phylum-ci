@@ -144,7 +144,7 @@ class Depfile:
                     is a valid [code]{self.type}[/] lockfile."""
             else:
                 msg = f"""\
-                    Consider supplying lockfile type explicitly in the `.phylum_project` file.
+                    Consider supplying lockfile type explicitly in `.phylum_project` file.
                     For more info, see: https://docs.phylum.io/docs/lockfile_generation
                     Please report this as a bug if you believe [code]{self!r}[/]
                     is a valid [code]{self.type}[/] manifest file."""

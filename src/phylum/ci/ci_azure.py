@@ -250,8 +250,9 @@ class CIAzure(CIBase):
             return False
 
         err_msg = """\
-            Consider changing the `fetchDepth` property in CI settings to clone/fetch more branch history.
-            Reference: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
+            Consider changing the `fetchDepth` property in CI settings to
+            clone/fetch more branch history. For more info, reference:
+            https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
         self.update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
@@ -276,9 +277,11 @@ class CIAzure(CIBase):
         if self.triggering_repo == "TfsGit":
             # SYSTEM_TEAMPROJECT provides the name that corresponds to SYSTEM_TEAMPROJECTID.
             # Even though the ID will never change while the name might, the name is used for better human consumption.
-            if (team_project_id := os.getenv("SYSTEM_TEAMPROJECT")) is None:
+            team_project_id = os.getenv("SYSTEM_TEAMPROJECT")
+            if team_project_id is None:
                 LOG.debug("`SYSTEM_TEAMPROJECT` missing. Can't get repository URL.")
-            if (instance := os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")) is None:
+            instance = os.getenv("SYSTEM_TEAMFOUNDATIONCOLLECTIONURI")
+            if instance is None:
                 LOG.debug("`SYSTEM_TEAMFOUNDATIONCOLLECTIONURI` missing. Can't get repository URL.")
             if team_project_id is None or instance is None:
                 return None
@@ -286,7 +289,10 @@ class CIAzure(CIBase):
             return f"{instance}{team_project_id}"
         if self.triggering_repo == "GitHub":
             # BUILD_REPOSITORY_URI will have the correct format regardless of the pipeline context
-            return os.getenv("BUILD_REPOSITORY_URI")
+            build_repo_uri = os.getenv("BUILD_REPOSITORY_URI")
+            if build_repo_uri is None:
+                LOG.debug("`BUILD_REPOSITORY_URI` missing. Can't get repository URL.")
+            return build_repo_uri
         return None
 
     def post_output(self) -> None:

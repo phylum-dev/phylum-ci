@@ -209,15 +209,15 @@ class CIBase(ABC):
                         generation to parse but it was disabled to prevent running arbitrary
                         code in untrusted contexts, like PRs from forks. The resolved
                         dependencies from the manifest have NOT been analyzed by Phylum. Care
-                        should be taken to inspect changes manually before allowing the manifest
-                        to be used in a trusted context. For automatic analysis, consider adding
+                        should be taken to inspect changes manually before allowing a manifest
+                        to be used in a trusted context. For Phylum analysis, consider adding
                         a lockfile instead of or along with the manifest, even for libraries."""
                     self.returncode = ReturnCode.MANIFEST_WITHOUT_GENERATION
                 else:
                     msg = f"""\
                         Provided dependency file [code]{provided_depfile!r}[/] failed to parse
                         as lockfile type [code]{provided_depfile.type}[/]. If this is a manifest,
-                        consider supplying lockfile type explicitly in a `.phylum_project` file.
+                        consider supplying lockfile type explicitly in `.phylum_project` file.
                         For more info, see: https://docs.phylum.io/docs/lockfile_generation
                         Please report this as a bug if you believe [code]{provided_depfile!r}[/]
                         is a valid [code]{provided_depfile.type}[/] dependency file."""

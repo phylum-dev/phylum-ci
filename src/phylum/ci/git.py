@@ -208,7 +208,8 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
             Getting the git repository name failed. Are all assumptions met:
               * Only a single remote is in use if remotes are used
               * When a remote exists, it points to a URL and not another local repo
-              * Cloned local repos without a remote defined have a name that does not end in `.git`"""
+              * Cloned local repos without a remote defined have a name that does
+                not end in `.git`"""
         raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
 
     full_repo_path = Path(full_repo_name)
