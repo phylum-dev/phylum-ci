@@ -174,8 +174,8 @@ class CIGitHub(CIBase):
             return False
 
         err_msg = """\
-            Consider changing the `fetch-depth` input during checkout to fetch more branch history.
-            Reference: https://github.com/actions/checkout"""
+            Consider changing the `fetch-depth` input during checkout to fetch more
+            branch history. For more info: https://github.com/actions/checkout"""
         self.update_depfiles_change_status(pr_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
@@ -189,9 +189,11 @@ class CIGitHub(CIBase):
     def repo_url(self) -> Optional[str]:
         """Get the repository URL for reference in Phylum project metadata."""
         # Ref: https://docs.github.com/actions/learn-github-actions/variables#default-environment-variables
-        if (server_url := os.getenv("GITHUB_SERVER_URL")) is None:
+        server_url = os.getenv("GITHUB_SERVER_URL")
+        if server_url is None:
             LOG.debug("`GITHUB_SERVER_URL` missing. Can't get repository URL.")
-        if (repo := os.getenv("GITHUB_REPOSITORY")) is None:
+        repo = os.getenv("GITHUB_REPOSITORY")
+        if repo is None:
             LOG.debug("`GITHUB_REPOSITORY` missing. Can't get repository URL.")
         if server_url is None or repo is None:
             return None
