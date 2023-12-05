@@ -15,7 +15,7 @@ import subprocess
 import textwrap
 from typing import Optional
 
-from phylum.ci.common import LockfileEntry, PackageDescriptor, Packages
+from phylum.ci.common import CLIExitCode, LockfileEntry, PackageDescriptor, Packages
 from phylum.exceptions import PhylumCalledProcessError
 from phylum.logger import LOG, MARKUP
 
@@ -40,11 +40,19 @@ class DepfileType(Enum):
 class Depfile:
     """Provide methods for an instance of a dependency file."""
 
-    def __init__(self, provided_depfile: LockfileEntry, cli_path: Path, depfile_type: DepfileType) -> None:
+    def __init__(
+        self,
+        provided_depfile: LockfileEntry,
+        cli_path: Path,
+        depfile_type: DepfileType,
+        *,
+        disable_lockfile_generation: bool = False,
+    ) -> None:
         """Initialize a `Depfile` object."""
         self._path = provided_depfile.path.resolve()
         self._type = provided_depfile.type
         self.cli_path = cli_path
+        self.disable_lockfile_generation = disable_lockfile_generation
         self._depfile_type = depfile_type
         self._is_depfile_changed: Optional[bool] = None
 
@@ -115,8 +123,21 @@ class Depfile:
     def deps(self) -> Packages:
         """Get the dependencies from the current iteration of the dependency file and return them in sorted order."""
         try:
-            curr_depfile_packages = parse_depfile(self.cli_path, self.type, self.path)
+            curr_depfile_packages = parse_depfile(
+                self.cli_path,
+                self.type,
+                self.path,
+                disable_lockfile_generation=self.disable_lockfile_generation,
+            )
         except subprocess.CalledProcessError as err:
+            if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
+                msg = f"""\
+                    Provided manifest [code]{self!r}[/] requires lockfile
+                    generation to parse but it was disabled to prevent running arbitrary
+                    code in untrusted contexts, like PRs from forks. Consider adding a
+                    lockfile instead of or along with the manifest, even for libraries."""
+                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                return []
             if self.is_lockfile:
                 msg = f"""\
                     Please report this as a bug if you believe [code]{self!r}[/]
@@ -136,13 +157,23 @@ Depfiles = list[Depfile]
 
 
 @cache
-def parse_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path, start: Optional[Path] = None) -> Packages:
+def parse_depfile(
+    cli_path: Path,
+    lockfile_type: str,
+    depfile_path: Path,
+    *,
+    start: Optional[Path] = None,
+    disable_lockfile_generation: bool = False,
+) -> Packages:
     """Parse a dependency file and return its packages.
 
     `start` is an optional `Path` where the parsing command should be executed.
     When not specified, it will default to the current working directory.
 
+    Specify `disable_lockfile_generation` as True to disable lockfile generation and False to allow it.
+
     Callers of this function *MUST* catch `subprocess.CalledProcessError` exceptions and handle them.
+    Of note, an exit code of 20 indicates lockfile generation is required but was disabled.
     """
     if start is None:
         start = Path.cwd()
@@ -152,10 +183,34 @@ def parse_depfile(cli_path: Path, lockfile_type: str, depfile_path: Path, start:
         lockfile_type,
         extra=MARKUP,
     )
-    cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type, str(depfile_path)]
+    cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type]
+    if not _is_sandbox_possible(cli_path):
+        cmd.append("--skip-sandbox")
+    if disable_lockfile_generation:
+        cmd.append("--no-generation")
+    cmd.append(str(depfile_path))
     LOG.debug("Using parse command: %s", shlex.join(cmd))
     LOG.debug("Running command from: %s", start)
     result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
     parsed_pkgs = json.loads(result)
     depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
     return depfile_packages
+
+
+@cache
+def _is_sandbox_possible(cli_path: Path) -> bool:
+    """Predicate to determine if the Phylum sandbox will work in the current running environment."""
+    # See https://github.com/phylum-dev/cli/issues/1294 for more detail
+    LOG.debug("Determining viability of the Phylum sandbox in this environment ...")
+    cmd = [str(cli_path), "sandbox", "--allow-run", "/", "true"]
+    LOG.debug("Executing command: %s", shlex.join(cmd))
+    # We want the return code here and don't want to raise when non-zero.
+    if bool(subprocess.run(cmd, check=False, capture_output=True).returncode):  # noqa: S603
+        msg = """\
+            Phylum sandbox does not work in this environment and will be disabled.
+            This is common and expected for container environments, such as Docker.
+            Carefully scrutinize other environments where sandboxing is expected."""
+        LOG.warning(textwrap.dedent(msg))
+        return False
+    LOG.info("The Phylum sandbox works in this environment and will be enabled")
+    return True

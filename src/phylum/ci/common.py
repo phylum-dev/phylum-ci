@@ -88,10 +88,30 @@ class ReturnCode(IntEnum):
     """Integer enumeration to track return codes."""
 
     SUCCESS = 0
-    FAILURE = 1
+    # NOTE: Don't create a unique entry here for the value `1`. That value is used for default
+    #       failures (when a `SystemExit` exception is raised with a message instead of a code).
+    #
+    # Phylum analysis is complete and contains a policy violation
+    POLICY_FAILURE = 2
+    # Phylum analysis is incomplete and does not contain any policy violations
     INCOMPLETE = 5
+    # Phylum analysis is incomplete and contains a policy violation
     FAILURE_INCOMPLETE = 6
+    # A provided or detected dependency file failed one of the filters and was not included for analysis
     DEPFILE_FILTER = 10
+    # No dependency files were provided or detected
+    NO_DEPFILES_PROVIDED = 11
+    # A manifest is attempted to be parsed but lockfile generation has been disabled
+    MANIFEST_WITHOUT_GENERATION = 20
+
+
+class CLIExitCode(IntEnum):
+    """Integer enumeration to track the Phylum CLI exit codes."""
+
+    # A project that already exists is attempted to be created
+    PROJECT_ALREADY_EXISTS = 14
+    # A manifest is attempted to be parsed but lockfile generation has been disabled
+    MANIFEST_WITHOUT_GENERATION = 20
 
 
 # Reference: https://stackoverflow.com/questions/51286748/make-the-python-json-encoder-support-pythons-new-dataclasses

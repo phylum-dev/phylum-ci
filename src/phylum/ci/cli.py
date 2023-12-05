@@ -217,11 +217,10 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Output the results of the analysis
     ci_env.post_output()
 
-    # Don't return a failure code if the results are unknown at this point
-    LOG.debug("Return code: %s", ci_env.returncode)
-    if ci_env.returncode == ReturnCode.INCOMPLETE:
-        return 0
-    return ci_env.returncode.value
+    # Don't return a failure code if the only reason is that analysis results are unknown at this point
+    returncode = 0 if ci_env.returncode == ReturnCode.INCOMPLETE else ci_env.returncode.value
+    LOG.debug("Return code: %s", returncode)
+    return returncode
 
 
 def script_main() -> None:

@@ -74,12 +74,22 @@ class CIGitHub(CIBase):
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
 
+        if os.getenv("GITHUB_EVENT_NAME") == "pull_request_target":
+            msg = """\
+                Using `pull_request_target` events for forked repositories has security
+                implications if done improperly. Lockfile generation has been disabled
+                to prevent arbitrary code execution in an untrusted context.
+                See https://docs.phylum.io/docs/github_actions for more detail."""
+            LOG.warning(textwrap.dedent(msg))
+            self.disable_lockfile_generation = True
+
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.
 
         These are the current pre-requisites for operating within a GitHub Actions Environment:
           * The environment must actually be within GitHub Actions
           * A GitHub token providing `issues` API access is available
+          * `pull_request` or `pull_request_target` is the triggering event
           * `pull_request` webhook event payload is available
         """
         super()._check_prerequisites()
@@ -95,10 +105,11 @@ class CIGitHub(CIBase):
         self._github_token = github_token
 
         # Unfortunately, there's not always a simple default environment variable that contains the desired information.
-        # Instead, the full event webhook payload can be used to obtain the information. Reference:
-        # https://docs.github.com/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
-        if os.getenv("GITHUB_EVENT_NAME") != "pull_request":
-            msg = "The workflow event must be `pull_request`"
+        # Instead, the full event webhook payload can be used to obtain the information. The webhook payload for both
+        # `pull_request` and `pull_request_target` events is the same - `pull_request`.
+        # Ref: https://docs.github.com/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request
+        if os.getenv("GITHUB_EVENT_NAME") not in {"pull_request", "pull_request_target"}:
+            msg = "The workflow event must be `pull_request` or `pull_request_target`"
             raise SystemExit(msg)
         github_event_path_envvar = os.getenv("GITHUB_EVENT_PATH")
         if github_event_path_envvar is None:
@@ -106,8 +117,7 @@ class CIGitHub(CIBase):
             raise SystemExit(msg)
         github_event_path = Path(github_event_path_envvar)
         with github_event_path.open(encoding="utf-8") as f:
-            pr_event = json.load(f)
-        self._pr_event = pr_event
+            self._pr_event = json.load(f)
 
     @property
     def github_token(self) -> str:
@@ -135,7 +145,11 @@ class CIGitHub(CIBase):
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
         pr_number = self.pr_event.get("pull_request", {}).get("number", "unknown-number")
-        pr_src_branch = os.getenv("GITHUB_HEAD_REF", "unknown-ref")
+        if os.getenv("GITHUB_EVENT_NAME") == "pull_request_target":
+            # Use the `OWNER:BRANCH` form when the PR comes from a forked repo
+            pr_src_branch = self.pr_event.get("pull_request", {}).get("head", {}).get("label", "unknown-ref")
+        else:
+            pr_src_branch = os.getenv("GITHUB_HEAD_REF", "unknown-ref")
         label = f"{self.ci_platform_name}_PR#{pr_number}_{pr_src_branch}"
         label = re.sub(r"\s+", "-", label)
         return label
