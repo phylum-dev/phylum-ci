@@ -10,6 +10,17 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.41.0 (2023-12-05)
+
+### Feature
+
+* Extend GHA integration to support `pull_request_target` events ([#341](https://github.com/phylum-dev/phylum-ci/issues/341)) ([`6ed6c14`](https://github.com/phylum-dev/phylum-ci/commit/6ed6c14ab5c72f09fb6b9d0a2aea008278e8b927))
+
+### Breaking
+
+* Phylum CLI installs before v5.9.0-rc2 are no longer supported. A version with support for disabling lockfile generation and skipping sandbox usage is required. ([`6ed6c14`](https://github.com/phylum-dev/phylum-ci/commit/6ed6c14ab5c72f09fb6b9d0a2aea008278e8b927))
+* The `phylum-ci` return code for a policy violation that results from a Phylum analysis has been changed from 1 to 2 in order to make it distinct from the default failure code that is generated for all raised `SystemExit` exceptions with a message instead of a code. ([`6ed6c14`](https://github.com/phylum-dev/phylum-ci/commit/6ed6c14ab5c72f09fb6b9d0a2aea008278e8b927))
+
 ## v0.40.0 (2023-12-04)
 
 ### Feature
