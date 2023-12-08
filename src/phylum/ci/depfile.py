@@ -15,7 +15,7 @@ import subprocess
 import textwrap
 from typing import Optional
 
-from phylum.ci.common import CLIExitCode, LockfileEntry, PackageDescriptor, Packages
+from phylum.ci.common import CLIExitCode, LockfileEntry, Package, Packages
 from phylum.exceptions import PhylumCalledProcessError
 from phylum.logger import LOG, MARKUP
 
@@ -177,13 +177,14 @@ def parse_depfile(
     """
     if start is None:
         start = Path.cwd()
+    depfile_relpath = os.path.relpath(depfile_path, start=start)
     LOG.info(
         "Parsing [code]%s[/] as [code]%s[/] dependency file. Manifests take longer.",
-        os.path.relpath(depfile_path, start=start),
+        depfile_relpath,
         lockfile_type,
         extra=MARKUP,
     )
-    cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type]
+    cmd = [str(cli_path), "parse", "--type", lockfile_type]
     if not _is_sandbox_possible(cli_path):
         cmd.append("--skip-sandbox")
     if disable_lockfile_generation:
@@ -192,9 +193,9 @@ def parse_depfile(
     LOG.debug("Using parse command: %s", shlex.join(cmd))
     LOG.debug("Running command from: %s", start)
     result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
-    parsed_pkgs = json.loads(result)
-    depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-    return depfile_packages
+    parsed_pkgs: list[dict[str, str]] = json.loads(result)
+    depfile_pkgs_with_origin = [Package(origin=depfile_relpath, **pkg) for pkg in parsed_pkgs]
+    return depfile_pkgs_with_origin
 
 
 @cache

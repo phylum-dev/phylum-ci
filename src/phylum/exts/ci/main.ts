@@ -1,4 +1,4 @@
-import { Package, PhylumApi } from "phylum";
+import { Package, PackageWithOrigin, PhylumApi } from "phylum";
 
 // Ensure required arguments are present.
 const args = Deno.args.slice(0);
@@ -25,7 +25,7 @@ const current = args[3];
 
 // Deserialize current dependencies.
 const currDepsJson = await Deno.readTextFile(current);
-const currDeps: Package[] = JSON.parse(currDepsJson);
+const currDeps: PackageWithOrigin[] = JSON.parse(currDepsJson);
 
 // Short-circuit if there are no current dependencies.
 if (currDeps.length == 0) {

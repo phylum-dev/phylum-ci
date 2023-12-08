@@ -28,6 +28,7 @@ from phylum.ci.common import (
     JobPolicyEvalResult,
     LockfileEntries,
     LockfileEntry,
+    Package,
     Packages,
     ReturnCode,
 )
@@ -117,11 +118,11 @@ class CIBase(ABC):
 
     def _find_potential_depfiles(self) -> None:
         """Find all the lockfiles and manifests at the current directory or below."""
-        cmd = [str(self.cli_path), "find-lockable-files"]
+        cmd = [str(self.cli_path), "find-dependency-files"]
         try:
             result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = "Phylum `find-lockable-files` command failed"
+            msg = "Phylum `find-dependency-files` command failed"
             raise PhylumCalledProcessError(err, msg) from err
         lockable_files: dict = json.loads(result)
         self._potential_manifests: LockfileEntries = list(starmap(LockfileEntry, lockable_files.get("manifests", [])))
@@ -148,7 +149,7 @@ class CIBase(ABC):
                 return valid_depfiles
 
         LOG.info("No valid dependency files were provided as arguments. An attempt will be made to detect them.")
-        depfile_entries: list[OrderedDict] = self._project_settings.get("lockfiles", [])
+        depfile_entries: list[OrderedDict] = self._project_settings.get("dependency_files", [])
         detected_depfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in depfile_entries]
         if depfile_entries and self._project_settings.get("root"):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
@@ -693,7 +694,7 @@ class CIBase(ABC):
             LOG.info("No common ancestor commit for `%r`. Assuming no base dependencies.", self)
             return []
 
-        base_packages = set()
+        base_packages: set[Package] = set()
         with git_worktree(self.common_ancestor_commit) as temp_dir:
             for depfile in self.depfiles:
                 prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())

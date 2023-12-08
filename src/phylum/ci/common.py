@@ -4,21 +4,28 @@ from enum import IntEnum
 import json
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 
 @dataclasses.dataclass(order=True, frozen=True)
-class PackageDescriptor:
-    """Class for keeping track of packages returned by the `phylum parse` subcommand."""
+class Package:
+    """Class for tracking various package formats of the Phylum CLI and its extension API.
+
+    This class is used for:
+
+    * Keeping track of packages returned by the `phylum parse` subcommand (`PackageDescriptor`)
+    * Representing the "base" packages used to filter results when getting a job's status (`Package`)
+    * Representing "current" packages when submitting to Phylum CLI Extension API `analyze` call (`PackageWithOrigin`)
+    """
 
     name: str
     version: str
     type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
-    lockfile: Optional[str] = dataclasses.field(compare=False, default=None)
+    origin: str = dataclasses.field(compare=False)  # path to dependency file containing this package
 
 
 # Type alias
-Packages = list[PackageDescriptor]
+Packages = list[Package]
 
 
 @dataclasses.dataclass()
@@ -35,7 +42,7 @@ class JobPolicyEvalResult:
 class LockfileEntry:
     """Class for keeping track of an individual "lockfile" entry returned by `phylum` commands.
 
-    Current commands that return entries in this format include `status` and `find-lockable-files`.
+    Current commands that return entries in this format include `status` and `find-dependency-files`.
     """
 
     _path: dataclasses.InitVar[Union[str, Path]]
