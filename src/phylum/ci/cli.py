@@ -103,15 +103,16 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
 
     analysis_group = parser.add_argument_group(title="Dependency File Analysis Options")
     analysis_group.add_argument(
-        "-l",
-        "--lockfile",
+        "-d",
+        "--depfile",
         type=pathlib.Path,
         action="append",
         nargs="*",
         help="""Path to package dependency file(s) (lockfiles or manifests) to analyze. If not specified here or in the
-            `.phylum_project` file, an attempt will be made to automatically detect the file(s). Some lockfile types
-            (e.g., Python/pip `requirements.txt`) are ambiguous in that they can be named differently and may or may
-            not contain strict dependencies. In these cases, it is best to specify an explicit dependency file path.""",
+            `.phylum_project` file, an attempt will be made to automatically detect the file(s). Some dependency file
+            types (e.g., Python/pip `requirements.txt`) are ambiguous in that they can be named differently and may or
+            may not contain strict dependencies. In these cases, it is best to specify an explicit dependency file path.
+            """,
     )
     analysis_group.add_argument(
         "-a",

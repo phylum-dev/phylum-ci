@@ -77,7 +77,7 @@ class CIPreCommit(CIBase):
         if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
             LOG.info("A dependency file was included in the extra args")
         # NOTE: There is still the case where a dependency file is "accidentally" included as an extra argument. For
-        #       example, `phylum-ci poetry.lock` was used instead of `phylum-ci --lockfile poetry.lock`, which is bad
+        #       example, `phylum-ci poetry.lock` was used instead of `phylum-ci --depfile poetry.lock`, which is bad
         #       syntax but nonetheless results in the `CIPreCommit` environment used instead of `CINone`. This is not
         #       terrible; it just might be a slightly confusing corner case. It might be possible to use a library like
         #       `psutil` to acquire the command line from the parent process and inspect it for `pre-commit` usage.

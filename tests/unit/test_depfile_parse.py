@@ -4,7 +4,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from unittest.mock import MagicMock, patch
 
-from phylum.ci.common import CLIExitCode, LockfileEntry, Package
+from phylum.ci.common import CLIExitCode, DepfileEntry, Package
 from phylum.ci.depfile import Depfile, DepfileType
 
 
@@ -31,15 +31,15 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     """
 
     depfile_path = Path("dummy.spdx.json")
-    provided_lockfile_type = "spdx"
-    lockfile_entry = LockfileEntry(depfile_path, provided_lockfile_type)
+    provided_depfile_type = "spdx"
+    depfile_entry = DepfileEntry(depfile_path, provided_depfile_type)
     cli_path = Path("dummy_cli_path")
     expected_num_packages = 2
     expected_cargo_package = Package("quote", "1.0.21", "cargo", str(depfile_path))
     expected_npm_package = Package("example", "0.1.0", "npm", str(depfile_path))
 
     # Test the `deps` property with lockfile generation and sandbox enabled
-    depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE)
+    depfile = Depfile(depfile_entry, cli_path, DepfileType.LOCKFILE)
     packages = depfile.deps
     assert len(packages) == expected_num_packages
     assert expected_cargo_package in packages
@@ -47,7 +47,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     assert all(pkg.origin == str(depfile_path) for pkg in packages)
     mock_sandbox_check.assert_called_once()
     mock_run.assert_called_once_with(
-        [str(depfile.cli_path), "parse", "--type", provided_lockfile_type, str(depfile.path)],
+        [str(depfile.cli_path), "parse", "--type", provided_depfile_type, str(depfile.path)],
         cwd=Path.cwd(),
         check=True,
         capture_output=True,
@@ -61,7 +61,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
         str(depfile.cli_path),
         "parse",
         "--type",
-        provided_lockfile_type,
+        provided_depfile_type,
         "--skip-sandbox",
         "--no-generation",
         str(depfile.path),
@@ -69,7 +69,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     mock_run.side_effect = CalledProcessError(returncode=CLIExitCode.MANIFEST_WITHOUT_GENERATION.value, cmd=cmd)
     assert isinstance(mock_run.side_effect, CalledProcessError)
     mock_sandbox_check.return_value = False
-    depfile = Depfile(lockfile_entry, cli_path, DepfileType.LOCKFILE, disable_lockfile_generation=True)
+    depfile = Depfile(depfile_entry, cli_path, DepfileType.LOCKFILE, disable_lockfile_generation=True)
     packages = depfile.deps
     assert packages == []
     mock_sandbox_check.assert_called_once()

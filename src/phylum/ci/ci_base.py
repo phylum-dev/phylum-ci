@@ -25,9 +25,9 @@ from rich.markdown import Markdown
 from phylum.ci.common import (
     CLIExitCode,
     DataclassJSONEncoder,
+    DepfileEntries,
+    DepfileEntry,
     JobPolicyEvalResult,
-    LockfileEntries,
-    LockfileEntry,
     Package,
     Packages,
     ReturnCode,
@@ -125,8 +125,8 @@ class CIBase(ABC):
             msg = "Phylum `find-dependency-files` command failed"
             raise PhylumCalledProcessError(err, msg) from err
         lockable_files: dict = json.loads(result)
-        self._potential_manifests: LockfileEntries = list(starmap(LockfileEntry, lockable_files.get("manifests", [])))
-        self._potential_lockfiles: LockfileEntries = list(starmap(LockfileEntry, lockable_files.get("lockfiles", [])))
+        self._potential_manifests: DepfileEntries = list(starmap(DepfileEntry, lockable_files.get("manifests", [])))
+        self._potential_lockfiles: DepfileEntries = list(starmap(DepfileEntry, lockable_files.get("lockfiles", [])))
 
     @cached_property
     def depfiles(self) -> Depfiles:
@@ -137,27 +137,27 @@ class CIBase(ABC):
 
         When no valid dependency files are provided otherwise, an attempt will be made to automatically detect them.
         """
-        arg_lockfiles: Optional[list[list[Path]]] = self.args.lockfile
-        provided_arg_lockfiles: LockfileEntries = []
-        if arg_lockfiles:
+        arg_depfiles: Optional[list[list[Path]]] = self.args.depfile
+        provided_arg_depfiles: DepfileEntries = []
+        if arg_depfiles:
             # flatten the list of lists
-            provided_arg_lockfiles = [LockfileEntry(path) for sub_list in arg_lockfiles for path in sub_list]
-            LOG.debug("Dependency files provided as arguments: %s", provided_arg_lockfiles)
-            valid_depfiles = self._filter_depfiles(provided_arg_lockfiles)
+            provided_arg_depfiles = [DepfileEntry(path) for sub_list in arg_depfiles for path in sub_list]
+            LOG.debug("Dependency files provided as arguments: %s", provided_arg_depfiles)
+            valid_depfiles = self._filter_depfiles(provided_arg_depfiles)
             if valid_depfiles:
                 LOG.debug("Valid provided dependency files: %s", valid_depfiles)
                 return valid_depfiles
 
         LOG.info("No valid dependency files were provided as arguments. An attempt will be made to detect them.")
         depfile_entries: list[OrderedDict] = self._project_settings.get("dependency_files", [])
-        detected_depfiles = [LockfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in depfile_entries]
+        detected_depfiles = [DepfileEntry(lfe.get("path", ""), lfe.get("type", "auto")) for lfe in depfile_entries]
         if depfile_entries and self._project_settings.get("root"):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
         else:
             LOG.debug("Detected dependency files: %s", detected_depfiles)
-        if arg_lockfiles:
-            # Ensure any lockfiles provided as arguments that were already filtered out are not included again here
-            detected_depfiles = list(set(detected_depfiles).difference(set(provided_arg_lockfiles)))
+        if arg_depfiles:
+            # Ensure any depfiles provided as arguments that were already filtered out are not included again here
+            detected_depfiles = list(set(detected_depfiles).difference(set(provided_arg_depfiles)))
             LOG.debug("Unique new dependency files: %s", detected_depfiles)
         if detected_depfiles:
             valid_depfiles = self._filter_depfiles(detected_depfiles)
@@ -168,14 +168,14 @@ class CIBase(ABC):
         msg = """\
             No valid dependency files were detected.
             Consider specifying at least one with
-            `--lockfile` argument or in `.phylum_project` file."""
+            `--depfile` argument or in `.phylum_project` file."""
         LOG.error(textwrap.dedent(msg))
         if not self.returncode:
             self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
         raise SystemExit(self.returncode)
 
     @progress_spinner("Filtering dependency files")
-    def _filter_depfiles(self, provided_depfiles: LockfileEntries) -> Depfiles:
+    def _filter_depfiles(self, provided_depfiles: DepfileEntries) -> Depfiles:
         """Filter potential dependency files and return the valid ones in sorted order."""
         depfiles: Depfiles = []
         for provided_depfile in provided_depfiles:
@@ -217,8 +217,8 @@ class CIBase(ABC):
                 else:
                     msg = f"""\
                         Provided dependency file [code]{provided_depfile!r}[/] failed to parse
-                        as lockfile type [code]{provided_depfile.type}[/]. If this is a manifest,
-                        consider supplying lockfile type explicitly in `.phylum_project` file.
+                        as type [code]{provided_depfile.type}[/]. If this is a manifest, consider
+                        supplying dependency file type explicitly in `.phylum_project` file.
                         For more info, see: https://docs.phylum.io/docs/lockfile_generation
                         Please report this as a bug if you believe [code]{provided_depfile!r}[/]
                         is a valid [code]{provided_depfile.type}[/] dependency file."""
@@ -720,8 +720,8 @@ class CIBase(ABC):
                     else:
                         msg = f"""\
                             Due to error, assuming no previous packages in [code]{depfile!r}[/].
-                            Consider supplying lockfile type explicitly in `.phylum_project` file.
-                            For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                            Consider supplying dependency file type explicitly in `.phylum_project`
+                            file. For more info: https://docs.phylum.io/docs/lockfile_generation
                             Please report this as a bug if you believe [code]{depfile!r}[/]
                             is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
                             [code]{self.common_ancestor_commit}[/]."""

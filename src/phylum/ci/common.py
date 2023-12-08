@@ -39,10 +39,10 @@ class JobPolicyEvalResult:
 
 
 @dataclasses.dataclass()
-class LockfileEntry:
-    """Class for keeping track of an individual "lockfile" entry returned by `phylum` commands.
+class DepfileEntry:
+    """Class for keeping track of an individual dependency file entry returned by `phylum` commands.
 
-    Current commands that return entries in this format include `status` and `find-dependency-files`.
+    Current commands that return entries in this format include `status --json` and `find-dependency-files`.
     """
 
     _path: dataclasses.InitVar[Union[str, Path]]
@@ -60,7 +60,7 @@ class LockfileEntry:
             raise TypeError(msg)
 
     def __repr__(self) -> str:
-        """Return a debug printable string representation of the `LockfileEntry` object."""
+        """Return a debug printable string representation of the `DepfileEntry` object."""
         # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but `os.path.relpath()` does not.
         return os.path.relpath(self.path)
 
@@ -70,7 +70,7 @@ class LockfileEntry:
         Since "auto" could be any value, exclude it from comparisons when
         either side of the equality contains an "auto" `type` value.
         """
-        if not isinstance(other, LockfileEntry):
+        if not isinstance(other, DepfileEntry):
             return NotImplemented
         if "auto" in {self.type, other.type}:
             return self.path == other.path
@@ -88,7 +88,7 @@ class LockfileEntry:
 
 
 # Type alias
-LockfileEntries = list[LockfileEntry]
+DepfileEntries = list[DepfileEntry]
 
 
 class ReturnCode(IntEnum):
