@@ -194,8 +194,8 @@ def parse_depfile(
     LOG.debug("Running command from: %s", start)
     result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
     parsed_pkgs: list[dict[str, str]] = json.loads(result)
-    depfile_pkgs_with_origin = [Package(origin=depfile_relpath, **pkg) for pkg in parsed_pkgs]
-    return depfile_pkgs_with_origin
+    depfile_pkgs = [Package(**pkg) for pkg in parsed_pkgs]
+    return depfile_pkgs
 
 
 @cache

@@ -13,7 +13,7 @@ class Package:
 
     This class is used for:
 
-    * Keeping track of packages returned by the `phylum parse` subcommand (`PackageDescriptor`)
+    * Keeping track of packages returned by the `phylum parse` subcommand (`PackageDescriptorAndLockfile`)
     * Representing the "base" packages used to filter results when getting a job's status (`Package`)
     * Representing "current" packages when submitting to Phylum CLI Extension API `analyze` call (`PackageWithOrigin`)
     """
@@ -21,7 +21,7 @@ class Package:
     name: str
     version: str
     type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
-    origin: str = dataclasses.field(compare=False)  # path to dependency file containing this package
+    lockfile: str = dataclasses.field(compare=False)  # path to dependency file containing this package
 
 
 # Type alias

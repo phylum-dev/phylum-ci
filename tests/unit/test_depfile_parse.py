@@ -15,22 +15,24 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     # Prepare the mocks to skip running the subprocess calls since the Phylum CLI may not be installed and
     # we don't want to enforce that it is for a unit test. It will be given a dummy path value instead.
     mock_sandbox_check.return_value = True
-    mock_run.return_value.stdout = """
+    depfile_path = Path("dummy.spdx.json")
+    mock_run.return_value.stdout = f"""
     [
-        {
+        {{
             "name": "quote",
             "version": "1.0.21",
-            "type": "cargo"
-        },
-        {
+            "type": "cargo",
+            "lockfile": "{depfile_path}"
+        }},
+        {{
             "name": "example",
             "version": "0.1.0",
-            "type": "npm"
-        }
+            "type": "npm",
+            "lockfile": "{depfile_path}"
+        }}
     ]
     """
 
-    depfile_path = Path("dummy.spdx.json")
     provided_depfile_type = "spdx"
     depfile_entry = DepfileEntry(depfile_path, provided_depfile_type)
     cli_path = Path("dummy_cli_path")
@@ -44,7 +46,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     assert len(packages) == expected_num_packages
     assert expected_cargo_package in packages
     assert expected_npm_package in packages
-    assert all(pkg.origin == str(depfile_path) for pkg in packages)
+    assert all(pkg.lockfile == str(depfile_path) for pkg in packages)
     mock_sandbox_check.assert_called_once()
     mock_run.assert_called_once_with(
         [str(depfile.cli_path), "parse", "--type", provided_depfile_type, str(depfile.path)],
