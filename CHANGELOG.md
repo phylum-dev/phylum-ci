@@ -10,6 +10,13 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.42.0 (2023-12-13)
+
+### Breaking
+
+* Phylum CLI installs before v6.0.0-rc3 are no longer supported. That release introduced a number of breaking changes which are only functional with this release of the `phylum` package. ([`35adcaf`](https://github.com/phylum-dev/phylum-ci/commit/35adcaf694368987433da471e5a657190aecfb9f))
+* The `--lockfile`/`-l` argument to to the `phylum-ci` script has changed to `--depfile`/`-d`. ([`35adcaf`](https://github.com/phylum-dev/phylum-ci/commit/35adcaf694368987433da471e5a657190aecfb9f))
+
 ## v0.41.0 (2023-12-05)
 
 ### Feature
