@@ -2,12 +2,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Support for disabling lockfile generation and skipping sandbox usage was added in v5.9.0-rc2
-MIN_CLI_VER_FOR_INSTALL = "v5.9.0-rc2"
+# Adhering to the CLI major version release breaking changes started with v6.0.0-rc3
+MIN_CLI_VER_FOR_INSTALL = "v6.0.0-rc3"
 
 # This is the minimum CLI version supported for existing installs.
-# Support for disabling lockfile generation and skipping sandbox usage was added in v5.9.0-rc2
-MIN_CLI_VER_INSTALLED = "v5.9.0-rc2"
+# Adhering to the CLI major version release breaking changes started with v6.0.0-rc3
+MIN_CLI_VER_INSTALLED = "v6.0.0-rc3"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.

@@ -15,7 +15,7 @@ import subprocess
 import textwrap
 from typing import Optional
 
-from phylum.ci.common import CLIExitCode, LockfileEntry, PackageDescriptor, Packages
+from phylum.ci.common import CLIExitCode, DepfileEntry, Package, Packages
 from phylum.exceptions import PhylumCalledProcessError
 from phylum.logger import LOG, MARKUP
 
@@ -42,7 +42,7 @@ class Depfile:
 
     def __init__(
         self,
-        provided_depfile: LockfileEntry,
+        provided_depfile: DepfileEntry,
         cli_path: Path,
         depfile_type: DepfileType,
         *,
@@ -144,8 +144,8 @@ class Depfile:
                     is a valid [code]{self.type}[/] lockfile."""
             else:
                 msg = f"""\
-                    Consider supplying lockfile type explicitly in `.phylum_project` file.
-                    For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                    Consider supplying dependency file type explicitly in `.phylum_project`
+                    file. For more info: https://docs.phylum.io/docs/lockfile_generation
                     Please report this as a bug if you believe [code]{self!r}[/]
                     is a valid [code]{self.type}[/] manifest file."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
@@ -159,7 +159,7 @@ Depfiles = list[Depfile]
 @cache
 def parse_depfile(
     cli_path: Path,
-    lockfile_type: str,
+    depfile_type: str,
     depfile_path: Path,
     *,
     start: Optional[Path] = None,
@@ -177,13 +177,14 @@ def parse_depfile(
     """
     if start is None:
         start = Path.cwd()
+    depfile_relpath = os.path.relpath(depfile_path, start=start)
     LOG.info(
         "Parsing [code]%s[/] as [code]%s[/] dependency file. Manifests take longer.",
-        os.path.relpath(depfile_path, start=start),
-        lockfile_type,
+        depfile_relpath,
+        depfile_type,
         extra=MARKUP,
     )
-    cmd = [str(cli_path), "parse", "--lockfile-type", lockfile_type]
+    cmd = [str(cli_path), "parse", "--type", depfile_type]
     if not _is_sandbox_possible(cli_path):
         cmd.append("--skip-sandbox")
     if disable_lockfile_generation:
@@ -192,9 +193,9 @@ def parse_depfile(
     LOG.debug("Using parse command: %s", shlex.join(cmd))
     LOG.debug("Running command from: %s", start)
     result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
-    parsed_pkgs = json.loads(result)
-    depfile_packages = [PackageDescriptor(**pkg) for pkg in parsed_pkgs]
-    return depfile_packages
+    parsed_pkgs: list[dict[str, str]] = json.loads(result)
+    depfile_pkgs = [Package(**pkg) for pkg in parsed_pkgs]
+    return depfile_pkgs
 
 
 @cache
