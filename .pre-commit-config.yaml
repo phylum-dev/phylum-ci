@@ -60,7 +60,7 @@ repos:
         args: [--no-update, --no-cache]
 
   # NOTE: Don't use this config for your own repositories. Instead, see
-  #       "Git pre-commit Integration" at https://docs.phylum.io/docs/git_precommit
+  #       "Git pre-commit Integration" at https://docs.phylum.io/integrations/git_precommit
   - repo: local
     hooks:
       - id: phylum-ci

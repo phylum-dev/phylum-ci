@@ -77,7 +77,7 @@ EOF
 )
 
 # These are the commands to ensure lockfile generation is available by checking
-# for each required tool: https://docs.phylum.io/docs/lockfile_generation
+# for each required tool: https://docs.phylum.io/cli/lockfile_generation
 MANIFEST_COMMANDS=$(cat <<EOF
 set -eux
 type npm && npm --version || false

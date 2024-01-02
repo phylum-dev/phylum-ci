@@ -79,7 +79,7 @@ class CIGitHub(CIBase):
                 Using `pull_request_target` events for forked repositories has security
                 implications if done improperly. Lockfile generation has been disabled
                 to prevent arbitrary code execution in an untrusted context.
-                See https://docs.phylum.io/docs/github_actions for more detail."""
+                See https://docs.phylum.io/integrations/github_actions for more detail."""
             LOG.warning(textwrap.dedent(msg))
             self.disable_lockfile_generation = True
 
