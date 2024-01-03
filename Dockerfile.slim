@@ -4,7 +4,7 @@
 # NOTE:
 # This Dockerfile is used to build the `slim` tags for the `phylum-ci` images. It differs
 # from the primary Dockerfile in that it does not install the required tools needed for
-# lockfile generation: https://docs.phylum.io/docs/lockfile_generation (with the exception
+# lockfile generation: https://docs.phylum.io/cli/lockfile_generation (with the exception
 # of the `pip` tool). The image created from this Dockerfile is significantly smaller and
 # will allow the integrations relying on it to complete faster. It is useful for those
 # instances where *no* manifest files are present and/or *only* lockfiles are used.

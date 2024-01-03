@@ -116,7 +116,7 @@ docker pull phylumio/phylum-ci:0.35.2-CLIv5.7.1
 docker pull phylumio/phylum-ci:0.36.0-CLIv5.7.1-slim
 ```
 
-[lockfile generation]: https://docs.phylum.io/docs/lockfile_generation
+[lockfile generation]: https://docs.phylum.io/cli/lockfile_generation
 
 #### `phylum-init` Script Entry Point
 
@@ -160,11 +160,11 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 
 ![phylum-ci options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-ci_options.svg)
 
-[github_docs]: https://docs.phylum.io/docs/github_actions
-[gitlab_docs]: https://docs.phylum.io/docs/gitlab_ci
-[azure_docs]: https://docs.phylum.io/docs/azure_pipelines
-[bb_pipelines_docs]: https://docs.phylum.io/docs/bitbucket_pipelines
-[precommit_docs]: https://docs.phylum.io/docs/git_precommit
+[github_docs]: https://docs.phylum.io/integrations/github_actions
+[gitlab_docs]: https://docs.phylum.io/integrations/gitlab_ci
+[azure_docs]: https://docs.phylum.io/integrations/azure_pipelines
+[bb_pipelines_docs]: https://docs.phylum.io/integrations/bitbucket_pipelines
+[precommit_docs]: https://docs.phylum.io/integrations/git_precommit
 
 ## License
 

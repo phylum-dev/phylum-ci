@@ -145,7 +145,7 @@ class Depfile:
             else:
                 msg = f"""\
                     Consider supplying dependency file type explicitly in `.phylum_project`
-                    file. For more info: https://docs.phylum.io/docs/lockfile_generation
+                    file. For more info: https://docs.phylum.io/cli/lockfile_generation
                     Please report this as a bug if you believe [code]{self!r}[/]
                     is a valid [code]{self.type}[/] manifest file."""
             raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err

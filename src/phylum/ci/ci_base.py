@@ -219,7 +219,7 @@ class CIBase(ABC):
                         Provided dependency file [code]{provided_depfile!r}[/] failed to parse
                         as type [code]{provided_depfile.type}[/]. If this is a manifest, consider
                         supplying dependency file type explicitly in `.phylum_project` file.
-                        For more info, see: https://docs.phylum.io/docs/lockfile_generation
+                        For more info, see: https://docs.phylum.io/cli/lockfile_generation
                         Please report this as a bug if you believe [code]{provided_depfile!r}[/]
                         is a valid [code]{provided_depfile.type}[/] dependency file."""
                     self.returncode = ReturnCode.DEPFILE_FILTER
@@ -231,7 +231,7 @@ class CIBase(ABC):
                 msg = f"""\
                     Provided dependency file [code]{provided_depfile!r}[/] is a [b]lockifest[/].
                     It will be treated as a [b]manifest[/].
-                    For more info, see: https://docs.phylum.io/docs/lockfile_generation"""
+                    For more info, see: https://docs.phylum.io/cli/lockfile_generation"""
                 LOG.warning(textwrap.dedent(msg), extra=MARKUP)
                 depfile = Depfile(
                     provided_depfile,
@@ -564,8 +564,9 @@ class CIBase(ABC):
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             msg = """\
-                Phylum project status failed. Skipping repository URL check. Use CLI
-                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+                Phylum project status failed. Skipping repository URL check.
+                Use CLI to manually set it:
+                https://docs.phylum.io/cli/commands/phylum_project_update"""
             LOG.warning(textwrap.dedent(msg))
             return
         project_status: dict = json.loads(cmd_output)
@@ -573,8 +574,9 @@ class CIBase(ABC):
         repo_url = project_status.get("repository_url")
         if not project_id:
             msg = """\
-                Could not find the project ID. Skipping repository URL check. Use CLI
-                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+                Could not find the project ID. Skipping repository URL check.
+                Use CLI to manually set it:
+                https://docs.phylum.io/cli/commands/phylum_project_update"""
             LOG.warning(textwrap.dedent(msg))
             return
         LOG.debug("Found project ID: %s", project_id)
@@ -586,7 +588,7 @@ class CIBase(ABC):
                     Repository URL differs from what would be set! Keeping existing value.
                     Existing: {repo_url}
                     Proposed: {self.repo_url}
-                    Use CLI to override: https://docs.phylum.io/docs/phylum_project_update"""
+                    To override: https://docs.phylum.io/cli/commands/phylum_project_update"""
                 LOG.warning(textwrap.dedent(msg))
                 return
             LOG.info("Repository URL matches what would be set. Nothing to do.")
@@ -602,8 +604,9 @@ class CIBase(ABC):
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             msg = """\
-                Phylum project update failed. Skipping repository URL check. Use CLI
-                to manually set it: https://docs.phylum.io/docs/phylum_project_update"""
+                Phylum project update failed. Skipping repository URL check.
+                Use CLI to manually set it:
+                https://docs.phylum.io/cli/commands/phylum_project_update"""
             LOG.warning(textwrap.dedent(msg))
             return
         LOG.info("Repository URL successfully set")
@@ -721,7 +724,7 @@ class CIBase(ABC):
                         msg = f"""\
                             Due to error, assuming no previous packages in [code]{depfile!r}[/].
                             Consider supplying dependency file type explicitly in `.phylum_project`
-                            file. For more info: https://docs.phylum.io/docs/lockfile_generation
+                            file. For more info: https://docs.phylum.io/cli/lockfile_generation
                             Please report this as a bug if you believe [code]{depfile!r}[/]
                             is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
                             [code]{self.common_ancestor_commit}[/]."""
