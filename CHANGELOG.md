@@ -10,6 +10,12 @@ However, some entries may be manually edited, where it helps for clarity and und
 
 <!--next-version-placeholder-->
 
+## v0.42.1 (2024-01-05)
+
+### Documentation
+
+* Update documentation links ([#370](https://github.com/phylum-dev/phylum-ci/issues/370)) ([`60ee5ca`](https://github.com/phylum-dev/phylum-ci/commit/60ee5ca3cc36b5011d830d7ac2c73ba2f5174ba3))
+
 ## v0.42.0 (2023-12-13)
 
 ### Breaking
