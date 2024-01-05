@@ -92,6 +92,9 @@ exclude = ["conftest.py"]
 [tool.refurb]
 python_version = "3.9"
 format = "github"
+# FURB184 (use-fluent-interface) is ignored because the benefits of "chaining" calls identified by this rule are not
+# outweighed by the type checking based autocompletion and syntax highlighting provided by the IDE with the calls split.
+ignore = [184]
 
 [tool.ruff]
 # Reference: https://beta.ruff.rs/docs/settings
