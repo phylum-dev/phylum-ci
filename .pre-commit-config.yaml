@@ -33,7 +33,7 @@ repos:
       - id: ruff
 
   - repo: https://github.com/dosisod/refurb
-    rev: a7c461fcfaa2ca3248d489cdf7fed8e2d4fd8520  # frozen: v1.26.0
+    rev: a295cee6d188f5797aefe5d7cf77a353ed48ea93  # frozen: v1.27.0
     hooks:
       - id: refurb
 
