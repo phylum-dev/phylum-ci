@@ -87,7 +87,7 @@ class Depfile:
         return self._path
 
     @property
-    def type(self) -> str:  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+    def type(self) -> str:
         """Get the dependency file ecosystem type."""
         return self._type
 

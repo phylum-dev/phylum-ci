@@ -20,7 +20,7 @@ class Package:
 
     name: str
     version: str
-    type: str  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+    type: str
     lockfile: str = dataclasses.field(compare=False)  # path to dependency file containing this package
 
 
@@ -46,7 +46,7 @@ class DepfileEntry:
     """
 
     _path: dataclasses.InitVar[Union[str, Path]]
-    type: str = "auto"  # noqa: A003 ; shadowing built-in `type` is okay since renaming here would be more confusing
+    type: str = "auto"
     path: Path = dataclasses.field(init=False)
 
     def __post_init__(self, _path):

@@ -126,6 +126,8 @@ ignore = [
     "PERF203", # try-except-in-loop
     # This code base does not require a license header at the top of every file.
     "CPY001", # missing-copyright-notice
+    # This project makes extensive use of the `subprocess` module, but in a secure way
+    "S404", # suspicious-subprocess-import
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
     "ANN", # flake8-annotations
     "TCH", # flake8-type-checking
