@@ -4,6 +4,7 @@ The "base" environment is one that makes use of the CLI directly and is not nece
 integration (CI) environment. Common functionality is provided where possible and CI specific features are
 designated as abstract methods to be defined in specific CI environments.
 """
+
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict

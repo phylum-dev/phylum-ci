@@ -3,6 +3,7 @@
 The `rich` library is used here for excellent control over the console.
 Reference: https://rich.readthedocs.io/en/latest/index.html
 """
+
 from collections.abc import Mapping
 from typing import Union
 

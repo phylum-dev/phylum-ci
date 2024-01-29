@@ -1,4 +1,5 @@
 """Provide custom exceptions for the package."""
+
 import subprocess
 import sys
 

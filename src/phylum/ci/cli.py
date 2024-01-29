@@ -1,4 +1,5 @@
 """Console script for phylum-ci."""
+
 import argparse
 from collections.abc import Sequence
 import os

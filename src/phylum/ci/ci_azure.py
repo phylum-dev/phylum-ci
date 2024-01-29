@@ -15,6 +15,7 @@ Azure References:
   * https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/list
   * https://learn.microsoft.com/rest/api/azure/devops/git/pull-request-threads/create
 """
+
 from argparse import Namespace
 import base64
 from functools import cached_property, lru_cache

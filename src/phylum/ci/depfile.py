@@ -4,6 +4,7 @@ A Phylum project can consist of multiple dependency files.
 Dependency files can be either lockfiles or manifests.
 This module/class represents a single dependency file.
 """
+
 from enum import Enum
 from functools import cache, cached_property
 import json

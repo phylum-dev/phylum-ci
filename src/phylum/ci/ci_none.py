@@ -4,6 +4,7 @@ This is the case when the `phylum-ci` command is run directly, from the CLI, but
 This might be useful for running locally.
 This is also the fallback implementation to use when no known CI platform is detected.
 """
+
 import argparse
 from functools import cached_property
 import re

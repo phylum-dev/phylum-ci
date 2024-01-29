@@ -1,4 +1,5 @@
 """Test the signature verification module."""
+
 from textwrap import dedent
 
 from cryptography.hazmat.primitives.asymmetric import rsa

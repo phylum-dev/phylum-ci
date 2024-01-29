@@ -1,4 +1,5 @@
 """Top-level package for phylum."""
+
 from importlib.metadata import metadata, version
 import logging
 

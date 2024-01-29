@@ -1,4 +1,5 @@
 """Place test package constants here."""
+
 import pathlib
 
 import tomli

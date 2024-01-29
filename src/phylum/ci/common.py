@@ -1,4 +1,5 @@
 """Provide common data structures for the package."""
+
 import dataclasses
 from enum import IntEnum
 import json

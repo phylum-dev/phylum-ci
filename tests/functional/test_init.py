@@ -1,4 +1,5 @@
 """"Test the phylum-init command line interface (CLI)."""
+
 import logging
 from pathlib import Path
 import subprocess
