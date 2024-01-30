@@ -7,6 +7,7 @@ GitLab References:
   * https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html
   * https://docs.gitlab.com/ee/api/notes.html#merge-requests
 """
+
 from argparse import Namespace
 from functools import cached_property, lru_cache
 import os

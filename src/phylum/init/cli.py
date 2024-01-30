@@ -1,8 +1,10 @@
 """Console script for phylum-init."""
+
 import argparse
 from collections.abc import Sequence
 from functools import lru_cache
 import itertools
+import operator
 import os
 import pathlib
 from pathlib import Path
@@ -140,7 +142,7 @@ def supported_releases() -> list[str]:
         except InvalidVersion as err:
             msg = f"An invalid version was provided: {rel_ver}"
             raise SystemExit(msg) from err
-    sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=lambda x: x[1], reverse=True)]
+    sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=operator.itemgetter(1), reverse=True)]
     releases = itertools.takewhile(is_supported_version, sorted_cli_releases)
 
     return list(releases)

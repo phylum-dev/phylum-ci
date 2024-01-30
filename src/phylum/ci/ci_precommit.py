@@ -8,6 +8,7 @@ References:
   * https://pre-commit.com/index.html#pre-commit-during-commits
   * https://pre-commit.com/index.html#arguments-pattern-in-hooks
 """
+
 import argparse
 from functools import cached_property
 from pathlib import Path

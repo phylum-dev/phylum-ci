@@ -23,6 +23,7 @@ A functional test exists to check that the hard-coded signature matches the one 
 https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub since that is where the quickstart
 documentation directs CLI users.
 """
+
 from pathlib import Path
 from textwrap import dedent
 

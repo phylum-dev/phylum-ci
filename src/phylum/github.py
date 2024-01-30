@@ -1,4 +1,5 @@
 """Provide methods for interacting with the GitHub API."""
+
 import os
 import textwrap
 import time

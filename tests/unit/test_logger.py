@@ -1,4 +1,5 @@
 """Test the package logging capabilities."""
+
 import logging
 
 import pytest

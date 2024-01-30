@@ -16,6 +16,7 @@ Bitbucket References:
   * https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/
   * https://developer.atlassian.com/cloud/bitbucket/rest/intro/#pullrequest
 """
+
 from argparse import Namespace
 from functools import cached_property, lru_cache
 import os

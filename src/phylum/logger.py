@@ -1,4 +1,5 @@
 """Configure the logging features for the package."""
+
 import inspect
 import logging
 import sys

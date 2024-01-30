@@ -1,4 +1,5 @@
 """Provide constants for use throughout the package."""
+
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
