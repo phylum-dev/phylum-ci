@@ -180,11 +180,12 @@ RUN set -eux; \
     # Install pre-requisites
     apt-get update; \
     apt-get upgrade --yes; \
-    apt-get install --yes --no-install-recommends git; \
+    apt-get install --yes --no-install-recommends git binutils; \
     # Make ENTRYPOINT alternative script available
     chmod +x "${PHYLUM_VENV}/bin/entrypoint.sh"; \
     # Install Phylum CLI
     phylum-init -vvv --phylum-release "${CLI_VER:-latest}" --global-install; \
+    strip "$(which phylum)"; \
     # Create a git config file in a location accessible for $HOME-less users
     # Ref: https://git-scm.com/docs/git-config#FILES
     mkdir -vp "${XDG_CONFIG_HOME}/git" && touch "${XDG_CONFIG_HOME}/git/config"; \
@@ -192,6 +193,7 @@ RUN set -eux; \
     mkdir -vp "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
     chmod -vR 777 "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
     # Cleanup
+    apt-get remove --yes --auto-remove binutils; \
     apt-get purge --yes --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*; \
     rm -rf /tmp/*; \
