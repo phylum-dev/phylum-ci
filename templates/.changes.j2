@@ -1,0 +1,24 @@
+{% set included_commit_types = ("breaking", "feature", "fix", "performance", "documentation") %}
+{% for commit_type in included_commit_types if commit_type in release.elements %}
+### {{ commit_type | capitalize }}
+
+    {% for commit in release.elements[commit_type] %}
+        {% set commit_summary = commit.descriptions[0].rstrip().capitalize() %}
+        {% set pr_num = commit_summary.rsplit("(#", 1)[-1].rsplit(")", 1)[0] | int %}
+        {% if pr_num %}
+            {% set title_text = commit_summary.rsplit("(#", 1)[0].rstrip() %}
+            {% set pr_link_text = "([#{}]({}))".format(pr_num, pr_num | string | pull_request_url) %}
+            {% set commit_summary = "{} {}".format(title_text, pr_link_text) %}
+        {% endif %}
+        {% set hash_link_text = "([`{}`]({}))".format(commit.short_hash, commit.hexsha | commit_hash_url) %}
+        {% set commit_summary = "{} {}".format(commit_summary, hash_link_text) %}
+* {{ commit_summary }}
+        {% for breaking_description in commit.breaking_descriptions if
+            commit_type == "breaking"
+            and commit.breaking_descriptions | length > 0
+        %}
+  * {{ breaking_description }}
+        {% endfor %}
+    {% endfor %}
+
+{% endfor %}

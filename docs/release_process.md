@@ -49,12 +49,14 @@ This is a workflow for releasing packages in GitHub and publishing to PyPI.
 This workflow is only triggered manually, from the Actions tab. It is limited to those with `write` access
 to the repo (e.g., collaborators and orgs, people, teams given write access) and only for the `main` branch.
 
-The release process leans heavily on the Python Semantic Release (PSR) package, which in turn is dependent on
-conventional commits to determine release versions. Poetry is used to build the release distributions in order to
-use them for "verification" purposes *before* creating a GitHub release and publishing to PyPI. PSR will bump the
-release version, tag the release, update the change log, run `rich-codex` to update the script options documentation,
-and commit the changes back to the repository. PSR will also generate the GitHub release and populate it with the
-artifacts as built by `poetry`. Finally, PSR will upload the release to [PyPI](https://pypi.org).
+The release process leans heavily on the
+[Python Semantic Release](https://python-semantic-release.readthedocs.io/en/latest/index.html) (PSR) tool, which in
+turn is dependent on conventional commits to determine release versions. Poetry is used to build the release
+distributions in order to use them for "verification" purposes *before* creating a GitHub release and publishing to
+PyPI. The [`rich-codex`](https://ewels.github.io/rich-codex/) tool is used to update the script options documentation.
+PSR will determine the release version, update the change log, commit and push changes (including those from
+`rich-codex`) back to the repository, and tag the release. PSR will also generate the GitHub release and populate it
+with the artifacts as built by `poetry`. Poetry is used to upload the release to [PyPI](https://pypi.org).
 
 Currently this workflow uses the `Production` environment, as configured in
 [the repo settings](https://github.com/phylum-dev/phylum-ci/settings/environments).

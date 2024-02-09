@@ -1,0 +1,35 @@
+{#
+    This is a Jinja template for generating the CHANGELOG with Python Semantic Release.
+    Ref: https://python-semantic-release.readthedocs.io/en/latest/changelog_templates.html
+#}
+{% import ".macros.j2" as macros %}
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is partially based on [Keep a Changelog], and this project adheres to
+[Semantic Versioning]. The entries in this changelog are primarily automatically
+generated through the use of [conventional commits] and the [Python Semantic Release]
+tool. However, some entries may be manually edited, where it helps for clarity
+and understanding.
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
+[conventional commits]: https://www.conventionalcommits.org
+[Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
+
+{% for version, release in context.history.released.items() if
+    release.tagged_date.timestamp() > macros.min_release_timestamp
+    and ("unknown" not in release.elements or release.elements | length > 1)
+%}
+    {% if loop.nextitem %}
+        {% set prev_version = loop.nextitem[0] %}
+        {% set compare_url = macros.version_compare_url(prev_version, version) %}
+## [{{ version.as_tag() }}]({{ compare_url }}) ({{ release.tagged_date.strftime("%Y-%m-%d") }})
+    {% else %}
+## {{ version.as_tag() }} ({{ release.tagged_date.strftime("%Y-%m-%d") }})
+    {% endif %}
+
+{% include ".changes.j2" %}
+{% endfor %}
+{% include ".CHANGELOG_historic.md" %}

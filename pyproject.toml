@@ -68,9 +68,7 @@ optional = true
 [tool.poetry.group.ci.dependencies]
 tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
-# TODO: Unpin this to allow for using the v8+ PSR release
-#       https://github.com/phylum-dev/phylum-ci/issues/278
-python-semantic-release = "7.*"
+python-semantic-release = "*"
 rich-codex = "*"
 
 [tool.poetry.group.qa]
@@ -153,20 +151,16 @@ convention = "pep257"
 
 [tool.semantic_release]
 # Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
-branch = "main"
-version_toml = "pyproject.toml:tool.poetry.version"
-prerelease_tag = "rc"
-# If set to true, this will create a new patch release even if there are no commits
-# since the last release that would trigger a release.
-patch_without_tag = true
+version_toml = ["pyproject.toml:tool.poetry.version"]
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
-upload_to_repository = true
-upload_to_release = true
-remove_dist = false
-# Setting build_command to false here b/c `poetry build -vvv` will be used prior to a PSR publish command
-build_command = false
-# The `pre_commit_command` option has proven troublesome so these files get updated in the release workflow instead
-include_additional_files = "docs/img/phylum-ci_options.svg,docs/img/phylum-init_options.svg"
-commit_subject = "chore: bump to v{version}"
+# These files (may) get updated in the release workflow before Python Semantic Release runs
+assets = ["docs/img/phylum-ci_options.svg", "docs/img/phylum-init_options.svg"]
+commit_message = "chore: bump to v{version}"
 commit_author = "phylum-bot <69485888+phylum-bot@users.noreply.github.com>"
+logging_use_named_masks = true
+
+[tool.semantic_release.changelog.environment]
+trim_blocks = true
+lstrip_blocks = true
+keep_trailing_newline = true

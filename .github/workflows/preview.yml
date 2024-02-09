@@ -61,8 +61,12 @@ jobs:
         # poetry version rules do not provide for developmental releases as specified in PEP440.
         # It can be pieced together with these commands.
         run: |
-          poetry version "$(poetry run semantic-release print-version --next)"
-          poetry version "$(poetry version --short).dev${GITHUB_RUN_NUMBER}"
+          curr_ver=$(poetry version --short)
+          next_ver=$(poetry run semantic-release -vv version --print)
+          if [ "${curr_ver}" = "${next_ver}" ]; then
+            next_ver=$(poetry run semantic-release -vv version --print --patch)
+          fi
+          poetry version "${next_ver}.dev${GITHUB_RUN_NUMBER}"
 
       - name: Run tox via poetry
         run: poetry run tox
