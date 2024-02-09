@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## v0.42.2 (2024-02-09)
+
+### Performance
+
+* Reduce `phylum` binary size for slim images ([#385](https://github.com/phylum-dev/phylum-ci/issues/385)) ([`ac5e477`](https://github.com/phylum-dev/phylum-ci/commit/ac5e47740f9bedaed71b11988d2d22dd7c4a20aa))
+
 ## v0.42.1 (2024-01-05)
 
 ### Documentation
