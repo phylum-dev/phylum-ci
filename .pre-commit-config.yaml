@@ -43,7 +43,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: 8713140e99914c0cb6e07364daedfb140847c3c5  # frozen: v1.33.0
+    rev: dd99a1c965b56027e9773442f41d3c58cc53c690  # frozen: v1.34.0
     hooks:
       - id: yamllint
 
