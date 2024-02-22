@@ -280,9 +280,10 @@ RUN \
     # Create a git config file in a location accessible for $HOME-less users
     # Ref: https://git-scm.com/docs/git-config#FILES
     mkdir -vp "${XDG_CONFIG_HOME}/git" && touch "${XDG_CONFIG_HOME}/git/config"; \
-    # Ensure the XDG directories have permissions for non-root users
+    # Ensure non-root users have necessary permissions
     mkdir -vp "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
     chmod -vR 777 "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
+    chmod -v 666 "${COREPACK_HOME}/lastKnownGood.json"; \
     #
     # Final cleanup
     apt-get remove --yes --auto-remove \
