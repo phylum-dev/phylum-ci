@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.42.3](https://github.com/phylum-dev/phylum-ci/compare/v0.42.2...v0.42.3) (2024-02-22)
+
+### Fix
+
+* Image failures for non-root uses of `yarn` and `pnpm` ([#391](https://github.com/phylum-dev/phylum-ci/issues/391)) ([`345ecd2`](https://github.com/phylum-dev/phylum-ci/commit/345ecd24124d11abe8a922c1820027d1e5b95b07))
+
 ## v0.42.2 (2024-02-09)
 
 ### Performance
