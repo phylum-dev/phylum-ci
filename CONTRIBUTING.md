@@ -178,7 +178,7 @@ Here's how to set up `phylum-ci` for local development.
     #   new-dependency-name = "*"
 
     # Update the lockfile and the local environment to get the latest versions of dependencies
-    poetry update
+    poetry update --no-cache
 
     # Dependencies will be checked automatically in CI during a PR. They will also be checked
     # with the local pre-commit hook, if enabled. Manually checking locally is also possible:
