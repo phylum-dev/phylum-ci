@@ -52,7 +52,7 @@ repos:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
     # NOTE: This `rev` should be manually updated whenever `poetry` is updated. The `rev` can be found by checking out
     #       the `poetry` repository and running the command: `git show-ref --tags <tag_name>`
-    rev: 7696e93872a965261ea154b5e423c44e8317fd38  # frozen: 1.7.1
+    rev: 3de374c01c9a0c927abd419813a47746c45afb11  # frozen: 1.8.1
     hooks:
       - id: poetry-check
         args: [--lock]
