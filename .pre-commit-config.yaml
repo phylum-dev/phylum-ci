@@ -38,7 +38,7 @@ repos:
       - id: refurb
 
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 42ae1c1776f475a205bedeaf8dc6913c044e1440  # frozen: v2.10
+    rev: a1fc746237890f65e6addd14ade7d5da4d63ffb8  # frozen: v2.11
     hooks:
       - id: vulture
 
