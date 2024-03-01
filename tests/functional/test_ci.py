@@ -1,4 +1,4 @@
-""""Test the phylum-ci command line interface (CLI)."""
+"""Test the phylum-ci command line interface (CLI)."""
 
 import logging
 import subprocess

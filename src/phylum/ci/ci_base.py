@@ -655,6 +655,7 @@ class CIBase(ABC):
         # TODO(maxrake): Better formatting with parenthesized context managers is available in Python 3.10+
         #     https://github.com/phylum-dev/phylum-ci/issues/357
         #     https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
+        #     https://stackoverflow.com/q/67808977
         with tempfile.NamedTemporaryFile(
             mode="w+",
             encoding="utf-8",
