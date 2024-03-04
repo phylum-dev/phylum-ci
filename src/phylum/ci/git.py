@@ -1,6 +1,6 @@
 """Provide common git functions."""
 
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 import contextlib
 from pathlib import Path
 import shlex
@@ -221,7 +221,11 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
 
 
 @contextlib.contextmanager
-def git_worktree(commit: str, git_c_path: Optional[Path] = None) -> Generator[Path, None, None]:
+def git_worktree(
+    commit: str,
+    env: Optional[Mapping[str, str]] = None,
+    git_c_path: Optional[Path] = None,
+) -> Generator[Path, None, None]:
     """Create a git worktree at the given commit.
 
     This is a context manager that yields a `Path` to the worktree, created in a temporary directory.
@@ -242,7 +246,7 @@ def git_worktree(commit: str, git_c_path: Optional[Path] = None) -> Generator[Pa
         LOG.debug("Adding git worktree for base iteration in a temporary directory ...")
         LOG.debug("Using command: %s", shlex.join(cmd))
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)  # noqa: S603
         except subprocess.CalledProcessError as err:
             msg = f"Unable to create a git worktree at commit: {commit}"
             raise PhylumCalledProcessError(err, msg) from err
