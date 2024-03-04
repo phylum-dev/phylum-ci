@@ -70,7 +70,7 @@ jobs:
 
       - name: Update Python dependencies
         run: |
-          poetry update -vv --lock
+          poetry update -vv --lock --no-cache
           poetry check --lock
 
       - name: Commit changes

@@ -11,6 +11,7 @@ References:
 
 import argparse
 from functools import cached_property
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -31,6 +32,15 @@ class CIPreCommit(CIBase):
         self.extra_args = remainder
         super().__init__(args)
         self.ci_platform_name = "pre-commit"
+
+        # There is a history of bugs dealing with git and environment variables set while running pre-commit hooks. In
+        # particular, GIT_INDEX_FILE set causes failures when adding new worktrees. Removing it from the environment
+        # has no negative effect since git will populate/determine correct values even when this variable is not set.
+        # https://github.com/pre-commit/pre-commit/blob/7b868c3508dd3a4c1f1930dc25f5433f2dac7950/pre_commit/git.py#L27
+        # https://github.com/mgedmin/check-manifest/issues/122
+        # https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables
+        self._env = os.environ.copy()
+        self._env.pop("GIT_INDEX_FILE", None)
 
     def _check_prerequisites(self) -> None:
         """Ensure the necessary pre-requisites are met and bail when they aren't.

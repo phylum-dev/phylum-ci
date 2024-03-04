@@ -8,6 +8,7 @@ designated as abstract methods to be defined in specific CI environments.
 from abc import ABC, abstractmethod
 from argparse import Namespace
 from collections import OrderedDict
+from collections.abc import Mapping
 from functools import cached_property, lru_cache
 from itertools import starmap
 import json
@@ -60,6 +61,7 @@ class CIBase(ABC):
         self._force_analysis = args.force_analysis
         self._returncode = ReturnCode.SUCCESS
         self._analysis_report = "No analysis output yet"
+        self._env: Optional[Mapping[str, str]] = None
         self.ci_platform_name = "Unknown"
         self.disable_lockfile_generation = False
 
@@ -655,6 +657,7 @@ class CIBase(ABC):
         # TODO(maxrake): Better formatting with parenthesized context managers is available in Python 3.10+
         #     https://github.com/phylum-dev/phylum-ci/issues/357
         #     https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
+        #     https://stackoverflow.com/q/67808977
         with tempfile.NamedTemporaryFile(
             mode="w+",
             encoding="utf-8",
@@ -699,7 +702,7 @@ class CIBase(ABC):
             return []
 
         base_packages: set[Package] = set()
-        with git_worktree(self.common_ancestor_commit) as temp_dir:
+        with git_worktree(self.common_ancestor_commit, env=self._env) as temp_dir:
             for depfile in self.depfiles:
                 prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())
                 try:
