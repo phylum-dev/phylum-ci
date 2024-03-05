@@ -13,6 +13,16 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.42.4](https://github.com/phylum-dev/phylum-ci/compare/v0.42.3...v0.42.4) (2024-03-05)
+
+### Fix
+
+* `pre-commit` hook failures ([#397](https://github.com/phylum-dev/phylum-ci/issues/397)) ([`a6d0f5e`](https://github.com/phylum-dev/phylum-ci/commit/a6d0f5eaae3977e85fbe8779821571dbef93485d))
+
+### Documentation
+
+* Restore integration documentation ([#395](https://github.com/phylum-dev/phylum-ci/issues/395)) ([`a209f58`](https://github.com/phylum-dev/phylum-ci/commit/a209f58170e9462718685a0019bd9a3d5d273470))
+
 ## [v0.42.3](https://github.com/phylum-dev/phylum-ci/compare/v0.42.2...v0.42.3) (2024-02-22)
 
 ### Fix
