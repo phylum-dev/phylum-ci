@@ -178,6 +178,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         run: poetry run semantic-release -vv --strict publish --tag "v${{ env.PHYLUM_REL_VER }}"
 
+      - name: Trigger documentation update
+        if: ${{ !inputs.prerelease }}
+        # Reference: https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GH_RELEASE_PAT }}
+          script: |
+            const response = await github.rest.repos.createDispatchEvent({
+              owner: "phylum-dev",
+              repo: "documentation",
+              event_type: "trigger-update-submodule",
+              client_payload: {
+                repo_name: context.repo.repo,
+                tag_name: "v${{ env.PHYLUM_REL_VER }}"
+              },
+            });
+            console.log(response);
+
       - name: Build default docker image
         run: |
           docker build \
