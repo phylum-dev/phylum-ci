@@ -10,6 +10,7 @@ from argparse import Namespace
 from collections import OrderedDict
 from collections.abc import Mapping
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 from itertools import starmap
 import json
 import os
@@ -18,7 +19,6 @@ import shlex
 import shutil
 import subprocess
 import tempfile
-import textwrap
 from typing import Optional
 
 from packaging.version import Version
@@ -168,11 +168,11 @@ class CIBase(ABC):
                 LOG.debug("Valid detected dependency files: %s", valid_depfiles)
                 return valid_depfiles
 
-        msg = """\
+        msg = """
             No valid dependency files were detected.
             Consider specifying at least one with
             `--depfile` argument or in `.phylum_project` file."""
-        LOG.error(textwrap.dedent(msg))
+        LOG.error(cleandoc(msg))
         if not self.returncode:
             self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
         raise SystemExit(self.returncode)
@@ -208,7 +208,7 @@ class CIBase(ABC):
                 # lockfile generation has been disabled. This situation is recognized with a distinct return code
                 # to signal that a manifest may have new resolved dependencies that have not been analyzed by Phylum.
                 if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
-                    msg = f"""\
+                    msg = f"""
                         Provided manifest [code]{provided_depfile!r}[/] requires lockfile
                         generation to parse but it was disabled to prevent running arbitrary
                         code in untrusted contexts, like PRs from forks. The resolved
@@ -218,7 +218,7 @@ class CIBase(ABC):
                         a lockfile instead of or along with the manifest, even for libraries."""
                     self.returncode = ReturnCode.MANIFEST_WITHOUT_GENERATION
                 else:
-                    msg = f"""\
+                    msg = f"""
                         Provided dependency file [code]{provided_depfile!r}[/] failed to parse
                         as type [code]{provided_depfile.type}[/]. If this is a manifest, consider
                         supplying dependency file type explicitly in `.phylum_project` file.
@@ -226,16 +226,16 @@ class CIBase(ABC):
                         Please report this as a bug if you believe [code]{provided_depfile!r}[/]
                         is a valid [code]{provided_depfile.type}[/] dependency file."""
                     self.returncode = ReturnCode.DEPFILE_FILTER
-                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                LOG.warning(cleandoc(msg), extra=MARKUP)
                 continue
 
             # Classify the file as a manifest or lockfile
             if provided_depfile in self._potential_manifests and provided_depfile in self._potential_lockfiles:
-                msg = f"""\
+                msg = f"""
                     Provided dependency file [code]{provided_depfile!r}[/] is a [b]lockifest[/].
                     It will be treated as a [b]manifest[/].
                     For more info, see: https://docs.phylum.io/cli/lockfile_generation"""
-                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                LOG.warning(cleandoc(msg), extra=MARKUP)
                 depfile = Depfile(
                     provided_depfile,
                     self.cli_path,
@@ -259,10 +259,10 @@ class CIBase(ABC):
                     disable_lockfile_generation=self.disable_lockfile_generation,
                 )
             else:
-                msg = f"""\
+                msg = f"""
                     Provided dependency file [code]{provided_depfile!r}[/] is an [b]unknown[/] type.
                     It will be treated as a [b]manifest[/]."""
-                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                LOG.warning(cleandoc(msg), extra=MARKUP)
                 depfile = Depfile(
                     provided_depfile,
                     self.cli_path,
@@ -273,10 +273,10 @@ class CIBase(ABC):
 
         # Check for the presence of a manifest file
         if any(depfile.is_manifest for depfile in depfiles):
-            msg = """\
+            msg = """
                 At least one manifest file was included.
                 Forcing analysis to ensure updated dependencies are included."""
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             self._force_analysis = True
 
         return sorted(depfiles)
@@ -487,7 +487,7 @@ class CIBase(ABC):
                 depfile.is_depfile_changed = True
             else:
                 if err_msg:
-                    LOG.error("%s", textwrap.dedent(err_msg))
+                    LOG.error("%s", cleandoc(err_msg))
                 ret.check_returncode()
 
     @abstractmethod
@@ -538,11 +538,11 @@ class CIBase(ABC):
                 LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
                 self._set_repo_url()
                 return
-            msg = """\
+            msg = """
                 There was a problem creating the project.
                 A PRO account is needed to create a project with a group.
                 If the command was expected to succeed, please report this as a bug."""
-            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+            raise PhylumCalledProcessError(err, cleandoc(msg)) from err
         LOG.info("Project %s created successfully", self.phylum_project)
         if self._project_file_already_existed:
             LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
@@ -566,33 +566,33 @@ class CIBase(ABC):
             cmd_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
-            msg = """\
+            msg = """
                 Phylum project status failed. Skipping repository URL check.
                 Use CLI to manually set it:
                 https://docs.phylum.io/cli/commands/phylum_project_update"""
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             return
         project_status: dict = json.loads(cmd_output)
         project_id = project_status.get("id")
         repo_url = project_status.get("repository_url")
         if not project_id:
-            msg = """\
+            msg = """
                 Could not find the project ID. Skipping repository URL check.
                 Use CLI to manually set it:
                 https://docs.phylum.io/cli/commands/phylum_project_update"""
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             return
         LOG.debug("Found project ID: %s", project_id)
 
         if repo_url is not None:
             LOG.info("Repository URL already set: %s", repo_url)
             if repo_url != self.repo_url:
-                msg = f"""\
+                msg = f"""
                     Repository URL differs from what would be set! Keeping existing value.
                     Existing: {repo_url}
                     Proposed: {self.repo_url}
                     To override: https://docs.phylum.io/cli/commands/phylum_project_update"""
-                LOG.warning(textwrap.dedent(msg))
+                LOG.warning(cleandoc(msg))
                 return
             LOG.info("Repository URL matches what would be set. Nothing to do.")
             return
@@ -606,11 +606,11 @@ class CIBase(ABC):
             subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
-            msg = """\
+            msg = """
                 Phylum project update failed. Skipping repository URL check.
                 Use CLI to manually set it:
                 https://docs.phylum.io/cli/commands/phylum_project_update"""
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             return
         LOG.info("Repository URL successfully set")
 
@@ -687,11 +687,11 @@ class CIBase(ABC):
                 if err.returncode == cli_exit_code_failed_policy:
                     analysis_result = err.stdout
                 else:
-                    msg = """\
+                    msg = """
                         There was a problem analyzing the project.
                         A PRO account is needed to use groups.
                         If the command was expected to succeed, please report this as a bug."""
-                    raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+                    raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
         self._parse_analysis_result(analysis_result)
 
@@ -719,20 +719,20 @@ class CIBase(ABC):
                     # lockfile generation has been disabled. This situation is recognized and allowed to continue, but
                     # with a message explaining the reason why no packages from the previous manifest version are used.
                     if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
-                        msg = f"""\
+                        msg = f"""
                             Provided manifest [code]{depfile!r}[/] requires lockfile
                             generation to parse but it was disabled to prevent running arbitrary
                             code in untrusted contexts, like PRs from forks. Therefore, no previous
                             packages will be assumed from the manifest."""
                     else:
-                        msg = f"""\
+                        msg = f"""
                             Due to error, assuming no previous packages in [code]{depfile!r}[/].
                             Consider supplying dependency file type explicitly in `.phylum_project`
                             file. For more info: https://docs.phylum.io/cli/lockfile_generation
                             Please report this as a bug if you believe [code]{depfile!r}[/]
                             is a valid [code]{depfile.type}[/] [b]{depfile.depfile_type.value}[/] at revision
                             [code]{self.common_ancestor_commit}[/]."""
-                    LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                    LOG.warning(cleandoc(msg), extra=MARKUP)
                     continue
                 base_packages.update(prev_depfile_pkgs)
 

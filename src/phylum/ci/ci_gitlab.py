@@ -10,12 +10,12 @@ GitLab References:
 
 from argparse import Namespace
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
-import textwrap
 from typing import Optional
 
 import requests
@@ -143,12 +143,12 @@ class CIGitLab(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = """\
+            msg = """
                 The common ancestor commit could not be found.
                 Ensure the git strategy is set to `clone` for repo checkouts:
                 https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
             pprint_subprocess_error(err)
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             common_commit = None
 
         return common_commit
@@ -163,7 +163,7 @@ class CIGitLab(CIBase):
         if diff_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `GIT_DEPTH` variable in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""

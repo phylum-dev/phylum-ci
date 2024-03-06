@@ -24,8 +24,8 @@ https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub si
 documentation directs CLI users.
 """
 
+from inspect import cleandoc
 from pathlib import Path
-from textwrap import dedent
 
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends.openssl import backend
@@ -36,8 +36,8 @@ from phylum.logger import LOG, progress_spinner
 
 # This is the RSA Public Key for Phylum, Inc. The matching private key was used to sign the software releases
 PHYLUM_RSA_PUBKEY = bytes(
-    dedent(
-        """\
+    cleandoc(
+        """
         -----BEGIN PUBLIC KEY-----
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyGgvuy6CWSgJuhKY8oVz
         42udH1F2yIlaBoxAdQFuY2zxPSSpK9zv34B7m0JekuC5WCYfW0gS2Z8Ryu2RVdQh

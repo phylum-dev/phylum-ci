@@ -19,11 +19,11 @@ Bitbucket References:
 
 from argparse import Namespace
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import os
 import re
 import shlex
 import subprocess
-import textwrap
 from typing import Optional
 import urllib.parse
 
@@ -180,12 +180,12 @@ class CIBitbucket(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = """\
+            msg = """
                 The common ancestor commit could not be found.
                 Ensure git strategy is set to `full clone depth` for repo checkouts:
                 https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""
             pprint_subprocess_error(err)
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             common_commit = None
 
         return common_commit
@@ -200,7 +200,7 @@ class CIBitbucket(CIBase):
         if diff_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `clone depth` variable in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://support.atlassian.com/bitbucket-cloud/docs/git-clone-behavior/"""

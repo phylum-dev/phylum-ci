@@ -1,6 +1,6 @@
 """Test the signature verification module."""
 
-from textwrap import dedent
+from inspect import cleandoc
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
@@ -15,7 +15,7 @@ def test_phylum_pubkey_is_bytes():
 
 def test_phylum_pubkey_is_constant():
     """Ensure the RSA public key in use by Phylum has not changed."""
-    key_text = """\
+    key_text = """
         -----BEGIN PUBLIC KEY-----
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyGgvuy6CWSgJuhKY8oVz
         42udH1F2yIlaBoxAdQFuY2zxPSSpK9zv34B7m0JekuC5WCYfW0gS2Z8Ryu2RVdQh
@@ -26,7 +26,7 @@ def test_phylum_pubkey_is_constant():
         sQIDAQAB
         -----END PUBLIC KEY-----
         """
-    expected_key = bytes(dedent(key_text), encoding="ASCII")
+    expected_key = bytes(cleandoc(key_text), encoding="ASCII")
     assert expected_key == sig.PHYLUM_RSA_PUBKEY, "The key should not be changing"
 
 

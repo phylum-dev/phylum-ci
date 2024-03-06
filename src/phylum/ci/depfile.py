@@ -7,13 +7,13 @@ This module/class represents a single dependency file.
 
 from enum import Enum
 from functools import cache, cached_property
+from inspect import cleandoc
 import json
 import os
 from pathlib import Path
 import shlex
 import shutil
 import subprocess
-import textwrap
 from typing import Optional
 
 from phylum.ci.common import CLIExitCode, DepfileEntry, Package, Packages
@@ -132,24 +132,24 @@ class Depfile:
             )
         except subprocess.CalledProcessError as err:
             if err.returncode == CLIExitCode.MANIFEST_WITHOUT_GENERATION.value:
-                msg = f"""\
+                msg = f"""
                     Provided manifest [code]{self!r}[/] requires lockfile
                     generation to parse but it was disabled to prevent running arbitrary
                     code in untrusted contexts, like PRs from forks. Consider adding a
                     lockfile instead of or along with the manifest, even for libraries."""
-                LOG.warning(textwrap.dedent(msg), extra=MARKUP)
+                LOG.warning(cleandoc(msg), extra=MARKUP)
                 return []
             if self.is_lockfile:
-                msg = f"""\
+                msg = f"""
                     Please report this as a bug if you believe [code]{self!r}[/]
                     is a valid [code]{self.type}[/] lockfile."""
             else:
-                msg = f"""\
+                msg = f"""
                     Consider supplying dependency file type explicitly in `.phylum_project`
                     file. For more info: https://docs.phylum.io/cli/lockfile_generation
                     Please report this as a bug if you believe [code]{self!r}[/]
                     is a valid [code]{self.type}[/] manifest file."""
-            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+            raise PhylumCalledProcessError(err, cleandoc(msg)) from err
         return sorted(set(curr_depfile_packages))
 
 
@@ -208,11 +208,11 @@ def _is_sandbox_possible(cli_path: Path) -> bool:
     LOG.debug("Executing command: %s", shlex.join(cmd))
     # We want the return code here and don't want to raise when non-zero.
     if bool(subprocess.run(cmd, check=False, capture_output=True).returncode):  # noqa: S603
-        msg = """\
+        msg = """
             Phylum sandbox does not work in this environment and will be disabled.
             This is common and expected for container environments, such as Docker.
             Carefully scrutinize other environments where sandboxing is expected."""
-        LOG.warning(textwrap.dedent(msg))
+        LOG.warning(cleandoc(msg))
         return False
     LOG.info("The Phylum sandbox works in this environment and will be enabled")
     return True

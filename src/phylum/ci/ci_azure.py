@@ -19,11 +19,11 @@ Azure References:
 from argparse import Namespace
 import base64
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import os
 import re
 import shlex
 import subprocess
-import textwrap
 from typing import Optional
 import urllib.parse
 
@@ -230,12 +230,12 @@ class CIAzure(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = """\
+            msg = """
                 The common ancestor commit could not be found.
                 Ensure shallow fetch is disabled for repo checkouts:
                 https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"""
             pprint_subprocess_error(err)
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             common_commit = None
 
         return common_commit
@@ -250,7 +250,7 @@ class CIAzure(CIBase):
         if diff_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `fetchDepth` property in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""

@@ -13,12 +13,12 @@ GitHub References:
 
 from argparse import Namespace
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
-import textwrap
 from typing import Optional
 
 import requests
@@ -64,24 +64,24 @@ class CIGitHub(CIBase):
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = f"""\
+            msg = f"""
                 Adding the GitHub workspace `{github_workspace}` as a safe
                 directory in the git config failed. This is the recommended workaround
                 for container actions, to avoid the `unsafe repository` error.
                 See https://github.com/actions/checkout/issues/766 (git CVE-2022-24765)
                 for more detail."""
-            raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+            raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
         super().__init__(args)
         self.ci_platform_name = "GitHub Actions"
 
         if os.getenv("GITHUB_EVENT_NAME") == "pull_request_target":
-            msg = """\
+            msg = """
                 Using `pull_request_target` events for forked repositories has security
                 implications if done improperly. Lockfile generation has been disabled
                 to prevent arbitrary code execution in an untrusted context.
                 See https://docs.phylum.io/integrations/github_actions for more detail."""
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             self.disable_lockfile_generation = True
 
     def _check_prerequisites(self) -> None:
@@ -174,7 +174,7 @@ class CIGitHub(CIBase):
         if pr_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `fetch-depth` input during checkout to fetch more
             branch history. For more info: https://github.com/actions/checkout"""
         self.update_depfiles_change_status(pr_base_sha, err_msg)

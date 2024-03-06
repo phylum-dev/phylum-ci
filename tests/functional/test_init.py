@@ -50,7 +50,7 @@ def test_phylum_pubkey_is_constant(tmp_path):
     phylum_pubkey_url = "https://raw.githubusercontent.com/phylum-dev/cli/main/scripts/signing-key.pub"
     downloaded_key_path: Path = tmp_path / "signing-key.pub"
     save_file_from_url(phylum_pubkey_url, downloaded_key_path)
-    assert downloaded_key_path.read_bytes() == sig.PHYLUM_RSA_PUBKEY, "The key should not be changing"
+    assert downloaded_key_path.read_bytes().strip() == sig.PHYLUM_RSA_PUBKEY, "The key should not be changing"
 
 
 @pytest.mark.parametrize(

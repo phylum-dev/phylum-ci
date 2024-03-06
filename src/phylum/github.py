@@ -1,7 +1,7 @@
 """Provide methods for interacting with the GitHub API."""
 
+from inspect import cleandoc
 import os
-import textwrap
 import time
 from typing import Any, Optional
 
@@ -89,7 +89,7 @@ def github_request(
     # The other possible forbidden cases are not common enough to check for here.
     # Reference: https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
     if resp.status_code == requests.codes.forbidden and rate_limit_remaining == "0":
-        msg = f"""\
+        msg = f"""
             GitHub API rate limit of {rate_limit} requests/hour was exceeded for
             URL: {api_url}
             The current time is:  {current_time}
@@ -98,7 +98,7 @@ def github_request(
             or to make authenticated requests by providing a GitHub token in
             the `GITHUB_TOKEN` environment variable. Reference:
             {PAT_REF}"""
-        raise SystemExit(textwrap.dedent(msg))
+        raise SystemExit(cleandoc(msg))
 
     LOG.debug("%s GitHub API requests remaining until window resets at: %s", rate_limit_remaining, reset_time)
 
@@ -106,11 +106,11 @@ def github_request(
     try:
         resp.raise_for_status()
     except requests.HTTPError as err:
-        msg = f"""\
+        msg = f"""
             A bad request was made to the GitHub API:
             {err}
             Response text: {resp.text.strip()}"""
-        raise SystemExit(textwrap.dedent(msg)) from err
+        raise SystemExit(cleandoc(msg)) from err
 
     resp_json = resp.json()
 
