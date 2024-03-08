@@ -65,6 +65,8 @@ class CIBase(ABC):
         self.ci_platform_name = "Unknown"
         self.disable_lockfile_generation = False
 
+        self._skip_comments = args.skip_comments
+
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
         LOG.info("All pre-requisites met")
@@ -290,6 +292,11 @@ class CIBase(ABC):
     def force_analysis(self) -> bool:
         """Get the status of forcing an analysis."""
         return self._force_analysis
+
+    @property
+    def skip_comments(self) -> bool:
+        """Get the status of skipping comments."""
+        return self._skip_comments
 
     @cached_property
     def phylum_project(self) -> str:

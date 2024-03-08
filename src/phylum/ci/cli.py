@@ -147,6 +147,13 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         "--group",
         help="Optional group name, which will be the owner of the project. Only used when a project is also specified.",
     )
+    analysis_group.add_argument(
+        "-s",
+        "--skip-comments",
+        action="store_true",
+        help="""Specify this flag to disable posting comments/notes on pull/merge requests. This flag is implicitly
+            set when audit mode is enabled.""",
+    )
 
     cli_group = parser.add_argument_group(
         title="Phylum CLI Options",

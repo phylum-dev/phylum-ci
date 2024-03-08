@@ -81,6 +81,7 @@ class CIBitbucket(CIBase):
         These are the current pre-requisites for operating within a Bitbucket Pipelines Environment:
           * The environment must actually be within Bitbucket Pipelines
           * A Bitbucket token providing API access is available when operating in a PR pipeline
+            * Unless comment generation is skipped
         """
         super()._check_prerequisites()
 
@@ -96,7 +97,7 @@ class CIBitbucket(CIBase):
         # See the Bitbucket Token Overview Documentation for info:
         # https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens
         bitbucket_token = os.getenv("BITBUCKET_TOKEN", "")
-        if not bitbucket_token and is_in_pr():
+        if not bitbucket_token and is_in_pr() and not self.skip_comments:
             msg = f"A Bitbucket access token must be set at `BITBUCKET_TOKEN`: {BITBUCKET_TOK_ERR_MSG}"
             raise SystemExit(msg)
         self._bitbucket_token = bitbucket_token
@@ -225,12 +226,17 @@ class CIBitbucket(CIBase):
         """Post the output of the analysis.
 
         Post output directly in the logs regardless of the pipeline context.
-        Post output as a comment on the Bitbucket Pipelines Pull Request (PR) when operating in a PR pipeline.
+        Optionally post output as a comment on the Bitbucket Pipelines Pull
+        Request (PR) when operating in a PR pipeline.
         """
         super().post_output()
 
         if not is_in_pr():
             # Can't post the output to the PR when there is no PR
+            return
+
+        if self.skip_comments:
+            LOG.debug("Posting analysis output as comments on the pull request was disabled.")
             return
 
         LOG.info("Checking pull request comments for existing content to avoid duplication ...")
@@ -272,6 +278,13 @@ class CIBitbucket(CIBase):
         if not is_in_pr():
             # It only makes sense to reference this property in the context of a PR
             return None
+
+        if self.skip_comments:
+            LOG.debug("Posting analysis output as comments on the pull request was disabled.")
+            if not self.bitbucket_token:
+                LOG.debug("Bitbucket API token not available. Unable to look for comments.")
+                return None
+            LOG.debug("Bitbucket API token available but possibly invalid. Attempting use ...")
 
         url = get_comments_url()
 
