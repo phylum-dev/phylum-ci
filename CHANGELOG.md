@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.43.0](https://github.com/phylum-dev/phylum-ci/compare/v0.42.4...v0.43.0) (2024-03-08)
+
+### Feature
+
+* Implement audit mode ([#400](https://github.com/phylum-dev/phylum-ci/issues/400)) ([`1613851`](https://github.com/phylum-dev/phylum-ci/commit/1613851fa82bcaadb5b4d7d67937ae292c6ab02f))
+
 ## [v0.42.4](https://github.com/phylum-dev/phylum-ci/compare/v0.42.3...v0.42.4) (2024-03-05)
 
 ### Fix
