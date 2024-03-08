@@ -65,7 +65,9 @@ class CIBase(ABC):
         self.ci_platform_name = "Unknown"
         self.disable_lockfile_generation = False
 
-        self._skip_comments = args.skip_comments
+        # Disable comments when in audit mode
+        self.audit_mode = args.audit
+        self._skip_comments = True if self.audit_mode else args.skip_comments
 
         # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()

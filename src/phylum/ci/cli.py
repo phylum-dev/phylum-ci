@@ -154,6 +154,11 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         help="""Specify this flag to disable posting comments/notes on pull/merge requests. This flag is implicitly
             set when audit mode is enabled.""",
     )
+    analysis_group.add_argument(
+        "--audit",
+        action="store_true",
+        help="Specify this flag to enable audit mode: analysis is performed but results do not affect the exit code.",
+    )
 
     cli_group = parser.add_argument_group(
         title="Phylum CLI Options",
@@ -226,8 +231,11 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Output the results of the analysis
     ci_env.post_output()
 
-    # Don't return a failure code if the only reason is that analysis results are unknown at this point
+    # Don't return a failure code in audit mode or if analysis results are unknown at this point
     returncode = 0 if ci_env.returncode == ReturnCode.INCOMPLETE else ci_env.returncode.value
+    if ci_env.audit_mode:
+        LOG.info("Audit mode enabled. Original return code: %s", returncode)
+        returncode = 0
     LOG.debug("Return code: %s", returncode)
     return returncode
 
