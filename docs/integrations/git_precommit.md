@@ -132,7 +132,7 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # casting the widest net for strict adherence to Quality Assurance (QA) standards.
         args: [--all-deps]
 
-        # Provide debug level output
+        # Provide debug level output.
         args: [-vv]
 
         # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
@@ -141,18 +141,13 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # an explicit path to them.
         args: [--depfile=requirements-prod.txt]
 
-        # Specify multiple explicit dependency file paths
+        # Specify multiple explicit dependency file paths.
         args:
           - --depfile=requirements-prod.txt
           - --depfile=package-lock.json
           - --depfile=poetry.lock
           - --depfile=Cargo.toml
           - --depfile=path/to/dependency.file
-
-        # Force analysis, even when no dependency file has changed. This can be useful for
-        # manifests, where the loosely specified dependencies may not change often but the
-        # completely resolved set of strict dependencies does.
-        args: [--force-analysis]
 
         # Force analysis for all dependencies in a manifest file. This is especially useful
         # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).

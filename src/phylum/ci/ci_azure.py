@@ -19,11 +19,11 @@ Azure References:
 from argparse import Namespace
 import base64
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import os
 import re
 import shlex
 import subprocess
-import textwrap
 from typing import Optional
 import urllib.parse
 
@@ -116,6 +116,7 @@ class CIAzure(CIBase):
         These are the current pre-requisites for operating within an Azure Pipelines Environment:
           * The environment must actually be within Azure Pipelines
           * A token providing API access is available to match the triggering repo when operating in a PR pipeline
+            * Unless comment generation is skipped
             * An Azure token for Azure Repos Git
             * A GitHub token for GitHub hosted repos
         """
@@ -136,13 +137,13 @@ class CIAzure(CIBase):
             raise SystemExit(msg)
 
         azure_token = os.getenv("AZURE_TOKEN", "")
-        if not azure_token and self.triggering_repo == "TfsGit" and is_in_pr():
+        if not azure_token and self.triggering_repo == "TfsGit" and is_in_pr() and not self.skip_comments:
             msg = f"An Azure token with API access must be set at `AZURE_TOKEN`: {AZURE_PAT_ERR_MSG}"
             raise SystemExit(msg)
         self._azure_token = azure_token
 
         github_token = os.getenv("GITHUB_TOKEN", "")
-        if not github_token and self.triggering_repo == "GitHub" and is_in_pr():
+        if not github_token and self.triggering_repo == "GitHub" and is_in_pr() and not self.skip_comments:
             msg = f"A GitHub token with API access must be set at `GITHUB_TOKEN`: {GITHUB_PAT_ERR_MSG}"
             raise SystemExit(msg)
         self._github_token = github_token
@@ -230,12 +231,12 @@ class CIAzure(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = """\
+            msg = """
                 The common ancestor commit could not be found.
                 Ensure shallow fetch is disabled for repo checkouts:
                 https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout#shallow-fetch"""
             pprint_subprocess_error(err)
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             common_commit = None
 
         return common_commit
@@ -250,7 +251,7 @@ class CIAzure(CIBase):
         if diff_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `fetchDepth` property in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
@@ -264,11 +265,26 @@ class CIAzure(CIBase):
         if not is_in_pr():
             # Comments only exist in the context of a PR
             return False
+
         if self.triggering_repo == "TfsGit":
+            if self.skip_comments:
+                LOG.debug("Posting analysis output as comments on the pull request was disabled.")
+                if not self.azure_token:
+                    LOG.debug("Azure API token not available. Unable to look for comments.")
+                    return False
+                LOG.debug("Azure API token available but possibly invalid. Attempting use ...")
             return bool(get_most_recent_phylum_comment_azure(self.azure_token))
+
         if self.triggering_repo == "GitHub":
+            if self.skip_comments:
+                LOG.debug("Posting analysis output as comments on the pull request was disabled.")
+                if not self.github_token:
+                    LOG.debug("GitHub API token not available. Unable to look for comments.")
+                    return False
+                LOG.debug("GitHub API token available but possibly invalid. Attempting use ...")
             comments_url = get_github_comments_url()
             return bool(get_most_recent_phylum_comment_github(comments_url, self.github_token))
+
         return False
 
     @property
@@ -300,13 +316,20 @@ class CIAzure(CIBase):
         """Post the output of the analysis.
 
         Post output directly in the logs regardless of the trigger type.
-        Post output as a comment on the Azure Repos Pull Request (PR) for PR triggers and Azure Repos hosted repos.
-        Post output as a comment on the GitHub PR for PR triggers and GitHub hosted repos.
+        Optionally post output as a comment on the Azure Repos Pull Request (PR)
+        for PR triggers and Azure Repos hosted repos.
+        Optionally post output as a comment on the GitHub PR for PR triggers and GitHub hosted repos.
         """
         super().post_output()
+
         if not is_in_pr():
             # Can't post the output to the PR when there is no PR
             return
+
+        if self.skip_comments:
+            LOG.debug("Posting analysis output as comments on the pull request was disabled.")
+            return
+
         if self.triggering_repo == "TfsGit":
             post_azure_comment(self.azure_token, self.analysis_report)
         elif self.triggering_repo == "GitHub":

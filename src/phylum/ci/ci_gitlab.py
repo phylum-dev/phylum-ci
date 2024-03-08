@@ -10,12 +10,12 @@ GitLab References:
 
 from argparse import Namespace
 from functools import cached_property, lru_cache
+from inspect import cleandoc
 import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
-import textwrap
 from typing import Optional
 
 import requests
@@ -63,6 +63,7 @@ class CIGitLab(CIBase):
         These are the current pre-requisites for operating within a GitLab CI Environment:
           * The environment must actually be within GitLab CI
           * A GitLab token providing API access is available when operating in an MR pipeline
+            * Unless comment generation is skipped
         """
         super()._check_prerequisites()
 
@@ -77,7 +78,7 @@ class CIGitLab(CIBase):
         # This can be a personal, project, or group access token...and possibly some other types as well.
         # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
         gitlab_token = os.getenv("GITLAB_TOKEN", "")
-        if not gitlab_token and is_in_mr():
+        if not gitlab_token and is_in_mr() and not self.skip_comments:
             msg = "A GitLab token with API access must be set at `GITLAB_TOKEN`"
             raise SystemExit(msg)
         self._gitlab_token = gitlab_token
@@ -143,12 +144,12 @@ class CIGitLab(CIBase):
         try:
             common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
         except subprocess.CalledProcessError as err:
-            msg = """\
+            msg = """
                 The common ancestor commit could not be found.
                 Ensure the git strategy is set to `clone` for repo checkouts:
                 https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
             pprint_subprocess_error(err)
-            LOG.warning(textwrap.dedent(msg))
+            LOG.warning(cleandoc(msg))
             common_commit = None
 
         return common_commit
@@ -163,7 +164,7 @@ class CIGitLab(CIBase):
         if diff_base_sha is None:
             return False
 
-        err_msg = """\
+        err_msg = """
             Consider changing the `GIT_DEPTH` variable in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
@@ -186,12 +187,17 @@ class CIGitLab(CIBase):
         """Post the output of the analysis.
 
         Post output directly in the logs regardless of the pipeline context.
-        Post output as a note (comment) on the GitLab CI Merge Request (MR) when operating in a merge request pipeline.
+        Optionally post output as a note (comment) on the GitLab CI Merge
+        Request (MR) when operating in a merge request pipeline.
         """
         super().post_output()
 
         if not is_in_mr():
             # Can't post the output to the MR when there is no MR
+            return
+
+        if self.skip_comments:
+            LOG.debug("Posting analysis output as notes on the merge request was disabled.")
             return
 
         LOG.info("Checking merge request notes for existing content to avoid duplication ...")
@@ -230,6 +236,13 @@ class CIGitLab(CIBase):
         if not is_in_mr():
             # It only makes sense to reference this property in the context of an MR
             return None
+
+        if self.skip_comments:
+            LOG.debug("Posting analysis output as notes on the merge request was disabled.")
+            if not self.gitlab_token:
+                LOG.debug("GitLab API token not available. Unable to look for notes.")
+                return None
+            LOG.debug("GitLab API token available but possibly invalid. Attempting use ...")
 
         url = get_notes_url()
         LOG.info("Getting all current merge request notes with GET URL: %s ...", url)

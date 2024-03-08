@@ -160,11 +160,11 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 
 ![phylum-ci options](https://raw.githubusercontent.com/phylum-dev/phylum-ci/main/docs/img/phylum-ci_options.svg)
 
-[github_docs]: https://docs.phylum.io/integrations/github_actions
-[gitlab_docs]: https://docs.phylum.io/integrations/gitlab_ci
-[azure_docs]: https://docs.phylum.io/integrations/azure_pipelines
-[bb_pipelines_docs]: https://docs.phylum.io/integrations/bitbucket_pipelines
-[precommit_docs]: https://docs.phylum.io/integrations/git_precommit
+[github_docs]: https://docs.phylum.io/phylum-ci/github_actions
+[gitlab_docs]: https://docs.phylum.io/phylum-ci/gitlab_ci
+[azure_docs]: https://docs.phylum.io/phylum-ci/azure_pipelines
+[bb_pipelines_docs]: https://docs.phylum.io/phylum-ci/bitbucket_pipelines
+[precommit_docs]: https://docs.phylum.io/phylum-ci/git_precommit
 
 ## License
 

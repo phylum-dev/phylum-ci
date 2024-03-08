@@ -2,11 +2,11 @@
 
 from collections.abc import Generator, Mapping
 import contextlib
+from inspect import cleandoc
 from pathlib import Path
 import shlex
 import subprocess
 import tempfile
-import textwrap
 from typing import Optional
 
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -204,13 +204,13 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
     try:
         full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
     except subprocess.CalledProcessError as err:
-        msg = """\
+        msg = """
             Getting the git repository name failed. Are all assumptions met:
               * Only a single remote is in use if remotes are used
               * When a remote exists, it points to a URL and not another local repo
               * Cloned local repos without a remote defined have a name that does
                 not end in `.git`"""
-        raise PhylumCalledProcessError(err, textwrap.dedent(msg)) from err
+        raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
     full_repo_path = Path(full_repo_name)
     repo_name = full_repo_path.name

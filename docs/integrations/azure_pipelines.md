@@ -15,8 +15,9 @@ For CI triggered pipelines, the analyzed dependencies will be determined by comp
 to the default branch. **All** dependencies will be analyzed when the CI triggered pipeline is run on the default
 branch.
 
-The results will be provided in the pipeline logs and provided as a comment in a thread on the PR. The CI job will
-return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the established policy.
+The results will be provided in the pipeline logs and provided as a comment in a thread on the PR unless the option to
+skip comments is provided. The CI job will return an error (i.e., fail the build) if any of the analyzed dependencies
+fail to meet the established policy unless audit mode is specified.
 
 There will be no comment if no dependencies were added or modified for a given PR.
 If one or more dependencies are still processing (no results available), then the comment will make that clear and
@@ -36,7 +37,10 @@ The pre-requisites for using this image are:
   * Azure DevOps Server versions are not guaranteed to work at this time
   * Bitbucket Cloud hosted repositories are not supported at this time
 * An [Azure token][azure_auth] with API access
-  * This is only required when the build repository is [Azure Repos Git][azure_repos_git] and PR triggers are enabled
+  * This is only required when:
+    * The build repository is [Azure Repos Git][azure_repos_git]
+    * PR triggers are enabled
+    * Comment generation has not been skipped
   * Can be the default `System.AccessToken` provided automatically at the start of each pipeline build
     * The [scoped build identity][build_scope] using this token needs the `Contribute to pull requests` permission
     * See documentation for using the [token][access_token] and setting it's [job authorization scope][auth_scope]
@@ -44,7 +48,10 @@ The pre-requisites for using this image are:
     * Needs at least the `Pull Request Threads` scope (read & write)
     * Consider using a service account for this token
 * A [GitHub PAT][GH_PAT] with API access
-  * This is only required when the build repository is [GitHub][github_repos] and PR triggers are enabled
+  * This is only required when:
+    * The build repository is [GitHub][github_repos]
+    * PR triggers are enabled
+    * Comment generation has not been skipped
   * Can be a fine-grained PAT
     * Needs repository access and permissions: read access to `metadata` and read/write access to `pull requests`
     * See [permissions required for fine-grained PATs][fine_pats]
@@ -176,7 +183,7 @@ documentation for more detail.
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.21.0-CLIv4.0.1`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.42.4-CLIv6.1.2`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -185,8 +192,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.21.0-CLIv4.0.1 | jq .Descriptor.digest
-"sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.42.4-CLIv6.1.2 | jq .Descriptor.digest
+"sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -198,10 +205,10 @@ For instance, at the time of this writing, all of these tag references pointed t
     container: phylumio/phylum-ci:latest
 
     # Use a specific release version of the `phylum-ci` package
-    container: phylumio/phylum-ci:0.21.0-CLIv4.0.1
+    container: phylumio/phylum-ci:0.42.4-CLIv6.1.2
 
     # Use a specific image with it's SHA256 digest
-    container: phylumio/phylum-ci@sha256:7ddeb98897cd7af9dacae2e1474e8574dcf74b2e2e41e47327519d12242601cc
+    container: phylumio/phylum-ci@sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -227,7 +234,7 @@ Here are examples of using the slim image tags:
     container: phylumio/phylum-ci:slim
 
     # Use the `slim` image with a specific release version of `phylum-ci` and Phylum CLI
-    container: phylumio/phylum-ci:0.36.0-CLIv5.7.1-slim
+    container: phylumio/phylum-ci:0.42.4-CLIv6.1.2-slim
 ```
 
 [resource_container]: https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/resources-containers-container
@@ -282,7 +289,7 @@ view the [script options output][script_options] for the latest release.
       # against the active policy set at the Phylum project level.
       - script: phylum-ci
 
-      # Provide debug level output
+      # Provide debug level output.
       - script: phylum-ci -vv
 
       # Consider all dependencies in analysis results instead of just the newly added ones.
@@ -300,17 +307,15 @@ view the [script options output][script_options] for the latest release.
       # and committing the generated `.phylum_project` file.
       - script: phylum-ci --depfile requirements-prod.txt
 
-      # Specify multiple explicit dependency file paths
+      # Specify multiple explicit dependency file paths.
       - script: phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file
-
-      # Force analysis, even when no dependency file has changed. This can be useful for
-      # manifests, where the loosely specified dependencies may not change often but the
-      # completely resolved set of strict dependencies does.
-      - script: phylum-ci --force-analysis
 
       # Force analysis for all dependencies in a manifest file. This is especially useful
       # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
       - script: phylum-ci --force-analysis --all-deps --depfile Cargo.toml
+
+      # Analyze all dependencies in audit mode, to gain insight without failing builds.
+      - script: phylum-ci --all-deps --audit
 
       # Ensure the latest Phylum CLI is installed.
       - script: phylum-ci --force-install
@@ -341,7 +346,7 @@ for this token.
 #### Azure Repos Git Build Repositories
 
 An Azure DevOps token with API access is required to use the API (e.g., to post notes/comments) when the build
-repository is [Azure Repos Git][azure_repos_git] and PR triggers are enabled.
+repository is [Azure Repos Git][azure_repos_git], PR triggers are enabled, and comment generation is not skipped.
 This can be the default `System.AccessToken` provided automatically at the start of each pipeline build for the
 [scoped build identity][build_scope] or a personal access token (PAT).
 
@@ -367,7 +372,7 @@ See the Azure DevOps documentation for [using the `System.AccessToken`][access_t
 #### GitHub Build Repositories
 
 A [GitHub PAT][GH_PAT] with API access is required to use the API (e.g., to post notes/comments) when the build
-repository is [GitHub][github_repos] and PR triggers are enabled.
+repository is [GitHub][github_repos], PR triggers are enabled, and comment generation is not skipped.
 This can be a fine-grained or classic PAT.
 
 If using a fine-grained PAT, it will need repository access and permissions for read access to `metadata` and
@@ -397,7 +402,8 @@ information. Since these tokens are sensitive, **care should be taken to protect
           PHYLUM_API_KEY: $(PHYLUM_TOKEN)
 
           # NOTE: These are examples. Only one `AZURE_TOKEN` entry line is expected, and only
-          #       when the build repository is hosted in Azure Repos Git with PR triggers enabled.
+          #       when the build repository is hosted in Azure Repos Git with PR triggers
+          #       and comment generation enabled.
           #
           # Use the `System.AccessToken` provided automatically at the start of each pipeline build.
           # This value does not have to be set as a secret variable since it is provided by default.
@@ -409,7 +415,7 @@ information. Since these tokens are sensitive, **care should be taken to protect
           AZURE_TOKEN: $(AZURE_PAT)
 
           # NOTE: A `GITHUB_TOKEN` entry is only needed for GitHub hosted build repositories
-          #       with PR triggers enabled.
+          #       with PR triggers and comment generation enabled.
           #
           # Use a personal access token (PAT).
           # This value (`GITHUB_PAT`) will need to be set as a secret variable:

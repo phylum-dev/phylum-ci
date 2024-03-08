@@ -8,7 +8,9 @@ conditions:
 ```yaml
 # Ensure these variables are set at the repository or workspace level:
 #  - `PHYLUM_API_KEY`: Phylum authentication token
-#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` (read) scope
+#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with
+#                       `pullrequest` (read) scope. It is not needed when in
+#                       audit mode or when comment generation is disabled.
 
     - step:
         name: Phylum Analyze
@@ -30,8 +32,9 @@ For PR pipelines, analyzed dependencies will include any that are added/modified
 For branch pipelines, the analyzed dependencies will be determined by comparing dependency files in the branch to
 the default branch. **All** dependencies will be analyzed when the branch pipeline is run on the default branch.
 
-The results will be provided in the pipeline logs and provided as a comment on the PR. The CI job will return an
-error (i.e., fail the build) if any of the analyzed dependencies fail to meet the established policy.
+The results will be provided in the pipeline logs and provided as a comment on the PR unless the option to skip
+comments is provided. The CI job will return an error (i.e., fail the build) if any of the analyzed dependencies fail
+to meet the established policy unless audit mode is specified.
 
 There will be no comment if no dependencies were added or modified for a given PR.
 If one or more dependencies are still processing (no results available), then the comment will make that clear and
@@ -47,7 +50,9 @@ for using this image are:
 
 * Access to the [phylumio/phylum-ci Docker image][docker_image]
 * A [Bitbucket access token][bb_tokens] with API access
-  * This is only required when using the integration in pull request pipelines
+  * This is only required when:
+    * Using the integration in pull request pipelines
+    * Comment generation has not been skipped
   * The token needs the `pullrequest` (read) scope
 * A [Phylum token][phylum_tokens] with API access
   * [Contact Phylum][phylum_contact] or [register][app_register] to gain access
@@ -70,7 +75,9 @@ Phylum analysis of dependencies can be added to existing CI workflows or on it's
 ```yaml
 # Ensure these variables are set at the repository or workspace level:
 #  - `PHYLUM_API_KEY`: Phylum authentication token
-#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with `pullrequest` (read) scope
+#  - `BITBUCKET_TOKEN`: repository, project, or workspace access token with
+#                       `pullrequest` (read) scope. It is not needed when in
+#                       audit mode or when comment generation is disabled.
 
 pipelines:
   pull-requests:
@@ -113,8 +120,8 @@ will be the one that appears to post the comments on the PR. Therefore, it might
 `Phylum Analysis`. See the [Bitbucket Access Tokens][bb_tokens] documentation for more info.
 
 Note, the Bitbucket token is only required when this Phylum integration is used in
-[pull request pipelines][pr_pipelines]. It is not required when used in branch based pipelines. Provide the token
-value in a user-defined variable named `BITBUCKET_TOKEN`.
+[pull request pipelines][pr_pipelines] where comment generation is not skipped. It is not required when used in branch
+based pipelines. Provide the token value in a user-defined variable named `BITBUCKET_TOKEN`.
 
 Values for the `BITBUCKET_TOKEN` and `PHYLUM_API_KEY` variables are sensitive and should be set as a
 [secured variable][secured_var]. **Care should be taken to protect them appropriately**.
@@ -169,7 +176,7 @@ pipelines:
 
 Choose the Docker image tag to match your comfort level with image dependencies. `latest` is a "rolling" tag that
 will point to the image created for the latest released `phylum-ci` Python package. A particular version tag
-(e.g., `0.23.1-CLIv4.4.0`) is created for each release of the `phylum-ci` Python package and _should_ not change
+(e.g., `0.42.4-CLIv6.1.2`) is created for each release of the `phylum-ci` Python package and _should_ not change
 once published.
 
 However, to be certain that the image does not change...or be warned when it does because it won't be available
@@ -178,8 +185,8 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 
 ```sh
 # NOTE: The command-line JSON processor `jq` is used here for the sake of a one line example. It is not required.
-❯ docker manifest inspect --verbose phylumio/phylum-ci:0.23.1-CLIv4.4.0 | jq .Descriptor.digest
-"sha256:f2840ad448278e26b69a076a93f2c90cb083803243a614f5efb518f032626578"
+❯ docker manifest inspect --verbose phylumio/phylum-ci:0.42.4-CLIv6.1.2 | jq .Descriptor.digest
+"sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6"
 ```
 
 For instance, at the time of this writing, all of these tag references pointed to the same image:
@@ -194,10 +201,10 @@ For instance, at the time of this writing, all of these tag references pointed t
   image: phylumio/phylum-ci:latest
 
   # Use a specific release version of the `phylum-ci` package
-  image: phylumio/phylum-ci:0.23.1-CLIv4.4.0
+  image: phylumio/phylum-ci:0.42.4-CLIv6.1.2
 
   # Use a specific image with it's SHA256 digest
-  image: phylumio/phylum-ci@sha256:f2840ad448278e26b69a076a93f2c90cb083803243a614f5efb518f032626578
+  image: phylumio/phylum-ci@sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -223,7 +230,7 @@ Here are examples of using the slim image tags:
   image: phylumio/phylum-ci:slim
 
   # Use the `slim` image with a specific release version of `phylum-ci` and Phylum CLI
-  image: phylumio/phylum-ci:0.36.0-CLIv5.7.1-slim
+  image: phylumio/phylum-ci:0.42.4-CLIv6.1.2-slim
 ```
 
 See the Docker [image option][image_option] and [build environment][docker_builds] documentation for more information.
@@ -267,7 +274,7 @@ view the [script options output][script_options] for the latest release.
     # against the active policy set at the Phylum project level.
     - phylum-ci
 
-    # Provide debug level output
+    # Provide debug level output.
     - phylum-ci -vv
 
     # Consider all dependencies in analysis results instead of just the newly added ones.
@@ -285,17 +292,15 @@ view the [script options output][script_options] for the latest release.
     # and committing the generated `.phylum_project` file.
     - phylum-ci --depfile requirements-prod.txt
 
-    # Specify multiple explicit dependency file paths
+    # Specify multiple explicit dependency file paths.
     - phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file
-
-    # Force analysis, even when no dependency file has changed. This can be useful for
-    # manifests, where the loosely specified dependencies may not change often but the
-    # completely resolved set of strict dependencies does.
-    - phylum-ci --force-analysis
 
     # Force analysis for all dependencies in a manifest file. This is especially useful
     # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
     - phylum-ci --force-analysis --all-deps --depfile Cargo.toml
+
+    # Analyze all dependencies in audit mode, to gain insight without failing builds.
+    - phylum-ci --all-deps --audit
 
     # Ensure the latest Phylum CLI is installed.
     - phylum-ci --force-install
