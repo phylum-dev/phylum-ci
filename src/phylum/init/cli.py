@@ -249,7 +249,7 @@ def get_archive_url(tag_name: str, archive_name: str) -> str:
     return archive_url
 
 
-def is_token_set(phylum_settings_path, token=None):
+def is_token_set(phylum_settings_path: Path, token: Optional[str] = None) -> bool:
     """Check if any token is already set in the given CLI configuration file.
 
     Optionally, check if a specific given `token` is set.
@@ -260,13 +260,14 @@ def is_token_set(phylum_settings_path, token=None):
         return False
 
     yaml = YAML()
-    settings_dict = yaml.load(settings_data)
-    configured_token = settings_dict.get("auth_info", {}).get("offline_access")
+    settings_dict: dict = yaml.load(settings_data)
+    auth_info_dict: dict = settings_dict.get("auth_info", {})
+    configured_token = auth_info_dict.get("offline_access")
 
     if configured_token is None:
         return False
-    if token is not None and token != configured_token:
-        return False
+    if token is not None:
+        return token == configured_token
 
     return True
 
