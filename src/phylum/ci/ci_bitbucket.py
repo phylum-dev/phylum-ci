@@ -220,7 +220,16 @@ class CIBitbucket(CIBase):
         # This is the "URL for the origin", which uses `HTTP:` instead of
         # `HTTPS:`, even though the value redirects to the `HTTPS:` site.
         # Ref: https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
-        return os.getenv("BITBUCKET_GIT_HTTP_ORIGIN")
+        origin_url = os.getenv("BITBUCKET_GIT_HTTP_ORIGIN")
+        if origin_url is None:
+            LOG.warning("Repository URL not found at `BITBUCKET_GIT_HTTP_ORIGIN`")
+            return None
+
+        # Ensure the repository URL uses the HTTPS scheme
+        parsed_url = urllib.parse.urlparse(origin_url)
+        if parsed_url.scheme == "http":
+            parsed_url = parsed_url._replace(scheme="https")
+        return parsed_url.geturl()
 
     def post_output(self) -> None:
         """Post the output of the analysis.
