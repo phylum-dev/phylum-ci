@@ -151,6 +151,19 @@ pipelines:
         # Add the Phylum Analyze step here
 ```
 
+If the `default` pipeline start condition is not used, it is recommended to at least enable the `branches` pipeline
+start condition for the default branch. That way, Phylum analysis results will stay current with updates to the default
+branch.
+
+```yaml
+pipelines:
+  # Pipeline definition for specific branches
+  branches:
+    main:   # The name of the default branch
+      - step:
+          # Add the Phylum Analyze step here
+```
+
 [start_conditions]: https://support.atlassian.com/bitbucket-cloud/docs/pipeline-start-conditions/
 
 ### Step name

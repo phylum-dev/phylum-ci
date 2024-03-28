@@ -116,7 +116,8 @@ Let's take a deeper dive into each part of the configuration:
 ### Pipeline control
 
 Choose when to run the pipeline. See the YAML schema [trigger definition][yaml_trigger] and [pr definition][yaml_pr]
-documentation for more detail.
+documentation for more detail. It is recommended to enable CI triggered branch pipelines for pushes to the default
+branch, to ensure the Phylum analysis results for that branch are current.
 
 ```yaml
 # This is a CI trigger that will cause the
