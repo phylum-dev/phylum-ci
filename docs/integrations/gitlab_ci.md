@@ -115,7 +115,22 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
+      # This next rule will trigger for pushes to any branch
     - if: $CI_COMMIT_BRANCH
+```
+
+It is recommended to allow branch pipelines for pushes to the default branch, to ensure the Phylum analysis results for
+that branch are current. This modification to the previous example will allow for merge request pipelines and pushes
+specifically to the default branch:
+
+```yaml
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+      # This next rule will trigger for pushes only to the default branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 ```
 
 See the [GitLab CI/CD Job Control][job_control] documentation for more detail.
