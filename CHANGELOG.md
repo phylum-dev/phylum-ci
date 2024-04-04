@@ -13,6 +13,16 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.44.0](https://github.com/phylum-dev/phylum-ci/compare/v0.43.0...v0.44.0) (2024-04-04)
+
+### Feature
+
+* Ensure bitbucket repo urls use https scheme ([#406](https://github.com/phylum-dev/phylum-ci/issues/406)) ([`5ea8cb2`](https://github.com/phylum-dev/phylum-ci/commit/5ea8cb260d5dfc361d83b7e4c9e64ba8dd3aad24))
+
+### Documentation
+
+* Recommend triggering scans for default branch ([#407](https://github.com/phylum-dev/phylum-ci/issues/407)) ([`efa67d0`](https://github.com/phylum-dev/phylum-ci/commit/efa67d0e0648a587461aad21ffe7c07bca3f1b63))
+
 ## [v0.43.0](https://github.com/phylum-dev/phylum-ci/compare/v0.42.4...v0.43.0) (2024-03-08)
 
 ### Feature
