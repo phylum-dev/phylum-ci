@@ -23,12 +23,12 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: 8fe627072f15ff2e3d380887b92f7868efaf6d05  # frozen: 24.4.0
+    rev: 3702ba224ecffbcec30af640c149f231d90aebdb  # frozen: 24.4.2
     hooks:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 21d9bff1d62aaf03230baa6b804b9074255fa9b8  # frozen: v0.4.1
+    rev: 596470fba20d04adc68ec7903ff69a12e5e1a8d3  # frozen: v0.4.2
     hooks:
       - id: ruff
 
