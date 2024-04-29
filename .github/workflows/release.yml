@@ -93,13 +93,13 @@ jobs:
           next_ver=$(poetry run semantic-release -vv version --print)
           if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${next_ver}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              next_ver=$(poetry run semantic-release -vv --strict version --print --prerelease --patch)
+              next_ver=$(poetry run semantic-release -vv --strict version --print --as-prerelease --patch)
             else
               next_ver=$(poetry run semantic-release -vv --strict version --print --patch)
             fi
           else
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              next_ver=$(poetry run semantic-release -vv --strict version --print --prerelease)
+              next_ver=$(poetry run semantic-release -vv --strict version --print --as-prerelease)
             fi
           fi
           poetry version "${next_ver}"
@@ -152,13 +152,13 @@ jobs:
         run: |
           if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${{ env.PHYLUM_NEXT_VER }}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              poetry run semantic-release -vv --strict version --prerelease --patch
+              poetry run semantic-release -vv --strict version --as-prerelease --patch
             else
               poetry run semantic-release -vv --strict version --patch
             fi
           else
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              poetry run semantic-release -vv --strict version --prerelease
+              poetry run semantic-release -vv --strict version --as-prerelease
             else
               poetry run semantic-release -vv version
             fi
