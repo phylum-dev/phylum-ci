@@ -65,7 +65,7 @@ jobs:
           git_tag_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.8.1
+        run: pipx install poetry==1.8.3
 
       - name: Configure poetry
         run: |

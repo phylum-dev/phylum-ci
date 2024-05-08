@@ -35,7 +35,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.8.1
+        run: pipx install poetry==1.8.3
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
