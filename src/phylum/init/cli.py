@@ -68,7 +68,7 @@ def get_phylum_cli_version(cli_path: Path) -> str:
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the Phylum CLI version"
         raise PhylumCalledProcessError(err, msg) from err
-    version = version.removeprefix("phylum ")
+    version = version.removeprefix("phylum ").removesuffix("+")
     return version
 
 
