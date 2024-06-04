@@ -13,43 +13,49 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.44.1](https://github.com/phylum-dev/phylum-ci/compare/v0.44.0...v0.44.1) (2024-06-04)
+
+### Fix
+
+* Account for `cargo_suffix` in cli version ([#433](https://github.com/phylum-dev/phylum-ci/pull/433)) ([`bfbd426`](https://github.com/phylum-dev/phylum-ci/commit/bfbd42628b5fb52016eab323aba7fb9c86ccd4e2))
+
 ## [v0.44.0](https://github.com/phylum-dev/phylum-ci/compare/v0.43.0...v0.44.0) (2024-04-04)
 
 ### Feature
 
-* Ensure bitbucket repo urls use https scheme ([#406](https://github.com/phylum-dev/phylum-ci/issues/406)) ([`5ea8cb2`](https://github.com/phylum-dev/phylum-ci/commit/5ea8cb260d5dfc361d83b7e4c9e64ba8dd3aad24))
+* Ensure bitbucket repo urls use https scheme ([#406](https://github.com/phylum-dev/phylum-ci/pull/406)) ([`5ea8cb2`](https://github.com/phylum-dev/phylum-ci/commit/5ea8cb260d5dfc361d83b7e4c9e64ba8dd3aad24))
 
 ### Documentation
 
-* Recommend triggering scans for default branch ([#407](https://github.com/phylum-dev/phylum-ci/issues/407)) ([`efa67d0`](https://github.com/phylum-dev/phylum-ci/commit/efa67d0e0648a587461aad21ffe7c07bca3f1b63))
+* Recommend triggering scans for default branch ([#407](https://github.com/phylum-dev/phylum-ci/pull/407)) ([`efa67d0`](https://github.com/phylum-dev/phylum-ci/commit/efa67d0e0648a587461aad21ffe7c07bca3f1b63))
 
 ## [v0.43.0](https://github.com/phylum-dev/phylum-ci/compare/v0.42.4...v0.43.0) (2024-03-08)
 
 ### Feature
 
-* Implement audit mode ([#400](https://github.com/phylum-dev/phylum-ci/issues/400)) ([`1613851`](https://github.com/phylum-dev/phylum-ci/commit/1613851fa82bcaadb5b4d7d67937ae292c6ab02f))
+* Implement audit mode ([#400](https://github.com/phylum-dev/phylum-ci/pull/400)) ([`1613851`](https://github.com/phylum-dev/phylum-ci/commit/1613851fa82bcaadb5b4d7d67937ae292c6ab02f))
 
 ## [v0.42.4](https://github.com/phylum-dev/phylum-ci/compare/v0.42.3...v0.42.4) (2024-03-05)
 
 ### Fix
 
-* `pre-commit` hook failures ([#397](https://github.com/phylum-dev/phylum-ci/issues/397)) ([`a6d0f5e`](https://github.com/phylum-dev/phylum-ci/commit/a6d0f5eaae3977e85fbe8779821571dbef93485d))
+* `pre-commit` hook failures ([#397](https://github.com/phylum-dev/phylum-ci/pull/397)) ([`a6d0f5e`](https://github.com/phylum-dev/phylum-ci/commit/a6d0f5eaae3977e85fbe8779821571dbef93485d))
 
 ### Documentation
 
-* Restore integration documentation ([#395](https://github.com/phylum-dev/phylum-ci/issues/395)) ([`a209f58`](https://github.com/phylum-dev/phylum-ci/commit/a209f58170e9462718685a0019bd9a3d5d273470))
+* Restore integration documentation ([#395](https://github.com/phylum-dev/phylum-ci/pull/395)) ([`a209f58`](https://github.com/phylum-dev/phylum-ci/commit/a209f58170e9462718685a0019bd9a3d5d273470))
 
 ## [v0.42.3](https://github.com/phylum-dev/phylum-ci/compare/v0.42.2...v0.42.3) (2024-02-22)
 
 ### Fix
 
-* Image failures for non-root uses of `yarn` and `pnpm` ([#391](https://github.com/phylum-dev/phylum-ci/issues/391)) ([`345ecd2`](https://github.com/phylum-dev/phylum-ci/commit/345ecd24124d11abe8a922c1820027d1e5b95b07))
+* Image failures for non-root uses of `yarn` and `pnpm` ([#391](https://github.com/phylum-dev/phylum-ci/pull/391)) ([`345ecd2`](https://github.com/phylum-dev/phylum-ci/commit/345ecd24124d11abe8a922c1820027d1e5b95b07))
 
 ## v0.42.2 (2024-02-09)
 
 ### Performance
 
-* Reduce `phylum` binary size for slim images ([#385](https://github.com/phylum-dev/phylum-ci/issues/385)) ([`ac5e477`](https://github.com/phylum-dev/phylum-ci/commit/ac5e47740f9bedaed71b11988d2d22dd7c4a20aa))
+* Reduce `phylum` binary size for slim images ([#385](https://github.com/phylum-dev/phylum-ci/pull/385)) ([`ac5e477`](https://github.com/phylum-dev/phylum-ci/commit/ac5e47740f9bedaed71b11988d2d22dd7c4a20aa))
 
 ## v0.42.1 (2024-01-05)
 
