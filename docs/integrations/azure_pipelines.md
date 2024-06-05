@@ -99,7 +99,7 @@ jobs:
       - checkout: self
         fetchDepth: 0
         persistCredentials: true
-      - script: phylum-ci
+      - script: phylum-ci -vv
         displayName: Analyze dependencies with Phylum
         env:
           PHYLUM_API_KEY: $(PHYLUM_TOKEN)
@@ -108,8 +108,8 @@ jobs:
 ```
 
 This single stage pipeline configuration contains a single container job named `Phylum`, triggered to run on pushes
-or PRs targeting the `main` branch. It does not override any of the `phylum-ci` arguments, which are all either
-optional or default to secure values.
+or PRs targeting the `main` branch. It provides debug output but otherwise does not override any of the `phylum-ci`
+arguments, which are all either optional or default to secure values.
 
 Let's take a deeper dive into each part of the configuration:
 
@@ -290,7 +290,7 @@ view the [script options output][script_options] for the latest release.
       # against the active policy set at the Phylum project level.
       - script: phylum-ci
 
-      # Provide debug level output.
+      # Provide debug level output. Highly recommended.
       - script: phylum-ci -vv
 
       # Consider all dependencies in analysis results instead of just the newly added ones.

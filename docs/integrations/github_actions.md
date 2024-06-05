@@ -33,6 +33,10 @@ GitHub Action. That is possible with either [container jobs](#container-jobs) or
 
 ### Container Jobs
 
+> ⚠️ **NOTE:** The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
+> image is not acceptable for any reason. Otherwise, use the [GitHub action][marketplace] directly and view it's
+> documentation for configuration instead.
+
 GitHub Actions allows for workflows to run a job within a container, using the `container:` statement in the
 workflow file. These are known as container jobs. More information can be found in GitHub documentation:
 ["Running jobs in a container"][container_job]. To use a `slim` tag in a container job, use this minimal
@@ -49,6 +53,10 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     container:
+      # This `slim` tag is smaller than the `latest` tag
+      # but does not contain all the required tools for
+      # lockfile generation. If that is desired, use the
+      # `phylum-dev/phylum-analyze-pr-action` action instead.
       image: docker://ghcr.io/phylum-dev/phylum-ci:slim
       env:
         GITHUB_TOKEN: ${{ github.token }}
@@ -76,6 +84,10 @@ Those environment variables and the rest of the options are more fully documente
 
 ### Container Steps
 
+> ⚠️ **NOTE:** The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
+> image is not acceptable for any reason. Otherwise, use the [GitHub action][marketplace] directly and view it's
+> documentation for configuration instead.
+
 GitHub Actions allows for workflows to run a step within a container, by specifying that container image in
 the `uses:` statement of the workflow step. These are known as container steps. More information can be found
 in [GitHub workflow syntax documentation][container_step]. To use a `slim` tag in a container step, use this
@@ -97,6 +109,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Analyze dependencies
+        # This `slim` tag is smaller than the `latest` tag
+        # but does not contain all the required tools for
+        # lockfile generation. If that is desired, use the
+        # `phylum-dev/phylum-analyze-pr-action` action instead.
         uses: docker://ghcr.io/phylum-dev/phylum-ci:slim
         env:
           GITHUB_TOKEN: ${{ github.token }}

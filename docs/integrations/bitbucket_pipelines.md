@@ -18,7 +18,7 @@ conditions:
         clone:
           depth: full
         script:
-          - phylum-ci
+          - phylum-ci -vv
 ```
 
 ## Overview
@@ -88,7 +88,7 @@ pipelines:
           clone:
             depth: full
           script:
-            - phylum-ci
+            - phylum-ci -vv
   default:
     - step:
         name: Phylum Analyze branch
@@ -96,12 +96,13 @@ pipelines:
         clone:
           depth: full
         script:
-          - phylum-ci
+          - phylum-ci -vv
 ```
 
 This configuration contains pipeline definitions for the `pull-requests` and `default` start conditions. It will
-run for _all_ pull requests and pushes to _any_ branch. It does not override any of the `phylum-ci` arguments, which
-are all either optional or default to secure values. Let's take a deeper dive into each part of the configuration:
+run for _all_ pull requests and pushes to _any_ branch. It provides debug output but otherwise does not override any of
+the `phylum-ci` arguments, which are all either optional or default to secure values. Let's take a deeper dive into
+each part of the configuration:
 
 ### User-defined variables
 
@@ -287,7 +288,7 @@ view the [script options output][script_options] for the latest release.
     # against the active policy set at the Phylum project level.
     - phylum-ci
 
-    # Provide debug level output.
+    # Provide debug level output. Highly recommended.
     - phylum-ci -vv
 
     # Consider all dependencies in analysis results instead of just the newly added ones.
