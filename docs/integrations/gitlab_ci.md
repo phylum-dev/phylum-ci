@@ -68,12 +68,12 @@ analyze_MR_with_Phylum:
     GITLAB_TOKEN: $GITLAB_TOKEN_VARIABLE_OR_SECRET_HERE
     PHYLUM_API_KEY: $PHYLUM_TOKEN_VARIABLE_OR_SECRET_HERE
   script:
-    - phylum-ci
+    - phylum-ci -vv
 ```
 
 This configuration contains a single Quality Assurance stage named QA and will only run in merge request pipelines.
-It does not override any of the `phylum-ci` arguments, which are all either optional or default to secure values.
-Let's take a deeper dive into each part of the configuration:
+It provides debug output but otherwise does not override any of the `phylum-ci` arguments, which are all either
+optional or default to secure values. Let's take a deeper dive into each part of the configuration:
 
 ### Stage and Job names
 
@@ -276,7 +276,7 @@ view the [script options output][script_options] for the latest release.
     # against the active policy set at the Phylum project level.
     - phylum-ci
 
-    # Provide debug level output.
+    # Provide debug level output. Highly recommended.
     - phylum-ci -vv
 
     # Consider all dependencies in analysis results instead of just the newly added ones.

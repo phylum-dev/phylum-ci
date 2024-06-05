@@ -168,3 +168,23 @@ with `--help` output as specified in the [Usage section of the top-level README.
           - --force-analysis
           - --all-deps
 ```
+
+### Audit Mode
+
+It is possible to use the Phylum hook in an audit mode, where analysis is performed but results do not affect the exit
+code. To do so, update the `args` to include the `--audit` flag and add the `verbose: true` mapping to the hook
+configuration. That will ensure the output of the hook is printed every time so it can be examined during the audit
+period.
+
+```yaml
+repos:
+  - repo: https://github.com/phylum-dev/phylum-ci
+    rev: main
+    hooks:
+      - id: phylum
+        # Additional args are possible, but `--audit` is the new one.
+        args: [--audit]
+        # Since the hook will always pass in audit mode, forcing the output of the
+        # hook to be printed will ensure failures have a chance of being noticed.
+        verbose: true
+```
