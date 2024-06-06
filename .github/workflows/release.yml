@@ -91,6 +91,7 @@ jobs:
       - name: Set to next version for build
         run: |
           next_ver=$(poetry run semantic-release -vv version --print)
+          echo "PSR_EXPECTED_NEXT_VER=${next_ver}" >> "${GITHUB_ENV}"
           if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${next_ver}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
               next_ver=$(poetry run semantic-release -vv --strict version --print --as-prerelease --patch)
@@ -103,7 +104,6 @@ jobs:
             fi
           fi
           poetry version "${next_ver}"
-          echo "PHYLUM_NEXT_VER=${next_ver}" >> "${GITHUB_ENV}"
 
       - name: Set PHYLUM_REL_VER value
         run: echo "PHYLUM_REL_VER=$(poetry version --short)" >> "${GITHUB_ENV}"
@@ -150,7 +150,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         run: |
-          if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${{ env.PHYLUM_NEXT_VER }}" ]; then
+          if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${{ env.PSR_EXPECTED_NEXT_VER }}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
               poetry run semantic-release -vv --strict version --as-prerelease --patch
             else
