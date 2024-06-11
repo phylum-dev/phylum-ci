@@ -14,6 +14,7 @@ from phylum.ci.ci_base import CIBase, CIEnvs
 from phylum.ci.ci_bitbucket import CIBitbucket
 from phylum.ci.ci_github import CIGitHub
 from phylum.ci.ci_gitlab import CIGitLab
+from phylum.ci.ci_jenkins import CIJenkins
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
 from phylum.ci.common import ReturnCode
@@ -48,6 +49,11 @@ def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase
     if os.getenv("BITBUCKET_COMMIT"):
         LOG.debug("CI environment detected: Bitbucket Pipelines")
         ci_envs.append(CIBitbucket(args))
+
+    # Detect Jenkins
+    if all(map(os.getenv, ["JENKINS_URL", "BUILD_ID"])):
+        LOG.debug("CI environment detected: Jenkins")
+        ci_envs.append(CIJenkins(args))
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,
