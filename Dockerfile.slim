@@ -177,7 +177,7 @@ ENV XDG_CACHE_HOME="${INSTALL_DIR}/.cache"
 COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 
 RUN set -eux; \
-    # Install pre-requisites
+    # Install prerequisites
     apt-get update; \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends git binutils; \

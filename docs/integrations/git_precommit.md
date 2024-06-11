@@ -18,7 +18,7 @@ dependencies that have _completed analysis results_ do not meet the active polic
 
 ## Prerequisites
 
-The pre-requisites for using the git `pre-commit` hook are:
+The prerequisites for using the git `pre-commit` hook are:
 
 * The [pre-commit] package manager installed
 * A [Phylum token][phylum_tokens] with API access

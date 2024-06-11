@@ -205,7 +205,7 @@ COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 # Ref: https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN \
-    # Install pre-requisites and package manager versions for `npm`, `bundle`, and `mvn` tools
+    # Install prerequisites and package manager versions for `npm`, `bundle`, and `mvn` tools
     apt-get update; \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends \

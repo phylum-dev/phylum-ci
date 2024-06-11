@@ -25,9 +25,9 @@ The GitLab CI environment is primarily supported through the use of a Docker ima
 hosted on [https://gitlab.com](https://gitlab.com) are supported. [Self-managed subscriptions][self_managed] are
 supported for "on-premises" installs which still have access to the internet. Self-hosted "offline" (e.g., air-gapped networks) installs of GitLab may work but have not been confirmed.
 
-The pre-requisites for using this image are:
+The prerequisites for using this image are:
 
-* Access to the [phylumio/phylum-ci Docker image][docker_image]
+* Access to the [`phylumio/phylum-ci` Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
   * This is only required when:
     * Using the integration in merge request pipelines

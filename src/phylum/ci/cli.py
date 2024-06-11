@@ -57,7 +57,7 @@ def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase
 
     # Detect Python pre-commit environment
     # This might be a naive strategy for detecting the `pre-commit` case, but there is at least an attempt,
-    # via a pre-requisite check, to check the extra arguments for common/valid pre-commit usage patterns.
+    # via a prerequisite check, to check the extra arguments for common/valid pre-commit usage patterns.
     if any(remainder):
         LOG.debug("Extra arguments provided. Assuming a Python `pre-commit` working environment.")
         ci_envs.append(CIPreCommit(args, remainder))

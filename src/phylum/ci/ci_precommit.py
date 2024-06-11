@@ -43,9 +43,9 @@ class CIPreCommit(CIBase):
         self._env.pop("GIT_INDEX_FILE", None)
 
     def _check_prerequisites(self) -> None:
-        """Ensure the necessary pre-requisites are met and bail when they aren't.
+        """Ensure the necessary prerequisites are met and bail when they aren't.
 
-        These are the current pre-requisites for operating within a pre-commit hook:
+        These are the current prerequisites for operating within a pre-commit hook:
           * The extra unparsed arguments passed to the CLI represent the staged files, no more and no less
         """
         super()._check_prerequisites()
