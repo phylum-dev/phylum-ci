@@ -13,6 +13,16 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.45.0](https://github.com/phylum-dev/phylum-ci/compare/v0.44.1...v0.45.0) (2024-06-12)
+
+### Feature
+
+* Add support for jenkins pipelines ([#438](https://github.com/phylum-dev/phylum-ci/pull/438)) ([`910cca7`](https://github.com/phylum-dev/phylum-ci/commit/910cca7389a9697cccdf4507ca206302b91cfa5a))
+
+### Documentation
+
+* Update docs based on user feedback ([#434](https://github.com/phylum-dev/phylum-ci/pull/434)) ([`f5c12ec`](https://github.com/phylum-dev/phylum-ci/commit/f5c12ecce4c582a03c81fbba1f6807bddeb5a316))
+
 ## [v0.44.1](https://github.com/phylum-dev/phylum-ci/compare/v0.44.0...v0.44.1) (2024-06-04)
 
 ### Fix
