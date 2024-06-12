@@ -25,9 +25,9 @@ class CINone(CIBase):
         self.ci_platform_name = "No CI"
 
     def _check_prerequisites(self) -> None:
-        """Ensure the necessary pre-requisites are met and bail when they aren't.
+        """Ensure the necessary prerequisites are met and bail when they aren't.
 
-        These are the current pre-requisites for when no CI environments/platforms is detected:
+        These are the current prerequisites for when no CI environments/platforms is detected:
           * (None at this time)
         """
         super()._check_prerequisites()

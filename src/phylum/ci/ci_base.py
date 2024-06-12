@@ -69,9 +69,9 @@ class CIBase(ABC):
         self.audit_mode = args.audit
         self._skip_comments = True if self.audit_mode else args.skip_comments
 
-        # Ensure all pre-requisites are met and bail at the earliest opportunity when they aren't
+        # Ensure all prerequisites are met and bail at the earliest opportunity when they aren't
         self._check_prerequisites()
-        LOG.info("All pre-requisites met")
+        LOG.info("All prerequisites met")
 
         self._backup_project_file()
 
@@ -501,13 +501,13 @@ class CIBase(ABC):
 
     @abstractmethod
     def _check_prerequisites(self) -> None:
-        """Ensure the necessary pre-requisites are met and bail when they aren't.
+        """Ensure the necessary prerequisites are met and bail when they aren't.
 
-        The current pre-requisites for *all* CI environments/platforms are:
+        The current prerequisites for *all* CI environments/platforms are:
           * A Phylum CLI version at least as new as the minimum supported version
           * Have `git` installed and available for use on the PATH
         """
-        LOG.info("Confirming pre-requisites ...")
+        LOG.info("Confirming prerequisites ...")
 
         if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
             msg = f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}"

@@ -205,7 +205,7 @@ COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 # Ref: https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN \
-    # Install pre-requisites and package manager versions for `npm`, `bundle`, and `mvn` tools
+    # Install prerequisites and package manager versions for `npm`, `bundle`, and `mvn` tools
     apt-get update; \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends \
@@ -277,9 +277,11 @@ RUN \
     rm ms-prod.deb; \
     apt-get update; \
     apt-get install --yes --no-install-recommends "dotnet-sdk-${DOTNET_SDK_LATEST_CHANNEL_VER}"; \
+    #
     # Create a git config file in a location accessible for $HOME-less users
     # Ref: https://git-scm.com/docs/git-config#FILES
     mkdir -vp "${XDG_CONFIG_HOME}/git" && touch "${XDG_CONFIG_HOME}/git/config"; \
+    #
     # Ensure non-root users have necessary permissions
     mkdir -vp "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \
     chmod -vR 777 "${XDG_DATA_HOME}" "${XDG_CONFIG_HOME}" "${XDG_STATE_HOME}" "${XDG_CACHE_HOME}"; \

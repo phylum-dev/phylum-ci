@@ -66,7 +66,7 @@ if [ -z "${IMAGE:-}" ]; then
     echo " [!] \`--image\` option not specified. Attempting to use \`${IMAGE}\` ..."
 fi
 
-# These are the commands to ensure the base pre-requisites are available
+# These are the commands to ensure the base prerequisites are available
 SLIM_COMMANDS=$(cat <<EOF
 set -eux
 type git && git --version || false

@@ -33,7 +33,9 @@ GitHub Action. That is possible with either [container jobs](#container-jobs) or
 
 ### Container Jobs
 
-> ⚠️ **NOTE:** The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
+> ⚠️ **INFO** ⚠️
+>
+> The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
 > image is not acceptable for any reason. Otherwise, use the [GitHub action][marketplace] directly and view it's
 > documentation for configuration instead.
 
@@ -84,7 +86,9 @@ Those environment variables and the rest of the options are more fully documente
 
 ### Container Steps
 
-> ⚠️ **NOTE:** The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
+> ⚠️ **INFO** ⚠️
+>
+> The alternative configuration offered here is only meant to be used if the default `phylum-ci` Docker
 > image is not acceptable for any reason. Otherwise, use the [GitHub action][marketplace] directly and view it's
 > documentation for configuration instead.
 

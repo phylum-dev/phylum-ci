@@ -76,9 +76,9 @@ class CIBitbucket(CIBase):
             LOG.debug("Pipeline context: branch pipeline")
 
     def _check_prerequisites(self) -> None:
-        """Ensure the necessary pre-requisites are met and bail when they aren't.
+        """Ensure the necessary prerequisites are met and bail when they aren't.
 
-        These are the current pre-requisites for operating within a Bitbucket Pipelines Environment:
+        These are the current prerequisites for operating within a Bitbucket Pipelines Environment:
           * The environment must actually be within Bitbucket Pipelines
           * A Bitbucket token providing API access is available when operating in a PR pipeline
             * Unless comment generation is skipped

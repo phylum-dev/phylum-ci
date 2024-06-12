@@ -30,9 +30,9 @@ the CI pipeline job will only fail if dependencies that have _completed analysis
 ## Prerequisites
 
 The Azure Pipelines environment is primarily supported through the use of a Docker image.
-The pre-requisites for using this image are:
+The prerequisites for using this image are:
 
-* Access to the [phylumio/phylum-ci Docker image][docker_image]
+* Access to the [`phylumio/phylum-ci` Docker image][docker_image]
 * Azure DevOps Services is used with an [Azure Repos Git][azure_repos_git] or [GitHub][github_repos] repository type
   * Azure DevOps Server versions are not guaranteed to work at this time
   * Bitbucket Cloud hosted repositories are not supported at this time

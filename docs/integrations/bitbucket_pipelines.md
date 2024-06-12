@@ -45,10 +45,10 @@ the CI job will only fail if dependencies that have _completed analysis results_
 Bitbucket Cloud is supported for repositories hosted on [https://bitbucket.org/](https://bitbucket.org/).
 Bitbucket Data Center is not currently supported.
 
-The Bitbucket Pipelines environment is primarily supported through the use of a Docker image. The pre-requisites
+The Bitbucket Pipelines environment is primarily supported through the use of a Docker image. The prerequisites
 for using this image are:
 
-* Access to the [phylumio/phylum-ci Docker image][docker_image]
+* Access to the [`phylumio/phylum-ci` Docker image][docker_image]
 * A [Bitbucket access token][bb_tokens] with API access
   * This is only required when:
     * Using the integration in pull request pipelines
