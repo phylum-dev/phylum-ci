@@ -69,6 +69,7 @@ fi
 # These are the commands to ensure the base prerequisites are available
 SLIM_COMMANDS=$(cat <<EOF
 set -eux
+type ps || false
 type git && git --version || false
 type phylum && phylum --version && phylum --help || false
 type phylum-init && phylum-init --version && phylum-init --help || false
