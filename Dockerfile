@@ -212,6 +212,7 @@ RUN \
         git \
         bundler \
         maven \
+        procps \
         curl \
         unzip \
         jq \

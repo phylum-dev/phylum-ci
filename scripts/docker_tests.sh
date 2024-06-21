@@ -66,9 +66,12 @@ if [ -z "${IMAGE:-}" ]; then
     echo " [!] \`--image\` option not specified. Attempting to use \`${IMAGE}\` ..."
 fi
 
-# These are the commands to ensure the base prerequisites are available
+# These are the commands to ensure the base prerequisites are available.
+# NOTE: The `ps` command was added in this PR and may not always be a
+#       prerequisite - https://github.com/phylum-dev/phylum-ci/pull/441
 SLIM_COMMANDS=$(cat <<EOF
 set -eux
+type ps || false
 type git && git --version || false
 type phylum && phylum --version && phylum --help || false
 type phylum-init && phylum-init --version && phylum-init --help || false
