@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.46.0](https://github.com/phylum-dev/phylum-ci/compare/v0.45.0...v0.46.0) (2024-06-21)
+
+### Feature
+
+* Add `ps` to docker images ([#441](https://github.com/phylum-dev/phylum-ci/pull/441)) ([`474c9b2`](https://github.com/phylum-dev/phylum-ci/commit/474c9b2703931082d8ecfc2c8ce94675f7a2a217))
+
 ## [v0.45.0](https://github.com/phylum-dev/phylum-ci/compare/v0.44.1...v0.45.0) (2024-06-12)
 
 ### Feature
