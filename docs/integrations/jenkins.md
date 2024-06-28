@@ -8,25 +8,25 @@ The credential ID should be specified since it will be used in the `Jenkinsfile`
 1. Add the following "Phylum" stage to an existing `Jenkinsfile` declarative pipeline configuration:
 
 ```groovy
-        stage('Phylum') {
-            agent {
-                docker {
-                    image 'phylumio/phylum-ci:latest'
-                    alwaysPull true
-                }
-            }
-            environment {
-                // The environment variable must be named like
-                // this but the credential ID can be different.
-                PHYLUM_API_KEY = credentials('phylum-token')
-            }
-            steps {
-                // The `--force-analysis` and `--all-deps` flags
-                // are needed because this configuration has no
-                // history available for computing changes.
-                sh 'phylum-ci -vv --force-analysis --all-deps'
-            }
+    stage('Phylum') {
+      agent {
+        docker {
+          image 'phylumio/phylum-ci:latest'
+          alwaysPull true
         }
+      }
+      environment {
+        // The environment variable must be named like
+        // this but the credential ID can be different.
+        PHYLUM_API_KEY = credentials('phylum-token')
+      }
+      steps {
+        // The `--force-analysis` and `--all-deps` flags
+        // are needed because this configuration has no
+        // history available for computing changes.
+        sh 'phylum-ci -vv --force-analysis --all-deps'
+      }
+    }
 ```
 
 > ⚠️ **INFO** ⚠️
@@ -78,46 +78,46 @@ pipeline configuration:
 
 ```groovy
 pipeline {
-    agent none
-    stages {
-        stage('Phylum') {
-            agent {
-                docker {
-                    image 'phylumio/phylum-ci:latest'
-                    alwaysPull true
-                }
-            }
-            environment {
-                PHYLUM_API_KEY = credentials('phylum-token')
-            }
-            options {
-                // This is optional but may save time since
-                // a full checkout is needed later.
-                skipDefaultCheckout()
-            }
-            steps {
-                checkout scmGit(
-                    branches: [[name: '**']],
-                    extensions: [cleanBeforeCheckout()],
-                    // Change to match your repository URL and creds.
-                    userRemoteConfigs: [[
-                        credentialsId: 'CHANGEME',
-                        url: 'https://github.com/CHANGEME/CHANGEME.git'
-                    ]]
-                )
-                withCredentials([gitUsernamePassword(credentialsId: 'CHANGEME', gitToolName: 'Default')]) {
-                    sh 'phylum-ci -vv'
-                }
-            }
-            post {
-                always {
-                    // Cleaning the workspace ensures the git
-                    // checkout is valid for future runs.
-                    cleanWs()
-                }
-            }
+  agent none
+  stages {
+    stage('Phylum') {
+      agent {
+        docker {
+          image 'phylumio/phylum-ci:latest'
+          alwaysPull true
         }
+      }
+      environment {
+        PHYLUM_API_KEY = credentials('phylum-token')
+      }
+      options {
+        // This is optional but may save time since
+        // a full checkout is needed later.
+        skipDefaultCheckout()
+      }
+      steps {
+        checkout scmGit(
+          branches: [[name: '**']],
+          extensions: [cleanBeforeCheckout()],
+          // Change to match your repository URL and creds.
+          userRemoteConfigs: [[
+            credentialsId: 'CHANGEME',
+            url: 'https://github.com/CHANGEME/CHANGEME.git'
+          ]]
+        )
+        withCredentials([gitUsernamePassword(credentialsId: 'CHANGEME', gitToolName: 'Default')]) {
+          sh 'phylum-ci -vv'
+        }
+      }
+      post {
+        always {
+          // Cleaning the workspace ensures the git
+          // checkout is valid for future runs.
+          cleanWs()
+        }
+      }
     }
+  }
 }
 ```
 
@@ -146,23 +146,23 @@ anymore...use the SHA256 digest of the tag. The digest can be found by looking a
 For instance, at the time of this writing, all of these tag references pointed to the same image:
 
 ```groovy
-            agent {
-                docker {
-                    // NOTE: These are examples. Only one image line for `phylum-ci` is expected.
-                    //
-                    // Not specifying a tag means a default of `latest`
-                    image 'phylumio/phylum-ci'
-                    // Be more explicit about wanting the `latest` tag
-                    image 'phylumio/phylum-ci:latest'
-                    // Use a specific release version of the `phylum-ci` package
-                    image 'phylumio/phylum-ci:0.42.4-CLIv6.1.2'
-                    // Use a specific image with it's SHA256 digest
-                    image 'phylumio/phylum-ci@sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6'
+      agent {
+        docker {
+          // NOTE: These are examples. Only one image line for `phylum-ci` is expected.
+          //
+          // Not specifying a tag means a default of `latest`
+          image 'phylumio/phylum-ci'
+          // Be more explicit about wanting the `latest` tag
+          image 'phylumio/phylum-ci:latest'
+          // Use a specific release version of the `phylum-ci` package
+          image 'phylumio/phylum-ci:0.42.4-CLIv6.1.2'
+          // Use a specific image with it's SHA256 digest
+          image 'phylumio/phylum-ci@sha256:77b761ccef10edc28b0f009a40fbeab240bf004522edaaea05572dc3728b6ca6'
 
-                    // This option is useful when image is NOT specified by hash
-                    alwaysPull true
-                }
-            }
+          // This option is useful when image is NOT specified by hash
+          alwaysPull true
+        }
+      }
 ```
 
 Only the last tag reference, by SHA256 digest, is guaranteed to not have the underlying image it points to change.
@@ -184,19 +184,19 @@ manifest files are present and/or **only** lockfiles are used.
 Here are examples of using the slim image tags:
 
 ```groovy
-            agent {
-                docker {
-                    // NOTE: These are examples. Only one image line for `phylum-ci` is expected.
-                    //
-                    // Use the most current release of *both* `phylum-ci` and the Phylum CLI
-                    image 'phylumio/phylum-ci:slim'
-                    // Use the `slim` image with a specific release version of `phylum-ci` and Phylum CLI
-                    image 'phylumio/phylum-ci:0.42.4-CLIv6.1.2-slim'
+      agent {
+        docker {
+          // NOTE: These are examples. Only one image line for `phylum-ci` is expected.
+          //
+          // Use the most current release of *both* `phylum-ci` and the Phylum CLI
+          image 'phylumio/phylum-ci:slim'
+          // Use the `slim` image with a specific release version of `phylum-ci` and Phylum CLI
+          image 'phylumio/phylum-ci:0.42.4-CLIv6.1.2-slim'
 
-                    // This option is useful when image is NOT specified by hash
-                    alwaysPull true
-                }
-            }
+          // This option is useful when image is NOT specified by hash
+          alwaysPull true
+        }
+      }
 ```
 
 See the documentation for [using Docker with Pipeline][docker_pipeline] more information.
@@ -216,11 +216,11 @@ higher. The value for this variable is sensitive and should be set as a secret t
 **Care should be taken to protect it appropriately**.
 
 ```groovy
-            environment {
-                // Variable must be named `PHYLUM_API_KEY`
-                // but the credential ID can be different.
-                PHYLUM_API_KEY = credentials('phylum-token')
-            }
+      environment {
+        // Variable must be named `PHYLUM_API_KEY`
+        // but the credential ID can be different.
+        PHYLUM_API_KEY = credentials('phylum-token')
+      }
 ```
 
 [user_vars]: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#setting-environment-variables
@@ -233,19 +233,19 @@ repository is required to ensure that the local working copy is always pristine 
 requested information.
 
 ```groovy
-            steps {
-                // A full checkout is needed to provide history and proper diffs.
-                // A `checkout scm` step is not enough here.
-                checkout scmGit(
-                    branches: [[name: '**']],
-                    extensions: [cleanBeforeCheckout()],
-                    // Change to match your repository URL and creds.
-                    userRemoteConfigs: [[
-                        credentialsId: 'CHANGEME',
-                        url: 'https://github.com/CHANGEME/CHANGEME.git'
-                    ]]
-                )
-            }
+      steps {
+        // A full checkout is needed to provide history and proper diffs.
+        // A `checkout scm` step is not enough here.
+        checkout scmGit(
+          branches: [[name: '**']],
+          extensions: [cleanBeforeCheckout()],
+          // Change to match your repository URL and creds.
+          userRemoteConfigs: [[
+            credentialsId: 'CHANGEME',
+            url: 'https://github.com/CHANGEME/CHANGEME.git'
+          ]]
+        )
+      }
 ```
 
 See the [checkout step][checkout_step] and [checkout plugin][scm_plugin] documentation for more information.
@@ -265,61 +265,65 @@ release.
 [script_options]: https://github.com/phylum-dev/phylum-ci/blob/main/docs/script_options.md
 
 ```groovy
-            steps {
-                // This block is needed for change detection and using
-                // authenticated git commands. Change the `credentialsId`.
-                withCredentials([gitUsernamePassword(credentialsId: 'CHANGEME', gitToolName: 'Default')]) {
-                    // NOTE: These are examples. Only one `phylum-ci` entry is expected.
-                    //
-                    // Use the defaults for all the arguments.
-                    // The default behavior is to only analyze newly added dependencies
-                    // against the active policy set at the Phylum project level.
-                    sh 'phylum-ci'
+      steps {
+        // This block is needed for change detection and using
+        // authenticated git commands. Change the `credentialsId`.
+        withCredentials([gitUsernamePassword(credentialsId: 'CHANGEME', gitToolName: 'Default')]) {
+          // NOTE: These are examples. Only one `phylum-ci` entry is expected.
+          //
+          // Use the defaults for all the arguments.
+          // The default behavior is to only analyze newly added dependencies
+          // against the active policy set at the Phylum project level.
+          sh 'phylum-ci'
 
-                    // Provide debug level output. Highly recommended.
-                    sh 'phylum-ci -vv'
+          // Provide debug level output. Highly recommended.
+          sh 'phylum-ci -vv'
 
-                    // Consider all dependencies in analysis results instead of just the newly added ones.
-                    // The default is to only analyze newly added dependencies, which can be useful for
-                    // existing code bases that may not meet established policy rules yet,
-                    // but don't want to make things worse. Specifying `--all-deps` can be useful for
-                    // casting the widest net for strict adherence to Quality Assurance (QA) standards.
-                    sh 'phylum-ci --all-deps'
+          // Consider all dependencies in analysis results instead of just the newly added ones.
+          // The default is to only analyze newly added dependencies, which can be useful for
+          // existing code bases that may not meet established policy rules yet,
+          // but don't want to make things worse. Specifying `--all-deps` can be useful for
+          // casting the widest net for strict adherence to Quality Assurance (QA) standards.
+          sh 'phylum-ci --all-deps'
 
-                    // Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
-                    // they can be named differently and may or may not contain strict dependencies.
-                    // In these cases it is best to specify an explicit path, either with the `--depfile`
-                    // option or in a `.phylum_project` file. The easiest way to do that is with the
-                    // Phylum CLI, using `phylum init` command (docs.phylum.io/cli/commands/phylum_init)
-                    // and committing the generated `.phylum_project` file.
-                    sh 'phylum-ci --depfile requirements-prod.txt'
+          // Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
+          // they can be named differently and may or may not contain strict dependencies.
+          // In these cases it is best to specify an explicit path, either with the `--depfile`
+          // option or in a `.phylum_project` file. The easiest way to do that is with the
+          // Phylum CLI, using `phylum init` command (docs.phylum.io/cli/commands/phylum_init)
+          // and committing the generated `.phylum_project` file.
+          sh 'phylum-ci --depfile requirements-prod.txt'
 
-                    // Specify multiple explicit dependency file paths.
-                    sh 'phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file'
+          // Specify multiple explicit dependency file paths.
+          sh 'phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file'
 
-                    // Force analysis for all dependencies in a manifest file. This is especially useful
-                    // for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
-                    sh 'phylum-ci --force-analysis --all-deps --depfile Cargo.toml'
+          // Force analysis for all dependencies in a manifest file. This is especially useful
+          // for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
+          sh 'phylum-ci --force-analysis --all-deps --depfile Cargo.toml'
 
-                    // Analyze all dependencies in audit mode, to gain insight without failing builds.
-                    sh 'phylum-ci --all-deps --audit'
+          // Perform analysis as part of a group-owned project.
+          // A paid account is needed to use groups: https://phylum.io/pricing
+          sh 'phylum-ci --group my_group'
 
-                    // Ensure the latest Phylum CLI is installed.
-                    sh 'phylum-ci --force-install'
+          // Analyze all dependencies in audit mode, to gain insight without failing builds.
+          sh 'phylum-ci --all-deps --audit'
 
-                    // Install a specific version of the Phylum CLI.
-                    sh 'phylum-ci --phylum-release 6.4.0 --force-install'
+          // Ensure the latest Phylum CLI is installed.
+          sh 'phylum-ci --force-install'
 
-                    // Mix and match for your specific use case.
-                    sh 'phylum-ci \
-                        -vv \
-                        --depfile requirements-dev.txt \
-                        --depfile requirements-prod.txt path/to/dependency.file \
-                        --depfile Cargo.toml \
-                        --force-analysis \
-                        --all-deps'
-                }
-            }
+          // Install a specific version of the Phylum CLI.
+          sh 'phylum-ci --phylum-release 6.4.0 --force-install'
+
+          // Mix and match for your specific use case.
+          sh 'phylum-ci \
+            -vv \
+            --depfile requirements-dev.txt \
+            --depfile requirements-prod.txt path/to/dependency.file \
+            --depfile Cargo.toml \
+            --force-analysis \
+            --all-deps'
+        }
+      }
 ```
 
 ## Alternatives
@@ -330,10 +334,10 @@ or "standalone" pipeline configuration, the solution is to force analysis of all
 is needed. This is done with the following flags:
 
 ```groovy
-            steps {
-                // Force analysis for all current dependencies.
-                sh 'phylum-ci --force-analysis --all-deps'
-            }
+      steps {
+        // Force analysis for all current dependencies.
+        sh 'phylum-ci -vv --force-analysis --all-deps'
+      }
 ```
 
 It is also possible to make direct use of the [`phylum` Python package][pypi] within CI.

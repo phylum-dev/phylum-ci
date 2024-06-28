@@ -153,6 +153,10 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
         args: [--force-analysis, --all-deps, --depfile=Cargo.toml]
 
+        # Perform analysis as part of a group-owned project.
+        # A paid account is needed to use groups: https://phylum.io/pricing
+        args: [--group, my_group]
+
         # Ensure the latest Phylum CLI is installed.
         args: [--force-install]
 
