@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.47.0](https://github.com/phylum-dev/phylum-ci/compare/v0.46.0...v0.47.0) (2024-06-28)
+
+### Feature
+
+* Allow groups to be specified without a project ([#443](https://github.com/phylum-dev/phylum-ci/pull/443)) ([`ec3bd63`](https://github.com/phylum-dev/phylum-ci/commit/ec3bd63c05f9c30b2c700623a0907483c11a7ff8))
+
 ## [v0.46.0](https://github.com/phylum-dev/phylum-ci/compare/v0.45.0...v0.46.0) (2024-06-21)
 
 ### Feature
