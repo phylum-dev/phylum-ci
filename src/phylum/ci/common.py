@@ -116,8 +116,8 @@ class ReturnCode(IntEnum):
 class CLIExitCode(IntEnum):
     """Integer enumeration to track the Phylum CLI exit codes."""
 
-    # A project that already exists is attempted to be created
-    PROJECT_ALREADY_EXISTS = 14
+    # A project or group that already exists is attempted to be created
+    ALREADY_EXISTS = 14
     # A manifest is attempted to be parsed but lockfile generation has been disabled
     MANIFEST_WITHOUT_GENERATION = 20
 

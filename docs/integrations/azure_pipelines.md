@@ -315,6 +315,10 @@ view the [script options output][script_options] for the latest release.
       # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
       - script: phylum-ci --force-analysis --all-deps --depfile Cargo.toml
 
+      # Perform analysis as part of a group-owned project.
+      # A paid account is needed to use groups: https://phylum.io/pricing
+      - script: phylum-ci --group my_group
+
       # Analyze all dependencies in audit mode, to gain insight without failing builds.
       - script: phylum-ci --all-deps --audit
 

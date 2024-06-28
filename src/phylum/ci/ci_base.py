@@ -316,36 +316,54 @@ class CIBase(ABC):
             LOG.debug("Project name provided as argument: %s", project_name)
             return project_name
 
-        LOG.info("Project name not provided as argument. Checking the `.phylum_project` file ...")
+        LOG.info("Project name not provided as argument. Checking `.phylum_project` file ...")
         project_name = self._project_settings.get("project")
         if project_name:
             LOG.debug("Project name provided in `.phylum_project` file: %s", project_name)
             return project_name
 
-        LOG.info("Project name not found in the `.phylum_project` file or file does not exist. Detecting instead ...")
+        LOG.info("Project name not found in `.phylum_project` file or file does not exist. Detecting instead ...")
         project_name = git_repo_name()
         LOG.debug("Project name detected from git repository name: %s", project_name)
         return project_name
 
-    @property
+    @cached_property
     def phylum_group(self) -> Optional[str]:
         """Get the effective Phylum group in use.
 
         The Phylum group name can be specified as an option or contained in the `.phylum_project` file.
         A group name provided as an input option will be preferred over an entry in the `.phylum_project` file.
 
+        Generate a warning when the possibility of unintended project/group pairings exist. This happens when
+        one of a project or group (but not both) is explicitly specified by argument and the other is specified
+        in the `.phylum_project` file.
+
         Return `None` when the group name is not available.
         """
-        # Group supplied on command-line
-        # A group can not be specified without a project
-        if self.args.group and self.args.project:
-            return self.args.group
+        group_name = self.args.group
+        if group_name:
+            LOG.debug("Group name provided as argument: %s", group_name)
+            if not self.args.project and self._project_file_already_existed:
+                msg = """
+                    Group name was explicitly specified but without a matching
+                    project argument. This can result in creation of an unexpected
+                    project/group pairing. Please check if this was intended."""
+                LOG.warning(cleandoc(msg))
+            return group_name
 
-        # Group supplied in `.phylum_project`
-        # Don't "mix" a project supplied as an option with a group that wasn't
-        if not self.args.project:
-            return self._project_settings.get("group")
+        LOG.debug("Group name not provided as argument. Checking `.phylum_project` file...")
+        group_name = self._project_settings.get("group")
+        if group_name:
+            LOG.debug("Group name provided in `.phylum_project` file: %s", group_name)
+            if self.args.project:
+                msg = """
+                    Project name was explicitly specified but without a matching
+                    group argument. This can result in creation of an unexpected
+                    project/group pairing. Please check if this was intended."""
+                LOG.warning(cleandoc(msg))
+            return group_name
 
+        LOG.debug("Group name not found in `.phylum_project` file or file does not exist. Assuming no group ...")
         return None
 
     @cached_property
@@ -489,10 +507,10 @@ class CIBase(ABC):
             cmd = ["git", "diff", "--exit-code", "--quiet", commit, "--", str(depfile.path)]
             ret = subprocess.run(cmd, check=False)  # noqa: S603
             if ret.returncode == 0:
-                LOG.debug("The dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra=MARKUP)
+                LOG.debug("Dependency file [code]%r[/] has [b]NOT[/] changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = False
             elif ret.returncode == 1:
-                LOG.debug("The dependency file [code]%r[/] has changed", depfile, extra=MARKUP)
+                LOG.debug("Dependency file [code]%r[/] has changed", depfile, extra=MARKUP)
                 depfile.is_depfile_changed = True
             else:
                 if err_msg:
@@ -526,10 +544,10 @@ class CIBase(ABC):
         A project may or may not already exist. Attempt to create the project, possibly overwriting a `.phylum_project`
         file that already exists. Continue on without error when the specified project already exists.
         """
-        LOG.info("Attempting to create a Phylum project with the name: %s ...", self.phylum_project)
+        LOG.info("Attempting to create a Phylum project with name: %s ...", self.phylum_project)
         cmd = [str(self.cli_path), "project", "create"]
         if self.phylum_group:
-            LOG.debug("Using Phylum group: %s", self.phylum_group)
+            LOG.info("Using Phylum group: %s", self.phylum_group)
             cmd.extend(["--group", self.phylum_group])
         if self.repo_url:
             LOG.debug("Using repository URL: %s", self.repo_url)
@@ -537,24 +555,85 @@ class CIBase(ABC):
         cmd.append(self.phylum_project)
         if not Path.cwd().joinpath(".git").is_dir():
             LOG.warning("Attempting to create a Phylum project outside the top level of a `git` repository")
+
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        except subprocess.CalledProcessError as outer_err:
+            # The Phylum CLI will return a unique error code when a project/group pairing
+            # that already exists is attempted to be created. This situation is recognized
+            # and allowed to happen since it means the project exists as expected.
+            project_exists_msg = f"""
+                Project/group pairing already exists. Continuing with it.
+                    Project: {self.phylum_project}
+                    Group:   {self.phylum_group or '(no group)'}"""
+            if outer_err.returncode == CLIExitCode.ALREADY_EXISTS.value:
+                LOG.info(cleandoc(project_exists_msg))
+                self._set_repo_url()
+                return
+
+            err_msg = """
+                There was a problem creating the project. A paid account is needed to
+                use groups or create more than five projects: https://phylum.io/pricing
+                If the command was expected to succeed, please report this as a bug."""
+
+            # The problem may be that a group was specified but does not exist yet. Check for that case and create it,
+            # if needed. This is done here instead of pre-emptively in an effort to avoid extra group creation calls.
+            if not self._created_group():
+                # A missing group was not the problem, which means the project creation attempt is an error.
+                raise PhylumCalledProcessError(outer_err, cleandoc(err_msg)) from outer_err
+
+            # A missing group was created, which means we need to try to create the project again.
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            except subprocess.CalledProcessError as inner_err:
+                # Check for this error code again because it is possible the same
+                # project/group pairing was created elsewhere since the last check.
+                if inner_err.returncode == CLIExitCode.ALREADY_EXISTS.value:
+                    LOG.info(cleandoc(project_exists_msg))
+                    self._set_repo_url()
+                    return
+                # Any other exit code is an error.
+                raise PhylumCalledProcessError(inner_err, cleandoc(err_msg)) from inner_err
+
+        project_created_msg = f"""
+            Project/group pairing created successfully.
+                Project: {self.phylum_project}
+                Group:   {self.phylum_group or '(no group)'}"""
+        LOG.info(cleandoc(project_created_msg))
+        if self._project_file_already_existed:
+            LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
+
+    def _created_group(self) -> bool:
+        """Ensure a Phylum group is created and in place, when specified.
+
+        A group may or may not already exist. Attempt to create the group when one is specified.
+        Continue on without error when the specified group already exists.
+
+        Return True if a group was created and False otherwise.
+        """
+        if not self.phylum_group:
+            LOG.debug("No Phylum group specified. Nothing to do.")
+            return False
+
+        LOG.info("Attempting to create a Phylum group with name: %s ...", self.phylum_group)
+        cmd = [str(self.cli_path), "group", "create", self.phylum_group]
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
         except subprocess.CalledProcessError as err:
-            # The Phylum CLI will return a unique error code when a project that already
+            # The Phylum CLI will return a unique error code when a group that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
-            # since it means the project exists as expected. Any other exit code is an error.
-            if err.returncode == CLIExitCode.PROJECT_ALREADY_EXISTS.value:
-                LOG.info("Project %s already exists. Continuing with it ...", self.phylum_project)
-                self._set_repo_url()
-                return
+            # since it means the group exists as expected. Any other exit code is an error.
+            if err.returncode == CLIExitCode.ALREADY_EXISTS.value:
+                LOG.info("Group %s already exists. Continuing with it ...", self.phylum_group)
+                return False
             msg = """
-                There was a problem creating the project.
-                A PRO account is needed to create a project with a group.
+                There was a problem creating the group.
+                A paid account is needed to use groups: https://phylum.io/pricing
                 If the command was expected to succeed, please report this as a bug."""
             raise PhylumCalledProcessError(err, cleandoc(msg)) from err
-        LOG.info("Project %s created successfully", self.phylum_project)
-        if self._project_file_already_existed:
-            LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
+
+        LOG.info("Successfully created group: %s", self.phylum_group)
+        return True
 
     def _set_repo_url(self) -> None:
         """Set the repository URL for the project.
@@ -698,7 +777,7 @@ class CIBase(ABC):
                 else:
                     msg = """
                         There was a problem analyzing the project.
-                        A PRO account is needed to use groups.
+                        A paid account is needed to use groups: https://phylum.io/pricing
                         If the command was expected to succeed, please report this as a bug."""
                     raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
@@ -757,10 +836,10 @@ class CIBase(ABC):
         #     https://github.com/phylum-dev/phylum-ci/issues/357
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
-                LOG.error("The analysis is complete and there were failures")
+                LOG.error("Analysis is complete and there were failures")
                 self.returncode = ReturnCode.POLICY_FAILURE
             else:
-                LOG.info("The analysis is complete and there were NO failures")
+                LOG.info("Analysis is complete and there were NO failures")
                 self.returncode = ReturnCode.SUCCESS
         elif analysis.is_failure:
             LOG.error("There were failures in one or more completed packages")

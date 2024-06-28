@@ -151,7 +151,9 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
     analysis_group.add_argument(
         "-g",
         "--group",
-        help="Optional group name, which will be the owner of the project. Only used when a project is also specified.",
+        help="""Optional group name, which will be the owner of the project. Can also specify this option's value in the
+            `.phylum_project` file. The value specified with this option takes precedence when both are provided. Group
+            will be created if it does not already exist. Groups require a paid account: https://phylum.io/pricing""",
     )
     analysis_group.add_argument(
         "-s",
