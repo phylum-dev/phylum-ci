@@ -13,7 +13,7 @@
 [![Downloads](https://static.pepy.tech/badge/phylum/month)][downloads]
 [![Discord](https://img.shields.io/discord/1070071012353376387?logo=discord)][discord_invite]
 
-Utilities for integrating Phylum into CI pipelines (and beyond)
+Utilities for integrating Phylum into CI pipelines
 
 [license]: https://github.com/phylum-dev/phylum-ci/blob/main/LICENSE
 [issues]: https://github.com/phylum-dev/phylum-ci/issues
@@ -109,11 +109,11 @@ Each of these also has a `-slim` variant that does not support [lockfile generat
 # Get the most current release of *both* `phylum-ci` and the Phylum CLI
 docker pull phylumio/phylum-ci:latest
 
-# Get the image with `phylum-ci` version 0.35.2 and Phylum CLI version 5.7.1
-docker pull phylumio/phylum-ci:0.35.2-CLIv5.7.1
+# Get the image with `phylum-ci` version 0.44.1 and Phylum CLI version 6.6.0
+docker pull phylumio/phylum-ci:0.44.1-CLIv6.6.0
 
-# Get the `slim` image with `phylum-ci` version 0.36.0 and Phylum CLI version 5.7.1
-docker pull phylumio/phylum-ci:0.36.0-CLIv5.7.1-slim
+# Get the `slim` image with `phylum-ci` version 0.47.0 and Phylum CLI version 6.6.4
+docker pull phylumio/phylum-ci:0.47.0-CLIv6.6.4-slim
 ```
 
 [lockfile generation]: https://docs.phylum.io/cli/lockfile_generation
@@ -147,6 +147,7 @@ The current CI platforms/environments supported are:
 |GitLab CI|[Documentation][gitlab_docs]|
 |Azure Pipelines|[Documentation][azure_docs]|
 |Bitbucket Pipelines|[Documentation][bb_pipelines_docs]|
+|Jenkins Pipelines|[Documentation][jenkins_docs]|
 |Git `pre-commit` Hooks|[Documentation][precommit_docs]|
 
 There is also support for local use. This is the "fall-through" case used when no other environment is detected.
@@ -164,6 +165,7 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 [gitlab_docs]: https://docs.phylum.io/phylum-ci/gitlab_ci
 [azure_docs]: https://docs.phylum.io/phylum-ci/azure_pipelines
 [bb_pipelines_docs]: https://docs.phylum.io/phylum-ci/bitbucket_pipelines
+[jenkins_docs]: https://docs.phylum.io/phylum-ci/jenkins
 [precommit_docs]: https://docs.phylum.io/phylum-ci/git_precommit
 
 ## License
