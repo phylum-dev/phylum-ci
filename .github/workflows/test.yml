@@ -33,7 +33,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Set up Python
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
@@ -76,7 +76,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
@@ -120,7 +120,7 @@ jobs:
 
       - name: Set up Python
         if: ${{ matrix.build == 'wheel' }}
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
