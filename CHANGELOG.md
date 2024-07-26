@@ -13,6 +13,16 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.48.0](https://github.com/phylum-dev/phylum-ci/compare/v0.47.0...v0.48.0) (2024-07-26)
+
+### Feature
+
+* Add `git-lfs` to docker images ([#453](https://github.com/phylum-dev/phylum-ci/pull/453)) ([`3ad6de5`](https://github.com/phylum-dev/phylum-ci/commit/3ad6de58f8fae5107b623b87f4504389d41e888c))
+
+### Documentation
+
+* Add missing jenkins link ([#444](https://github.com/phylum-dev/phylum-ci/pull/444)) ([`83587b9`](https://github.com/phylum-dev/phylum-ci/commit/83587b9209057bef5257938e4f94db37e7265d39))
+
 ## [v0.47.0](https://github.com/phylum-dev/phylum-ci/compare/v0.46.0...v0.47.0) (2024-06-28)
 
 ### Feature
