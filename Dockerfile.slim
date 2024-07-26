@@ -180,7 +180,7 @@ RUN set -eux; \
     # Install prerequisites
     apt-get update; \
     apt-get upgrade --yes; \
-    apt-get install --yes --no-install-recommends git procps binutils; \
+    apt-get install --yes --no-install-recommends git git-lfs procps binutils; \
     # Make ENTRYPOINT alternative script available
     chmod +x "${PHYLUM_VENV}/bin/entrypoint.sh"; \
     # Install Phylum CLI

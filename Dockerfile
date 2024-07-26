@@ -210,6 +210,7 @@ RUN \
     apt-get upgrade --yes; \
     apt-get install --yes --no-install-recommends \
         git \
+        git-lfs \
         bundler \
         maven \
         procps \
