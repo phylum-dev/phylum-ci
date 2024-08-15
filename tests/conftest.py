@@ -7,9 +7,9 @@ import pytest
 from phylum.logger import LOG
 
 
-@pytest.fixture()
+@pytest.fixture
 def _log() -> Generator:
-    """Ensure the LOG level is restored to orginal value."""
+    """Ensure the LOG level is restored to original value."""
     original_log_level = LOG.getEffectiveLevel()
     yield
     LOG.setLevel(original_log_level)
