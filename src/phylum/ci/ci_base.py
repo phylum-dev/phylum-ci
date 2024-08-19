@@ -198,7 +198,12 @@ class CIBase(ABC):
         excluded_depfiles: DepfileEntries = []
         for depfile in provided_depfiles:
             for exclusion in provided_arg_exclusions:
-                if depfile.path.match(exclusion):
+                depfile_path = depfile.path
+                if exclusion.startswith("/"):
+                    # Create a fake absolute path "rooted" at the working directory (presumably
+                    # the project root) to allow for matching absolute patterns
+                    depfile_path = Path("/") / str(depfile)
+                if depfile_path.match(exclusion):
                     excluded_depfiles.append(depfile)
                     # Stop after first matching exclusion
                     break

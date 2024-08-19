@@ -318,8 +318,8 @@ view the [script options output][script_options] for the latest release.
       - script: phylum-ci --exclude "build.gradle" "tests/fixtures/*"
       - script: |
         phylum-ci \
-          --exclude "build.gradle" \
-          --exclude "tests/fixtures/*"
+          --exclude "/requirements-*.txt" \
+          --exclude "build.gradle" "tests/fixtures/*"
 
       # Force analysis for all dependencies in a manifest file. This is especially useful
       # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).

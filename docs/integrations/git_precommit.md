@@ -154,6 +154,7 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
         # Specify multiple exclusion patterns.
         args:
+          - --exclude=/requirements-*.txt
           - --exclude=build.gradle
           - --exclude=tests/fixtures/*
 
