@@ -11,7 +11,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from functools import cached_property, lru_cache
 from inspect import cleandoc
-from itertools import starmap
+from itertools import chain, starmap
 import json
 import os
 from pathlib import Path
@@ -143,6 +143,8 @@ class CIBase(ABC):
         Dependency files provided as an input option will be preferred over any entries in the `.phylum_project` file.
 
         When no valid dependency files are provided otherwise, an attempt will be made to automatically detect them.
+
+        Detected dependency files can be modified with exclusion patterns provided as an argument.
         """
         arg_depfiles: Optional[list[list[Path]]] = self.args.depfile
         provided_arg_depfiles: DepfileEntries = []
@@ -162,6 +164,7 @@ class CIBase(ABC):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
         else:
             LOG.debug("Detected dependency files: %s", detected_depfiles)
+        detected_depfiles = self._exclude_depfiles(detected_depfiles)
         if arg_depfiles:
             # Ensure any depfiles provided as arguments that were already filtered out are not included again here
             detected_depfiles = list(set(detected_depfiles).difference(set(provided_arg_depfiles)))
@@ -180,6 +183,30 @@ class CIBase(ABC):
         if not self.returncode:
             self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
         raise SystemExit(self.returncode)
+
+    def _exclude_depfiles(self, provided_depfiles: DepfileEntries) -> DepfileEntries:
+        """Apply exclusion patterns to provided dependency files and return the remaining ones."""
+        arg_exclusions: Optional[list[list[str]]] = self.args.exclude
+        if not arg_exclusions:
+            LOG.debug("No dependency file exclusion patterns provided.")
+            return provided_depfiles
+
+        # flatten the list of lists
+        provided_arg_exclusions = list(chain.from_iterable(arg_exclusions))
+        LOG.debug("Exclusion patterns provided as arguments: %s", provided_arg_exclusions)
+
+        excluded_depfiles: DepfileEntries = []
+        for depfile in provided_depfiles:
+            for exclusion in provided_arg_exclusions:
+                if depfile.path.match(exclusion):
+                    excluded_depfiles.append(depfile)
+                    # Stop after first matching exclusion
+                    continue
+        LOG.info("Dependency files excluded by matching patterns: %s", excluded_depfiles)
+
+        depfiles = list(set(provided_depfiles).difference(set(excluded_depfiles)))
+        LOG.debug("Dependency files after exclusions: %s", depfiles)
+        return depfiles
 
     @progress_spinner("Filtering dependency files")
     def _filter_depfiles(self, provided_depfiles: DepfileEntries) -> Depfiles:

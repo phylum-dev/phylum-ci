@@ -122,6 +122,15 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
             """,
     )
     analysis_group.add_argument(
+        "-e",
+        "--exclude",
+        action="append",
+        nargs="*",
+        help="""Glob-style exclusion patterns. Ignored when dependency files are specified explicitly by argument.
+        Specify relative patterns and in quotes to prevent shell globbing. Matching is done from the right of paths. The
+        recursive wildcard “**” is not supported (it acts like non-recursive “*”).""",
+    )
+    analysis_group.add_argument(
         "-a",
         "--all-deps",
         action="store_true",
