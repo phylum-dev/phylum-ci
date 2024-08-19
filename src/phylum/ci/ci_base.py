@@ -201,7 +201,7 @@ class CIBase(ABC):
                 if depfile.path.match(exclusion):
                     excluded_depfiles.append(depfile)
                     # Stop after first matching exclusion
-                    continue
+                    break
         LOG.info("Dependency files excluded by matching patterns: %s", excluded_depfiles)
 
         depfiles = list(set(provided_depfiles).difference(set(excluded_depfiles)))
