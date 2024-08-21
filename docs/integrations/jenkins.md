@@ -301,7 +301,7 @@ release.
           sh 'phylum-ci --exclude "requirements-*.txt"'
 
           // Specify multiple exclusion patterns.
-          sh 'phylum-ci --exclude "build.gradle" "tests/fixtures/*"'
+          sh 'phylum-ci --exclude "build.gradle" "tests/fixtures/"'
           sh 'phylum-ci \
               --exclude "/requirements-*.txt" \
               --exclude "build.gradle" "fixtures/"'

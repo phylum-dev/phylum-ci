@@ -315,7 +315,7 @@ view the [script options output][script_options] for the latest release.
       - script: phylum-ci --exclude "requirements-*.txt"
 
       # Specify multiple exclusion patterns.
-      - script: phylum-ci --exclude "build.gradle" "tests/fixtures/*"
+      - script: phylum-ci --exclude "build.gradle" "tests/fixtures/"
       - script: |
         phylum-ci \
           --exclude "/requirements-*.txt" \
