@@ -3,6 +3,6 @@
     Ref: https://python-semantic-release.readthedocs.io/en/latest/changelog_templates.html
 #}
 {% set releases = context.history.released.items() | list %}
-{% set prev_version = "v{}".format(releases[1][0]) %}
+{% set prev_version = releases[1][0].as_tag() %}
 {% include ".changes.j2" %}
-**Full Changelog**: {{ prev_version | compare_url("v{}".format(version)) }}
+**Full Changelog**: {{ prev_version | compare_url(version.as_tag()) }}
