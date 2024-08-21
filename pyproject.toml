@@ -69,9 +69,11 @@ optional = true
 [tool.poetry.group.ci.dependencies]
 tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
-# TODO: Remove pin when PSR defines the `context` variable in release notes templates:
-#       https://github.com/python-semantic-release/python-semantic-release/issues/984
-python-semantic-release = "9.8.3"
+# PSR re-defined the `context` variable in release notes templates in v9.8.7, but
+# expects to remove it again in the next major version. Pin to prevent that upgrade.
+# https://github.com/python-semantic-release/python-semantic-release/pull/1005
+# https://github.com/python-semantic-release/python-semantic-release/issues/984
+python-semantic-release = "^9.8.7"
 rich-codex = "*"
 
 [tool.poetry.group.qa]
