@@ -13,6 +13,12 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.49.0](https://github.com/phylum-dev/phylum-ci/compare/v0.48.0...v0.49.0) (2024-08-21)
+
+### Feature
+
+* Add option to exclude dependency files ([#462](https://github.com/phylum-dev/phylum-ci/pull/462)) ([`258709b`](https://github.com/phylum-dev/phylum-ci/commit/258709b1acefb32e9ad88d5839d65f2e59d92d29))
+
 ## [v0.48.0](https://github.com/phylum-dev/phylum-ci/compare/v0.47.0...v0.48.0) (2024-07-26)
 
 ### Feature
