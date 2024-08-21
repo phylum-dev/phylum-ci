@@ -22,6 +22,7 @@ import tempfile
 from typing import Optional
 
 from packaging.version import Version
+import pathspec
 from rich.markdown import Markdown
 
 from phylum.ci.common import (
@@ -149,7 +150,7 @@ class CIBase(ABC):
         arg_depfiles: Optional[list[list[Path]]] = self.args.depfile
         provided_arg_depfiles: DepfileEntries = []
         if arg_depfiles:
-            # flatten the list of lists
+            # Flatten the list of lists
             provided_arg_depfiles = [DepfileEntry(path) for sub_list in arg_depfiles for path in sub_list]
             LOG.debug("Dependency files provided as arguments: %s", provided_arg_depfiles)
             valid_depfiles = self._filter_depfiles(provided_arg_depfiles)
@@ -191,25 +192,28 @@ class CIBase(ABC):
             LOG.debug("No dependency file exclusion patterns provided.")
             return provided_depfiles
 
-        # flatten the list of lists
+        # Flatten the list of lists
         provided_arg_exclusions = list(chain.from_iterable(arg_exclusions))
         LOG.debug("Exclusion patterns provided as arguments: %s", provided_arg_exclusions)
 
-        excluded_depfiles: DepfileEntries = []
-        for depfile in provided_depfiles:
-            for exclusion in provided_arg_exclusions:
-                # Create a fake absolute path "rooted" at the working directory (presumably
-                # the project root) to allow for matching absolute patterns
-                depfile_path = Path("/") / str(depfile)
-                if depfile_path.match(exclusion):
-                    excluded_depfiles.append(depfile)
-                    # Stop after first matching exclusion
-                    break
+        try:
+            spec = pathspec.GitIgnoreSpec.from_lines(provided_arg_exclusions)
+        except pathspec.patterns.gitwildmatch.GitWildMatchPatternError as err:
+            msg = f"""
+                Could not parse provided gitignore-style exclusion pattern!
+                {err}
+                For more info, see: https://git-scm.com/docs/gitignore#_pattern_format
+                Continuing without exclusions ..."""
+            LOG.warning(cleandoc(msg))
+            return provided_depfiles
+
+        excluded_depfiles = [pdf for pdf in provided_depfiles if spec.match_file(pdf.path.relative_to(Path.cwd()))]
         LOG.info("Dependency files excluded by matching patterns: %s", excluded_depfiles)
 
-        depfiles = list(set(provided_depfiles).difference(set(excluded_depfiles)))
-        LOG.debug("Dependency files after exclusions: %s", depfiles)
-        return depfiles
+        included_depfiles = list(set(provided_depfiles).difference(set(excluded_depfiles)))
+        LOG.debug("Dependency files after exclusions: %s", included_depfiles)
+
+        return included_depfiles
 
     @progress_spinner("Filtering dependency files")
     def _filter_depfiles(self, provided_depfiles: DepfileEntries) -> Depfiles:

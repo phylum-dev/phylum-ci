@@ -149,14 +149,14 @@ with `--help` output as specified in the [Usage section of the top-level README.
           - --depfile=Cargo.toml
           - --depfile=path/to/dependency.file
 
-        # Exclude dependency files by glob-style pattern.
+        # Exclude dependency files by gitignore-style pattern.
         args: [--exclude=requirements-*.txt]
 
         # Specify multiple exclusion patterns.
         args:
           - --exclude=/requirements-*.txt
           - --exclude=build.gradle
-          - --exclude=tests/fixtures/*
+          - --exclude=fixtures/
 
         # Force analysis for all dependencies in a manifest file. This is especially useful
         # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).

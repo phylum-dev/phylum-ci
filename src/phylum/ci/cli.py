@@ -126,10 +126,8 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         "--exclude",
         action="append",
         nargs="*",
-        help="""Glob-style exclusion patterns. Ignored when dependency files are specified explicitly by argument.
-        Absolute patterns (those starting with "/") only match whole paths, as rooted from the working directory
-        (e.g., the project root). Relative pattern matching is done from the right of paths. Specify patterns in quotes
-        to prevent shell globbing. The recursive wildcard “**” is not supported (it acts like non-recursive “*”).""",
+        help="""Gitignore-style exclusion patterns. Ignored when dependency files are specified explicitly by argument.
+        Specify patterns in quotes to prevent shell globbing. Patterns are applied relative to working directory.""",
     )
     analysis_group.add_argument(
         "-a",

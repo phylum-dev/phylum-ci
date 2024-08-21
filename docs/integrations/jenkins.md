@@ -297,14 +297,14 @@ release.
           // Specify multiple explicit dependency file paths.
           sh 'phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file'
 
-          // Exclude dependency files by glob-style pattern.
+          // Exclude dependency files by gitignore-style pattern.
           sh 'phylum-ci --exclude "requirements-*.txt"'
 
           // Specify multiple exclusion patterns.
           sh 'phylum-ci --exclude "build.gradle" "tests/fixtures/*"'
           sh 'phylum-ci \
               --exclude "/requirements-*.txt" \
-              --exclude "build.gradle" "tests/fixtures/*"'
+              --exclude "build.gradle" "fixtures/"'
 
           // Force analysis for all dependencies in a manifest file. This is especially useful
           // for *workspace* manifest files where there is no companion lockfile (e.g., libraries).

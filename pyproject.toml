@@ -52,6 +52,7 @@ cryptography = "*"
 packaging = "*"
 "ruamel.yaml" = "*"
 rich = "*"
+pathspec = "*"
 
 [tool.poetry.group.test]
 optional = true
