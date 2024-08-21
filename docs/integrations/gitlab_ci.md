@@ -297,6 +297,16 @@ view the [script options output][script_options] for the latest release.
     # Specify multiple explicit dependency file paths.
     - phylum-ci --depfile requirements-prod.txt Cargo.toml path/to/dependency.file
 
+    # Exclude dependency files by gitignore-style pattern.
+    - phylum-ci --exclude "requirements-*.txt"
+
+    # Specify multiple exclusion patterns.
+    - phylum-ci --exclude "build.gradle" "tests/fixtures/"
+    - |
+      phylum-ci \
+        --exclude "/requirements-*.txt" \
+        --exclude "build.gradle" "fixtures/"
+
     # Force analysis for all dependencies in a manifest file. This is especially useful
     # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
     - phylum-ci --force-analysis --all-deps --depfile Cargo.toml

@@ -122,6 +122,14 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
             """,
     )
     analysis_group.add_argument(
+        "-e",
+        "--exclude",
+        action="append",
+        nargs="*",
+        help="""Gitignore-style exclusion patterns. Ignored when dependency files are specified explicitly by argument.
+        Specify patterns in quotes to prevent shell globbing. Patterns are applied relative to working directory.""",
+    )
+    analysis_group.add_argument(
         "-a",
         "--all-deps",
         action="store_true",

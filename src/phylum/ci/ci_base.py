@@ -11,7 +11,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from functools import cached_property, lru_cache
 from inspect import cleandoc
-from itertools import starmap
+from itertools import chain, starmap
 import json
 import os
 from pathlib import Path
@@ -22,6 +22,7 @@ import tempfile
 from typing import Optional
 
 from packaging.version import Version
+import pathspec
 from rich.markdown import Markdown
 
 from phylum.ci.common import (
@@ -143,11 +144,13 @@ class CIBase(ABC):
         Dependency files provided as an input option will be preferred over any entries in the `.phylum_project` file.
 
         When no valid dependency files are provided otherwise, an attempt will be made to automatically detect them.
+
+        Detected dependency files can be modified with exclusion patterns provided as an argument.
         """
         arg_depfiles: Optional[list[list[Path]]] = self.args.depfile
         provided_arg_depfiles: DepfileEntries = []
         if arg_depfiles:
-            # flatten the list of lists
+            # Flatten the list of lists
             provided_arg_depfiles = [DepfileEntry(path) for sub_list in arg_depfiles for path in sub_list]
             LOG.debug("Dependency files provided as arguments: %s", provided_arg_depfiles)
             valid_depfiles = self._filter_depfiles(provided_arg_depfiles)
@@ -162,6 +165,7 @@ class CIBase(ABC):
             LOG.debug("Dependency files provided in `.phylum_project` file: %s", detected_depfiles)
         else:
             LOG.debug("Detected dependency files: %s", detected_depfiles)
+        detected_depfiles = self._exclude_depfiles(detected_depfiles)
         if arg_depfiles:
             # Ensure any depfiles provided as arguments that were already filtered out are not included again here
             detected_depfiles = list(set(detected_depfiles).difference(set(provided_arg_depfiles)))
@@ -180,6 +184,36 @@ class CIBase(ABC):
         if not self.returncode:
             self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
         raise SystemExit(self.returncode)
+
+    def _exclude_depfiles(self, provided_depfiles: DepfileEntries) -> DepfileEntries:
+        """Apply exclusion patterns to provided dependency files and return the remaining ones."""
+        arg_exclusions: Optional[list[list[str]]] = self.args.exclude
+        if not arg_exclusions:
+            LOG.debug("No dependency file exclusion patterns provided.")
+            return provided_depfiles
+
+        # Flatten the list of lists
+        provided_arg_exclusions = list(chain.from_iterable(arg_exclusions))
+        LOG.debug("Exclusion patterns provided as arguments: %s", provided_arg_exclusions)
+
+        try:
+            spec = pathspec.GitIgnoreSpec.from_lines(provided_arg_exclusions)
+        except pathspec.patterns.gitwildmatch.GitWildMatchPatternError as err:
+            msg = f"""
+                Could not parse provided gitignore-style exclusion pattern!
+                {err}
+                For more info, see: https://git-scm.com/docs/gitignore#_pattern_format
+                Continuing without exclusions ..."""
+            LOG.warning(cleandoc(msg))
+            return provided_depfiles
+
+        excluded_depfiles = [pdf for pdf in provided_depfiles if spec.match_file(pdf.path.relative_to(Path.cwd()))]
+        LOG.info("Dependency files excluded by matching patterns: %s", excluded_depfiles)
+
+        included_depfiles = list(set(provided_depfiles).difference(set(excluded_depfiles)))
+        LOG.debug("Dependency files after exclusions: %s", included_depfiles)
+
+        return included_depfiles
 
     @progress_spinner("Filtering dependency files")
     def _filter_depfiles(self, provided_depfiles: DepfileEntries) -> Depfiles:
