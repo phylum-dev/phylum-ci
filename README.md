@@ -173,7 +173,7 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 The `phylum-init` script entry point will return a zero (0) exit code when it completes successfully and a one (1)
 otherwise.
 
-The `phylum-ci` script entry point will also return a zero (0) exit code when it completes successfully or one of the
+The `phylum-ci` script entry point will return a zero (0) exit code when it completes successfully or one of the
 following non-zero codes otherwise:
 
 |Exit Code|Meaning|

@@ -338,7 +338,7 @@ release.
 ### Exit Codes
 
 The Phylum analysis stage will return a zero (0) exit code when it completes successfully and a non-zero code otherwise.
-The full and current list of exit codes, with explanations, is [documented here][exit_codes].
+The full and current list of exit codes is [documented here][exit_codes].
 
 [exit_codes]: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes
 
