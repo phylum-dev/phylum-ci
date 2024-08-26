@@ -2,6 +2,7 @@
 
 import argparse
 from collections.abc import Sequence
+from inspect import cleandoc
 import os
 import pathlib
 import sys
@@ -252,7 +253,10 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     if ci_env.audit_mode:
         LOG.info("Audit mode enabled. Original return code: %s", returncode)
         returncode = 0
-    LOG.debug("Return code: %s", returncode)
+    msg = f"""
+        Return code: {returncode}
+        More info: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes"""
+    LOG.debug(cleandoc(msg))
     return returncode
 
 

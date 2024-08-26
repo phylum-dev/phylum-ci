@@ -347,6 +347,13 @@ view the [script options output][script_options] for the latest release.
         --all-deps
 ```
 
+### Exit Codes
+
+The Phylum analysis step will return a zero (0) exit code when it completes successfully and a non-zero code otherwise.
+The full and current list of exit codes, with explanations, is [documented here][exit_codes].
+
+[exit_codes]: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes
+
 ## Alternatives
 
 It is also possible to make direct use of the [`phylum` Python package][pypi] within CI.
