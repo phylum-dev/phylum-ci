@@ -146,3 +146,10 @@ See the [Installation][installation] and [Usage][usage] sections of the [README 
 [readme]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md
 [installation]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md#installation
 [usage]: https://github.com/phylum-dev/phylum-ci/blob/main/README.md#usage
+
+## Exit Codes
+
+The Phylum analysis job/step will return a zero (0) exit code when it completes successfully and a non-zero code
+otherwise. The full and current list of exit codes is [documented here][exit_codes].
+
+[exit_codes]: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes

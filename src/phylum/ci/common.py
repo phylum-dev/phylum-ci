@@ -98,6 +98,7 @@ class ReturnCode(IntEnum):
     SUCCESS = 0
     # NOTE: Don't create a unique entry here for the value `1`. That value is used for default
     #       failures (when a `SystemExit` exception is raised with a message instead of a code).
+    #       Updates to this list should be kept in sync with the "Exit Codes" section of `README.md`.
     #
     # Phylum analysis is complete and contains a policy violation
     POLICY_FAILURE = 2

@@ -168,6 +168,25 @@ The options for `phylum-ci`, automatically updated to be current for the latest 
 [jenkins_docs]: https://docs.phylum.io/phylum-ci/jenkins
 [precommit_docs]: https://docs.phylum.io/phylum-ci/git_precommit
 
+### Exit Codes
+
+The `phylum-init` script entry point will return a zero (0) exit code when it completes successfully and a one (1)
+otherwise.
+
+The `phylum-ci` script entry point will return a zero (0) exit code when it completes successfully or one of the
+following non-zero codes otherwise:
+
+|Exit Code|Meaning|
+|---------|-------|
+|1|Default failure code. An unrecoverable error was encountered.|
+|2|Phylum analysis is complete and contains a policy violation.|
+|6|Phylum analysis is incomplete and contains a policy violation.|
+|10|Dependency file(s) failed filtering and excluded from analysis. See [this FAQ][FAQ] for more.|
+|11|No dependency files were provided or detected.|
+|20|A manifest is attempted to be parsed but lockfile generation has been disabled.|
+
+[FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-a-successful-analysis-comment
+
 ## License
 
 Copyright (C) 2022  Phylum, Inc.
