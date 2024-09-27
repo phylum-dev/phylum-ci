@@ -193,7 +193,14 @@ def parse_depfile(
     cmd.append(str(depfile_path))
     LOG.debug("Using parse command: %s", shlex.join(cmd))
     LOG.debug("Running command from: %s", start)
-    result = subprocess.run(cmd, cwd=start, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+    result = subprocess.run(  # noqa: S603
+        cmd,
+        cwd=start,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.strip()
     parsed_pkgs: list[dict[str, str]] = json.loads(result)
     depfile_pkgs = [Package(**pkg) for pkg in parsed_pkgs]
     return depfile_pkgs
@@ -210,7 +217,8 @@ def _is_sandbox_possible(cli_path: Path) -> bool:
     if bool(subprocess.run(cmd, check=False, capture_output=True).returncode):  # noqa: S603
         msg = """
             Phylum sandbox does not work in this environment and will be disabled.
-            This is common and expected for container environments, such as Docker.
+            This is common and expected for container environments, like Docker.
+            Windows environments are also not currently supported.
             Carefully scrutinize other environments where sandboxing is expected."""
         LOG.warning(cleandoc(msg))
         return False

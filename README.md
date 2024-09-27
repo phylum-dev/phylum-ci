@@ -36,7 +36,7 @@ The `phylum` Python package is pip installable for the environment of your choic
 pip install phylum
 ```
 
-It can also be installed in an isolated environment with the excellent [`pipx` tool](https://pypa.github.io/pipx/):
+It can also be installed in an isolated environment with the excellent [`pipx` tool][pipx]:
 
 ```sh
 # Globally install the app(s) on your system in an isolated virtual environment for the package
@@ -49,6 +49,15 @@ pipx run --spec phylum phylum-ci <options>
 
 These installation methods require Python 3.9+ to run.
 For a self contained environment, consider using the Docker image as described below.
+
+A Windows binary, `phylum-ci.exe`, is offered as a [release artifact][latest_rels] and does not require Python to run.
+Simply [download the latest version][latest_artifact] and run it to access the same
+[`phylum-ci` script entry point features][anchor_script].
+
+[pipx]: https://pypa.github.io/pipx/
+[latest_rels]: https://github.com/phylum-dev/phylum-ci/releases/latest
+[latest_artifact]: https://github.com/phylum-dev/phylum-ci/releases/latest/download/phylum-ci.exe
+[anchor_script]: #phylum-ci-script-entry-point
 
 ### Usage
 

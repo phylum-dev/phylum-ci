@@ -14,10 +14,9 @@ jobs:
   workflow-auto-updates:
     name: Update dependencies and hooks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.12"]
+    env:
+      PYTHON_VERSION: "3.12"
+      POETRY_VERSION: "1.8.3"
     defaults:
       run:
         shell: bash
@@ -35,7 +34,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.8.3
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
@@ -43,12 +42,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'poetry'
 
       - name: Install the project with poetry
         run: |
-          poetry env use python${{ matrix.python-version }}
+          poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with qa

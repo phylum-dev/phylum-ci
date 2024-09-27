@@ -46,7 +46,13 @@ class CINone(CIBase):
         remote = git_remote()
         cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/HEAD"]
         try:
-            commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            commit = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as outer_err:
             # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
             # the except block, is due to wanting to minimize calling commands that require git credentials.
@@ -54,7 +60,13 @@ class CINone(CIBase):
             LOG.warning("Failed to get commit. Remote HEAD ref likely not set. Attempting to set it and try again ...")
             git_set_remote_head(remote)
             try:
-                commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+                commit = subprocess.run(  # noqa: S603
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                ).stdout.strip()
             except subprocess.CalledProcessError as inner_err:
                 pprint_subprocess_error(inner_err)
                 LOG.warning("The common ancestor commit could not be found")

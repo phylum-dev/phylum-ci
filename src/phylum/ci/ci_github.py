@@ -62,7 +62,7 @@ class CIGitHub(CIBase):
         github_workspace = os.getenv("GITHUB_WORKSPACE", "/github/workspace")
         cmd = ["git", "config", "--global", "--add", "safe.directory", github_workspace]
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as err:
             msg = f"""
                 Adding the GitHub workspace `{github_workspace}` as a safe

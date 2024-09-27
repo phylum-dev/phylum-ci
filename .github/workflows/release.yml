@@ -1,4 +1,4 @@
-# This is a workflow for releasing packages in GitHub and publishing to PyPI.
+# This is a workflow for releasing packages in GitHub, publishing to PyPI, and building/pushing new Docker images.
 # This workflow is only triggered manually, from the Actions tab. It is limited to those with `write` access
 # to the repo (e.g., collaborators and orgs, people, teams given write access)
 #
@@ -27,45 +27,27 @@ on:
         required: true
         default: false
 
+env:
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "1.8.3"
+
 jobs:
-  release:
-    name: Build, Verify, Release, and Publish
-    if: github.ref_name == 'main'
-    environment:
-      name: Production
-      url: ${{ steps.pypi_release.outputs.url }}
+  build_dist:
+    name: Build and verify Python distribution
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.12"]
-    defaults:
-      run:
-        shell: bash
-    env:
-      DOCKER_BUILDKIT: 1
+    outputs:
+      phylum_rel_ver: ${{ steps.get_vers.outputs.phylum_rel_ver }}
+      phylum_rel_ver_nuitka: ${{ steps.get_vers.outputs.phylum_rel_ver_nuitka }}
+      psr_expected_next_ver: ${{ steps.get_vers.outputs.psr_expected_next_ver }}
     steps:
       - name: Checkout the repo
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
-          # `python-semantic-release` needs this personal access token (PAT) in order to push to a protected branch.
-          # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
-          token: ${{ secrets.GH_RELEASE_PAT }}
-
-      # This GPG key is for the `phylum-bot` account and used in order to ensure commits and tags are signed/verified
-      - name: Import GPG key for bot account
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
-        with:
-          gpg_private_key: ${{ secrets.PHYLUM_BOT_GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PHYLUM_BOT_GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-          git_tag_gpgsign: true
 
       - name: Install poetry
-        run: pipx install poetry==1.8.3
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
@@ -75,47 +57,55 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'poetry'
 
       - name: Install the project with poetry
         run: |
-          poetry env use python${{ matrix.python-version }}
+          poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --sync --with test,ci
 
-      - name: Set PHYLUM_ORIGINAL_VER value
-        run: echo "PHYLUM_ORIGINAL_VER=$(poetry version --short)" >> "${GITHUB_ENV}"
-
       - name: Set to next version for build
+        id: get_vers
         run: |
-          next_ver=$(poetry run semantic-release -vv version --print)
-          echo "PSR_EXPECTED_NEXT_VER=${next_ver}" >> "${GITHUB_ENV}"
-          if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${next_ver}" ]; then
+          curr_ver=$(poetry version --short)
+          next_ver=$(poetry run semantic-release -v version --print)
+          echo "psr_expected_next_ver=${next_ver}" >> "${GITHUB_OUTPUT}"
+          if [ "${curr_ver}" = "${next_ver}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              next_ver=$(poetry run semantic-release -vv --strict version --print --as-prerelease --patch)
+              next_ver=$(poetry run semantic-release -v --strict version --print --as-prerelease --patch)
             else
-              next_ver=$(poetry run semantic-release -vv --strict version --print --patch)
+              next_ver=$(poetry run semantic-release -v --strict version --print --patch)
             fi
           else
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              next_ver=$(poetry run semantic-release -vv --strict version --print --as-prerelease)
+              next_ver=$(poetry run semantic-release -v --strict version --print --as-prerelease)
             fi
           fi
           poetry version "${next_ver}"
+          phylum_rel_ver=$(poetry version --short)
+          phylum_rel_ver_nuitka=${phylum_rel_ver//-rc/}
+          echo "phylum_rel_ver=${phylum_rel_ver}" >> "${GITHUB_OUTPUT}"
+          echo "phylum_rel_ver_nuitka=${phylum_rel_ver_nuitka}" >> "${GITHUB_OUTPUT}"
 
-      - name: Set PHYLUM_REL_VER value
-        run: echo "PHYLUM_REL_VER=$(poetry version --short)" >> "${GITHUB_ENV}"
-
-      # NOTE: Run the tests for the current active Python version, as a sanity check.
+      # Run the tests for the active Python version as a sanity check.
       - name: Run tox via poetry
         run: poetry run tox
 
       - name: Build wheel and source distribution
         run: poetry build -vvv
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: dist
+          path: ./dist/
+          if-no-files-found: error
+
       - name: Publish to TestPyPI
+        if: github.ref_name == 'main'
         # Allow for re-running the workflow, with the same release package version, for situations where that package is
         # already published to TestPyPI (e.g., failures due to TestPyPI being slow to recognize a published package).
         continue-on-error: true
@@ -127,21 +117,162 @@ jobs:
       # "reviewers" for that environment would be notified of the release and could check that the package verification
       # step(s) worked as intended before approving the release to proceed.
       - name: Verify the package
+        if: github.ref_name == 'main'
         run: |
           pipx run \
             --index-url https://test.pypi.org/simple/ \
-            --spec "phylum==${{ env.PHYLUM_REL_VER }}" \
+            --spec "phylum==${{ steps.get_vers.outputs.phylum_rel_ver }}" \
             --pip-args="--extra-index-url=https://pypi.org/simple/" \
             phylum-init -h
           pipx run \
             --index-url https://test.pypi.org/simple/ \
-            --spec "phylum==${{ env.PHYLUM_REL_VER }}" \
+            --spec "phylum==${{ steps.get_vers.outputs.phylum_rel_ver }}" \
             --pip-args="--extra-index-url=https://pypi.org/simple/" \
             phylum-ci -h
 
-      # This step is needed b/c otherwise the Python Semantic Release `version` cmd would bump the version a 2nd time.
-      - name: Revert to original version
-        run: poetry version ${{ env.PHYLUM_ORIGINAL_VER }}
+  build_windows:
+    name: Build Windows standalone binary
+    needs: build_dist
+    runs-on: windows-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+        # Nuitka needs the packaged form and not the editable install Poetry provides
+        # Ref: https://github.com/Nuitka/Nuitka/issues/2965
+      - name: Download build artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+
+      - name: Set up Python
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        run: pipx install --python ${{ env.PYTHON_VERSION }} poetry==${{ env.POETRY_VERSION }}
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install the project with poetry
+        run: |
+          poetry check --lock
+          poetry lock --no-update --no-cache
+          poetry install --verbose --no-root --sync --with compile
+          poetry run python -m pip install --find-links dist --no-index phylum
+
+      - name: Compile binary with Nuitka
+        env:
+          PHYLUM_REL_VER: ${{ needs.build_dist.outputs.phylum_rel_ver_nuitka }}
+        run: |
+          poetry run python -m nuitka `
+            --onefile `
+            --output-dir=build `
+            --output-filename="phylum-ci.exe" `
+            --include-package=phylum `
+            --include-package-data=phylum `
+            --include-distribution-metadata=phylum `
+            --onefile-tempdir-spec="{CACHE_DIR}/{PRODUCT}/{VERSION}" `
+            --product-name=phylum-ci `
+            --product-version=${env:PHYLUM_REL_VER} `
+            --file-version=${env:GITHUB_RUN_NUMBER} `
+            --company-name="Phylum, Inc." `
+            --copyright="Copyright (C) 2024 Phylum, Inc." `
+            --file-description="Analyze dependencies in CI with Phylum" `
+            --windows-icon-from-ico="docs/img/favicon.ico" `
+            --warn-implicit-exceptions `
+            --warn-unusual-code `
+            --assume-yes-for-downloads `
+            --report=nuitka-compilation-report.xml `
+            --deployment `
+            src/phylum/ci/cli.py
+
+      - name: Confirm operation of binary
+        env:
+          PHYLUM_API_KEY: ${{ secrets.PHYLUM_TOKEN }}
+          PHYLUM_BYPASS_CI_DETECTION: true
+        run: |
+          ./build/phylum-ci.exe -h
+          ./build/phylum-ci.exe -vvaf
+
+      - name: Upload standalone binary
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: phylum-ci.exe
+          path: ./build/phylum-ci.exe
+          if-no-files-found: error
+
+      - name: Upload compilation report
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: nuitka-compilation-report.xml
+          path: ./nuitka-compilation-report.xml
+          if-no-files-found: warn
+
+      # Nuitka will create a crash report with a static name when there are failures
+      - name: Upload crash report
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: nuitka-crash-report.xml
+          path: ./nuitka-crash-report.xml
+          if-no-files-found: ignore
+
+  release:
+    name: Release and publish artifacts
+    needs: [build_dist, build_windows]
+    if: github.ref_name == 'main'
+    environment:
+      name: Production
+      url: ${{ steps.pypi_release.outputs.url }}
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+      PHYLUM_REL_VER: ${{ needs.build_dist.outputs.phylum_rel_ver }}
+      PSR_EXPECTED_NEXT_VER: ${{ needs.build_dist.outputs.psr_expected_next_ver }}
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          # `python-semantic-release` needs full history to properly determine the next release version
+          fetch-depth: 0
+          # `python-semantic-release` needs this personal access token (PAT) in order to push to a protected branch.
+          # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
+          token: ${{ secrets.GH_RELEASE_PAT }}
+
+      # This GPG key is for the `phylum-bot` account and used in order to ensure commits and tags are signed/verified.
+      - name: Import GPG key for bot account
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          gpg_private_key: ${{ secrets.PHYLUM_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PHYLUM_BOT_GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+
+      - name: Install poetry
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up Python
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'poetry'
+
+      - name: Install the project with poetry
+        run: |
+          poetry env use python${{ env.PYTHON_VERSION }}
+          poetry check --lock
+          poetry lock --no-update --no-cache
+          poetry install --verbose --sync --with ci
 
       - name: Update script options documentation
         run: poetry run rich-codex --verbose --skip-git-checks --no-confirm
@@ -150,19 +281,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         run: |
-          if [ "${{ env.PHYLUM_ORIGINAL_VER }}" = "${{ env.PSR_EXPECTED_NEXT_VER }}" ]; then
+          curr_ver=$(poetry version --short)
+          if [ "${curr_ver}" = "${{ env.PSR_EXPECTED_NEXT_VER }}" ]; then
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              poetry run semantic-release -vv --strict version --as-prerelease --patch
+              poetry run semantic-release -v --strict version --as-prerelease --patch
             else
-              poetry run semantic-release -vv --strict version --patch
+              poetry run semantic-release -v --strict version --patch
             fi
           else
             if [ "${{ inputs.prerelease }}" = "true" ]; then
-              poetry run semantic-release -vv --strict version --as-prerelease
+              poetry run semantic-release -v --strict version --as-prerelease
             else
-              poetry run semantic-release -vv version
+              poetry run semantic-release -v version
             fi
           fi
+
+      - name: Use Python Semantic Release to publish release
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
+        run: poetry run semantic-release -v --strict publish --tag "v${{ env.PHYLUM_REL_VER }}"
 
       - name: Publish to PyPI
         id: pypi_release
@@ -173,12 +310,15 @@ jobs:
           poetry publish -vvv --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
           echo "url=https://pypi.org/project/phylum/${{ env.PHYLUM_REL_VER }}/" >> "${GITHUB_OUTPUT}"
 
-      - name: Use Python Semantic Release to publish release
-        env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
-        run: poetry run semantic-release -vv --strict publish --tag "v${{ env.PHYLUM_REL_VER }}"
+      # This is the safety net for the previous step allowing "continue-on-error"
+      - name: Verify PyPI release
+        run: |
+          pipx run --spec "phylum==${{ env.PHYLUM_REL_VER }}" phylum-init -h
+          pipx run --spec "phylum==${{ env.PHYLUM_REL_VER }}" phylum-ci -h
 
       - name: Trigger documentation update
+        # NOTE: This is an instance where the expression syntax (`${{ }}`) is required for the `if` conditional,
+        #       contrary to the GitHub workflow syntax documentation. Do not remove the expression syntax.
         if: ${{ !inputs.prerelease }}
         # Reference: https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
@@ -242,7 +382,7 @@ jobs:
           docker push "ghcr.io/phylum-dev/phylum-ci:${{ env.PHYLUM_REL_VER }}-CLI${CLI_REL_VER}-slim"
 
       - name: Tag and push latest docker images
-        # Only tag and push `latest` when it's not a phylum-ci pre-release
+        # Only tag and push `latest` and `slim` images when it's not a phylum-ci pre-release.
         # NOTE: This is an instance where the expression syntax (`${{ }}`) is required for the `if` conditional,
         #       contrary to the GitHub workflow syntax documentation. Do not remove the expression syntax.
         if: ${{ !inputs.prerelease }}

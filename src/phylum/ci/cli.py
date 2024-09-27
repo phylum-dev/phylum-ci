@@ -31,6 +31,15 @@ def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase
     """
     ci_envs: CIEnvs = []
 
+    # Allow for bypassing full CI detection, which is useful for testing. It happens first
+    # so failed prerequisites of other detected environments won't cause a premature exit.
+    if os.getenv("PHYLUM_BYPASS_CI_DETECTION"):
+        msg = """
+            Found `PHYLUM_BYPASS_CI_DETECTION` environment variable set. Bypassing
+            CI platform detection and proceeding as if no CI environment detected."""
+        LOG.warning(cleandoc(msg))
+        return CINone(args)
+
     # Detect GitLab CI
     if os.getenv("GITLAB_CI") == "true":
         LOG.debug("CI environment detected: GitLab CI")

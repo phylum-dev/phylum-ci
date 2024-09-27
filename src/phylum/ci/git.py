@@ -35,7 +35,13 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
     """
     cmd = [*git_base_cmd(git_c_path), "remote"]
     try:
-        remotes = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.splitlines()  # noqa: S603
+        remotes = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.splitlines()
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the git remote"
         raise PhylumCalledProcessError(err, msg) from err
@@ -66,7 +72,7 @@ def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path:
             cmd.append(ref)
     LOG.debug("Executing command: %s", shlex.join(cmd))
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
     except subprocess.CalledProcessError as err:
         msg = "Fetching failed. Ensure credentials are available to run git commands."
         raise PhylumCalledProcessError(err, msg) from err
@@ -105,7 +111,7 @@ def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
     LOG.info("Automatically setting the remote HEAD ref ...")
     cmd = [*base_cmd, "remote", "set-head", remote, "--auto"]
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
     except subprocess.CalledProcessError as err:
         msg = "Setting the remote HEAD failed. Ensure credentials are available to run git commands."
         raise PhylumCalledProcessError(err, msg) from err
@@ -124,7 +130,13 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
     prefix = f"refs/remotes/{remote}/"
     cmd = [*base_cmd, "symbolic-ref", f"{prefix}HEAD"]
     try:
-        default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+        default_branch_name = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout
     except subprocess.CalledProcessError as outer_err:
         # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
         # the except block, is due to wanting to minimize calling commands that require git credentials.
@@ -132,7 +144,13 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
         LOG.warning("Failed to get the remote HEAD ref. It is likely not set. Attempting to set it and try again ...")
         git_set_remote_head(remote)
         try:
-            default_branch_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+            default_branch_name = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+            ).stdout
         except subprocess.CalledProcessError as inner_err:
             msg = "Failed to get the remote HEAD ref even after setting it."
             raise PhylumCalledProcessError(inner_err, msg) from outer_err
@@ -150,7 +168,13 @@ def git_curent_branch_name(git_c_path: Optional[Path] = None) -> str:
     base_cmd = git_base_cmd(git_c_path=git_c_path)
     cmd = [*base_cmd, "branch", "--show-current"]
     try:
-        current_branch = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+        current_branch = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.strip()
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the current branch name"
         raise PhylumCalledProcessError(err, msg) from err
@@ -167,7 +191,13 @@ def git_hash_object(object_path: Path, git_c_path: Optional[Path] = None) -> str
     # Reference: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
     cmd = [*base_cmd, "hash-object", str(object_path)]
     try:
-        hash_object = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+        hash_object = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.strip()
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the git hash object"
         raise PhylumCalledProcessError(err, msg) from err
@@ -202,7 +232,13 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
         cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
 
     try:
-        full_repo_name = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout.strip()  # noqa: S603
+        full_repo_name = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.strip()
     except subprocess.CalledProcessError as err:
         msg = """
             Getting the git repository name failed. Are all assumptions met:
@@ -246,7 +282,7 @@ def git_worktree(
         LOG.debug("Adding git worktree for base iteration in a temporary directory ...")
         LOG.debug("Using command: %s", shlex.join(cmd))
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True, env=env)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, env=env, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as err:
             msg = f"Unable to create a git worktree at commit: {commit}"
             raise PhylumCalledProcessError(err, msg) from err
@@ -274,7 +310,7 @@ def remove_git_worktree(worktree: Path, git_c_path: Optional[Path] = None) -> No
     LOG.debug("Removing the git worktree for the base iteration ...")
     LOG.debug("Using command: %s", shlex.join(cmd))
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
     except subprocess.CalledProcessError as err:
         pprint_subprocess_error(err)
         LOG.warning("Unable to remove the git worktree. Try running `git worktree prune` manually.")

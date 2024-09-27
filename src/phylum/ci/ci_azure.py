@@ -229,7 +229,13 @@ class CIAzure(CIBase):
         cmd = ["git", "merge-base", src_branch, tgt_branch]
         LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            common_commit = subprocess.run(  # noqa:S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             msg = """
                 The common ancestor commit could not be found.

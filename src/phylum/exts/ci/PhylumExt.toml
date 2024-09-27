@@ -2,4 +2,4 @@ name = "ci"
 description = "Phylum CI analysis"
 
 [permissions]
-read = ["/"]
+read = true

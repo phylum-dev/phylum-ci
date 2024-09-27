@@ -100,7 +100,10 @@ def github_request(
             {PAT_REF}"""
         raise SystemExit(cleandoc(msg))
 
-    LOG.debug("%s GitHub API requests remaining until window resets at: %s", rate_limit_remaining, reset_time)
+    msg = f"""
+        {rate_limit_remaining} GitHub API requests remaining until window resets at:
+        {reset_time}"""
+    LOG.debug(cleandoc(msg))
 
     # Wrap all other request failures in a detailed message and exit with that instead of a stack trace
     try:

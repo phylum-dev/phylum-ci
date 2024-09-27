@@ -54,6 +54,7 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
         check=True,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     # Test the `deps` property with lockfile generation and sandbox disabled
@@ -75,4 +76,4 @@ def test_deps(mock_run: MagicMock, mock_sandbox_check: MagicMock) -> None:
     packages = depfile.deps
     assert packages == []
     mock_sandbox_check.assert_called_once()
-    mock_run.assert_called_once_with(cmd, cwd=Path.cwd(), check=True, capture_output=True, text=True)
+    mock_run.assert_called_once_with(cmd, cwd=Path.cwd(), check=True, capture_output=True, text=True, encoding="utf-8")

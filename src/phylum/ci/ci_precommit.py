@@ -56,7 +56,13 @@ class CIPreCommit(CIBase):
 
         cmd = ["git", "diff", "--cached", "--name-only"]
         try:
-            output = subprocess.run(cmd, check=True, text=True, capture_output=True).stdout  # noqa: S603
+            output = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+            ).stdout
         except subprocess.CalledProcessError as err:
             msg = "Getting the staged files from git failed."
             raise PhylumCalledProcessError(err, msg) from err
@@ -111,7 +117,13 @@ class CIPreCommit(CIBase):
         """Find the common ancestor commit."""
         cmd = ["git", "rev-parse", "--verify", "HEAD"]
         try:
-            common_commit = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            common_commit = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             LOG.warning("The common ancestor commit could not be found")

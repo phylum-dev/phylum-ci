@@ -84,6 +84,12 @@ types-requests = "*"
 pre-commit = "*"
 tox = "*"
 
+[tool.poetry.group.compile]
+optional = true
+
+[tool.poetry.group.compile.dependencies]
+nuitka = "*"
+
 [tool.black]
 line-length = 120
 
@@ -164,6 +170,9 @@ assets = ["docs/img/phylum-ci_options.svg", "docs/img/phylum-init_options.svg"]
 commit_message = "chore: bump to v{version}"
 commit_author = "phylum-bot <69485888+phylum-bot@users.noreply.github.com>"
 logging_use_named_masks = true
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*", "build/phylum-ci.exe"]
 
 [tool.semantic_release.changelog.environment]
 trim_blocks = true
