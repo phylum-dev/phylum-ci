@@ -54,12 +54,6 @@ def get_phylum_settings_path() -> Path:
     return phylum_config_path
 
 
-def get_expected_phylum_bin_path() -> Path:
-    """Get the expected path to the Phylum CLI binary and return it."""
-    phylum_bin_path = Path.home() / ".local" / "bin" / "phylum"
-    return phylum_bin_path
-
-
 def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
     cmd = [str(cli_path), "--version"]
@@ -88,13 +82,13 @@ def get_phylum_bin_path() -> tuple[Optional[Path], Optional[str]]:
     which_cli_path = shutil.which("phylum")
 
     if which_cli_path is None:
-        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH
-        # has not been updated in this context. Look in the specific expected locations.
-        expected_cli_path = get_expected_phylum_bin_path()
+        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been
+        # updated in this context. Look in the specific expected location for non-Windows systems.
+        expected_cli_path = Path.home() / ".local" / "bin" / "phylum"
         which_cli_path = shutil.which("phylum", path=expected_cli_path)
 
     if which_cli_path is None:
-        # Maybe `phylum` is "installed" for Windows
+        # Maybe `phylum` is "installed" for Windows by being copied into the `phylum` package path.
         which_cli_path = shutil.which("phylum", path=PHYLUM_PACKAGE_PATH)
 
     if which_cli_path is None:
