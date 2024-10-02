@@ -13,6 +13,17 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.50.0](https://github.com/phylum-dev/phylum-ci/compare/v0.49.0...v0.50.0) (2024-10-02)
+
+### Breaking
+
+* Add windows support with standalone binary ([#474](https://github.com/phylum-dev/phylum-ci/pull/474)) ([`24a20c9`](https://github.com/phylum-dev/phylum-ci/commit/24a20c95d92b797a397b948b732d28432260cb80))
+  * Phylum CLI installs before v7.1.0-rc1 are no longer supported. That release is the first one providing full Windows support.
+
+### Documentation
+
+* Add exit code information ([#465](https://github.com/phylum-dev/phylum-ci/pull/465)) ([`b5842eb`](https://github.com/phylum-dev/phylum-ci/commit/b5842eb705c16245b670366e45f306ebb87ee5d0))
+
 ## [v0.49.0](https://github.com/phylum-dev/phylum-ci/compare/v0.48.0...v0.49.0) (2024-08-21)
 
 ### Feature
