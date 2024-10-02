@@ -3,10 +3,10 @@
 import argparse
 from collections.abc import Sequence
 from functools import lru_cache
+from inspect import cleandoc
 import itertools
 import operator
 import os
-import pathlib
 from pathlib import Path
 import platform
 import shutil
@@ -21,7 +21,7 @@ from packaging.version import InvalidVersion, Version
 import requests
 from ruamel.yaml import YAML
 
-from phylum import __version__
+from phylum import PHYLUM_PACKAGE_PATH, __version__
 from phylum.constants import (
     ENVVAR_NAME_API_URI,
     ENVVAR_NAME_TOKEN,
@@ -38,33 +38,37 @@ from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import github_request
 from phylum.init import SCRIPT_NAME
 from phylum.init.sig import verify_sig
-from phylum.logger import LOG, MARKUP_NO_HI, progress_spinner, set_logger_level
+from phylum.logger import LOG, progress_spinner, set_logger_level
 
 
-def get_phylum_settings_path():
+def get_phylum_settings_path() -> Path:
     """Get the Phylum settings path and return it."""
-    home_dir = pathlib.Path.home()
+    home_dir = Path.home()
 
-    config_home_path = os.getenv("XDG_CONFIG_HOME")
+    config_home_path = os.getenv("XDG_CONFIG_HOME", "")
     if not config_home_path:
-        config_home_path = home_dir / ".config"
+        config_home_path = str(home_dir / ".config")
 
-    phylum_config_path = pathlib.Path(config_home_path) / "phylum" / "settings.yaml"
+    phylum_config_path = Path(config_home_path) / "phylum" / "settings.yaml"
 
     return phylum_config_path
-
-
-def get_expected_phylum_bin_path():
-    """Get the expected path to the Phylum CLI binary and return it."""
-    phylum_bin_path = pathlib.Path.home() / ".local" / "bin" / "phylum"
-    return phylum_bin_path
 
 
 def get_phylum_cli_version(cli_path: Path) -> str:
     """Get the version of the installed and active Phylum CLI and return it."""
     cmd = [str(cli_path), "--version"]
     try:
-        version = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip().lower()  # noqa: S603
+        version = (
+            subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            .stdout.strip()
+            .lower()
+        )
     except subprocess.CalledProcessError as err:
         msg = "There was an error retrieving the Phylum CLI version"
         raise PhylumCalledProcessError(err, msg) from err
@@ -78,10 +82,14 @@ def get_phylum_bin_path() -> tuple[Optional[Path], Optional[str]]:
     which_cli_path = shutil.which("phylum")
 
     if which_cli_path is None:
-        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been updated in this
-        # context. Look in the specific expected location.
-        expected_cli_path = get_expected_phylum_bin_path()
+        # Maybe `phylum` is installed already but not on the PATH or maybe the PATH has not been
+        # updated in this context. Look in the specific expected location for non-Windows systems.
+        expected_cli_path = Path.home() / ".local" / "bin" / "phylum"
         which_cli_path = shutil.which("phylum", path=expected_cli_path)
+
+    if which_cli_path is None:
+        # Maybe `phylum` is "installed" for Windows by being copied into the `phylum` package path.
+        which_cli_path = shutil.which("phylum", path=PHYLUM_PACKAGE_PATH)
 
     if which_cli_path is None:
         return (None, None)
@@ -184,27 +192,36 @@ def supported_targets(release_tag: str) -> list[str]:
 
     assets = req_json.get("assets", [])
     targets: list[str] = []
-    prefix, suffix = "phylum-", ".zip"
+    prefixes = ("phylum-",)
+    suffixes = (".zip", ".exe")
     asset: dict
     for asset in assets:
         name: str = asset.get("name", "")
-        if name.startswith(prefix) and name.endswith(suffix):
-            target = name.removeprefix(prefix).removesuffix(suffix)
-            targets.append(target)
+        for prefix, suffix in itertools.product(prefixes, suffixes):
+            if name.startswith(prefix) and name.endswith(suffix):
+                target = name.removeprefix(prefix).removesuffix(suffix)
+                targets.append(target)
+                break
 
     return list(set(targets))
 
 
 def version_check(version: str) -> str:
     """Check a given version for validity and return a normalized form of it."""
+    supported_versions = supported_releases()
     if version == "latest":
         version = get_latest_version()
+        if version not in supported_versions:
+            msg = f"""
+                The "latest" released Phylum CLI, {version}, is not supported.
+                The most recent pre-release, {supported_versions[0]}, is and will be used."""
+            LOG.info(cleandoc(msg))
+            version = supported_versions[0]
 
     version = version.lower()
     if not version.startswith("v"):
         version = f"v{version}"
 
-    supported_versions = supported_releases()
     if version not in supported_versions:
         msg = f"Specified Phylum CLI version must be from a supported release: {', '.join(supported_versions)}"
         raise SystemExit(msg)
@@ -212,7 +229,7 @@ def version_check(version: str) -> str:
     return version
 
 
-def process_version(version: str) -> str:
+def process_version(version: Optional[str]) -> str:
     """Process the version argument and return it."""
     if version:
         LOG.debug("Phylum CLI version was specified as: %s", version)
@@ -273,7 +290,7 @@ def is_token_set(phylum_settings_path: Path, token: Optional[str] = None) -> boo
 
 
 @progress_spinner("Processing Phylum token option")
-def process_token_option(args):
+def process_token_option(args) -> None:
     """Process the Phylum token option as parsed from the arguments."""
     phylum_settings_path = get_phylum_settings_path()
 
@@ -320,20 +337,52 @@ def ensure_settings_file() -> None:
     # The Phylum CLI `settings.yaml` file may not exist upon initial install. This can happen if the install did not
     # include running any commands, like when using the `--global-install` method. The standard install method will run
     # `extension install` commands to install all the default extensions. Running a command will trigger the CLI to
-    # generate the settings file.
+    # generate the settings file as part of it's self-update check. This check is disabled for Windows and so a best
+    # effort attempt to create a settings file is done there.
     phylum_settings_path = get_phylum_settings_path()
+
+    if phylum_settings_path.exists():
+        return
+
+    # Prefer populating the settings file with the Phylum CLI itself
+    LOG.debug("Attempting to generate the Phylum CLI settings file ...")
+    phylum_bin_path, _ = get_phylum_bin_path()
+    if phylum_bin_path is None:
+        msg = """
+            Could not find the path to the Phylum CLI.
+            Unable to ensure the settings file."""
+        raise SystemExit(cleandoc(msg))
+    cmd = [str(phylum_bin_path), "version"]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
+    except subprocess.CalledProcessError as err:
+        msg = "There was an error attempting to generate the Phylum CLI settings file"
+        raise PhylumCalledProcessError(err, msg) from err
+
     if not phylum_settings_path.exists():
-        LOG.debug("Attempting to generate the Phylum CLI settings file ...")
-        phylum_bin_path, _ = get_phylum_bin_path()
-        if phylum_bin_path is None:
-            msg = "Could not find the path to the Phylum CLI. Unable to ensure the settings file."
-            raise SystemExit(msg)
-        cmd = [str(phylum_bin_path), "version"]
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-        except subprocess.CalledProcessError as err:
-            msg = "There was an error attempting to generate the Phylum CLI settings file"
-            raise PhylumCalledProcessError(err, msg) from err
+        # Likely due to running on Windows. Put down a minimal settings file.
+        msg = """
+            Failed to generate Phylum CLI settings file.
+            Attempting to manually create a default one ..."""
+        LOG.debug(cleandoc(msg))
+        # Ensure config directory and it's parents exist
+        phylum_settings_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        yaml = YAML()
+        settings = {
+            "connection": {"uri": "https://api.phylum.io"},
+            "auth_info": {"offline_access": None},
+            "last_update": None,
+            "ignore_certs": False,
+            "organization": None,
+        }
+        with phylum_settings_path.open("w", encoding="utf-8") as f:
+            yaml.dump(settings, f)
+
+    if not phylum_settings_path.exists():
+        msg = f"""
+            Phylum CLI settings file does not exist and could not be created at:
+            {phylum_settings_path}"""
+        raise SystemExit(cleandoc(msg))
 
 
 @progress_spinner("Processing Phylum API URI option")
@@ -384,7 +433,14 @@ def install_phylum_cli(args: argparse.Namespace, extracted_dir: Path) -> None:
     else:
         cmd = ["sh", "install.sh"]
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=extracted_dir)  # noqa: S603
+        subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=extracted_dir,
+            encoding="utf-8",
+        )
     except subprocess.CalledProcessError as err:
         msg = "There was an error while trying to install the Phylum CLI"
         raise PhylumCalledProcessError(err, msg) from err
@@ -393,24 +449,45 @@ def install_phylum_cli(args: argparse.Namespace, extracted_dir: Path) -> None:
 @progress_spinner("Confirming Phylum CLI installation and setup")
 def confirm_setup() -> None:
     """Check to ensure everything is working."""
+    # Since commands are captured and then displayed in the logs, the decoding value used throughout this function is
+    # left as the default but errors will be handled with backslash replacement values. This is done to ensure the
+    # `rich` log handler is able to encode on all systems (e.g., Windows uses `cp1252` instead of `utf-8`).
     phylum_bin_path, _ = get_phylum_bin_path()
 
     # Print the version message to aid log review
     cmd = [str(phylum_bin_path), "version"]
-    version_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+    version_output = subprocess.run(  # noqa: S603
+        cmd,
+        check=True,
+        capture_output=True,
+        text=True,
+        errors="backslashreplace",
+    ).stdout
     LOG.debug(version_output)
 
     if is_token_set(get_phylum_settings_path()):
         # Check that the token and API URI were setup correctly by using them to display the current auth status
         cmd = [str(phylum_bin_path), "auth", "status"]
-        auth_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+        auth_output = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            errors="backslashreplace",
+        ).stdout
         LOG.debug(auth_output)
     else:
         LOG.warning("Existing token not found. Can't confirm setup.")
 
     # Print the help message to aid log review
     cmd = [str(phylum_bin_path), "--help"]
-    help_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+    help_output = subprocess.run(  # noqa: S603
+        cmd,
+        check=True,
+        capture_output=True,
+        text=True,
+        errors="backslashreplace",
+    ).stdout
     LOG.debug(help_output)
 
 
@@ -494,62 +571,70 @@ def get_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args=args)
 
 
-def main(args=None):
+def main(args: Optional[Sequence[str]] = None) -> int:
     """Provide the main entrypoint."""
-    args = get_args(args=args)
-    set_logger_level(args.verbose - args.quiet)
+    parsed_args = get_args(args=args)
+    set_logger_level(parsed_args.verbose - parsed_args.quiet)
 
     # Perform version check and normalization separately from the argument parsing so as to minimize GitHub
     # API calls when showing the help message but still bail early when the version provided is invalid.
-    args.version = process_version(args.version)
+    parsed_args.version = process_version(parsed_args.version)
 
-    if args.list_releases:
+    if parsed_args.list_releases:
         LOG.info("Looking up supported releases ...")
         releases = ", ".join(supported_releases())
         LOG.warning("Supported releases: %s", releases, extra={"highlighter": False})
         return 0
 
-    tag_name = args.version
+    tag_name = parsed_args.version
     LOG.info("Looking up supported targets for release %s ...", tag_name)
     supported_target_triples = supported_targets(tag_name)
-    if args.list_targets:
+    if parsed_args.list_targets:
         targets = ", ".join(supported_target_triples)
         LOG.warning("Supported targets for release %s: %s", tag_name, targets, extra={"highlighter": False})
         return 0
 
-    target_triple = args.target
+    target_triple = parsed_args.target
     if target_triple not in supported_target_triples:
         msg = f"The identified target triple `{target_triple}` is not supported for release {tag_name}"
         raise SystemExit(msg)
 
-    archive_name = f"phylum-{target_triple}.zip"
-    sig_name = f"{archive_name}.signature"
-    archive_url = get_archive_url(tag_name, archive_name)
-    sig_url = f"{archive_url}.signature"
+    if "-windows-" in target_triple:
+        # Phylum CLI Windows targets are not supported for automatic install.
+        # Install manually by downloading binary and placing in known location.
+        archive_name = f"phylum-{target_triple}.exe"
+        archive_url = get_archive_url(tag_name, archive_name)
+        binary_path = PHYLUM_PACKAGE_PATH / "phylum.exe"
+        save_file_from_url(archive_url, binary_path)
+    else:
+        archive_name = f"phylum-{target_triple}.zip"
+        sig_name = f"{archive_name}.signature"
+        archive_url = get_archive_url(tag_name, archive_name)
+        sig_url = f"{archive_url}.signature"
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir_path = pathlib.Path(temp_dir)
-        archive_path = temp_dir_path / archive_name
-        sig_path = temp_dir_path / sig_name
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            archive_path = temp_dir_path / archive_name
+            sig_path = temp_dir_path / sig_name
 
-        save_file_from_url(archive_url, archive_path)
-        save_file_from_url(sig_url, sig_path)
+            save_file_from_url(archive_url, archive_path)
+            save_file_from_url(sig_url, sig_path)
 
-        verify_sig(archive_path, sig_path)
+            verify_sig(archive_path, sig_path)
 
-        with zipfile.ZipFile(archive_path, mode="r") as zip_file:
-            if zip_file.testzip() is not None:
-                msg = f"There was a bad file in the zip archive {archive_name}"
-                raise zipfile.BadZipFile(msg)
-            extracted_dir = temp_dir_path / f"phylum-{target_triple}"
-            zip_file.extractall(path=temp_dir)
+            with zipfile.ZipFile(archive_path, mode="r") as zip_file:
+                if zip_file.testzip() is not None:
+                    msg = f"There was a bad file in the zip archive {archive_name}"
+                    raise zipfile.BadZipFile(msg)
+                extracted_dir = temp_dir_path / f"phylum-{target_triple}"
+                zip_file.extractall(path=temp_dir)
 
-        install_phylum_cli(args, extracted_dir)
+            install_phylum_cli(parsed_args, extracted_dir)
 
-    process_uri_option(args)
-    process_token_option(args)
+    process_uri_option(parsed_args)
+    process_token_option(parsed_args)
     confirm_setup()
-    LOG.warning(":white_check_mark: Installed Phylum CLI %s", tag_name, extra=MARKUP_NO_HI)
+    LOG.warning("Installed Phylum CLI %s", tag_name)
 
     return 0
 

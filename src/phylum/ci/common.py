@@ -62,8 +62,13 @@ class DepfileEntry:
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `DepfileEntry` object."""
-        # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but `os.path.relpath()` does not.
-        return os.path.relpath(self.path)
+        try:
+            # `PurePath.relative_to()` requires `self` to be the subpath of the argument, but
+            # `os.path.relpath()` does not. This method will throw a ValueError when the path
+            # contains a Windows device drive prefix (e.g., `\\?\`), which we can safely ignore.
+            return os.path.relpath(self.path)
+        except ValueError:
+            return str(self.path)
 
     def __eq__(self, other: object) -> bool:
         """Provide an equality "rich comparison" method to override the default.

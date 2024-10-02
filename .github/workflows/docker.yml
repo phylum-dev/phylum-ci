@@ -45,6 +45,7 @@ jobs:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Get latest phylum-ci release version
+        id: get_vers
         # The API is called directly here instead of using git commands because the repo is not checked out yet
         run: |
           REL_VER_WITH_v=$( \
@@ -62,19 +63,19 @@ jobs:
           )
           REL_VER_WITHOUT_v="${REL_VER_WITH_v//v/}"
           echo "${REL_VER_WITH_v}" "${REL_VER_WITHOUT_v}"
-          echo "REL_VER_WITH_v=${REL_VER_WITH_v}" >> "${GITHUB_ENV}"
-          echo "REL_VER_WITHOUT_v=${REL_VER_WITHOUT_v}" >> "${GITHUB_ENV}"
+          echo "REL_VER_WITH_v=${REL_VER_WITH_v}" >> "${GITHUB_OUTPUT}"
+          echo "REL_VER_WITHOUT_v=${REL_VER_WITHOUT_v}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout the repo
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           # This will ensure the checkout matches the tag for the latest release
-          ref: ${{ env.REL_VER_WITH_v }}
+          ref: ${{ steps.get_vers.outputs.REL_VER_WITH_v }}
 
       - name: Get phylum wheel from latest release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release download ${{ env.REL_VER_WITH_v }} --pattern '*.whl'
+        run: gh release download ${{ steps.get_vers.outputs.REL_VER_WITH_v }} --pattern '*.whl'
 
       - name: Build default docker image with latest phylum wheel
         run: |
@@ -112,6 +113,8 @@ jobs:
         run: docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
       - name: Create specific docker tags and push them
+        env:
+          REL_VER_WITHOUT_v: ${{ steps.get_vers.outputs.REL_VER_WITHOUT_v }}
         run: |
           CLI_REL_VER=$(docker run --rm phylum-ci phylum --version | sed 's/phylum //')
           docker tag phylum-ci "phylumio/phylum-ci:${{ env.REL_VER_WITHOUT_v }}-CLI${CLI_REL_VER}"

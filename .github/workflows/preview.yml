@@ -1,6 +1,7 @@
 # This is a workflow for previewing packages. It can be used for testing before a release to the "production" systems.
 # It will automatically create developmental release builds and make them available for all pushes to `main`. There is
-# also an ability to manually trigger this workflow, with an additional option to publish the package to TestPyPI.
+# also an ability to manually trigger this workflow, with additional options to (1) publish the package to TestPyPI and
+# (2) build, test, and make available a Windows standalone binary.
 ---
 name: Preview
 
@@ -13,22 +14,29 @@ on:
         type: boolean
         required: true
         default: false
+      CompileWindows:
+        description: "Create Windows binary"
+        type: boolean
+        required: true
+        default: true
 
   push:
     branches:
       - main
 
+env:
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "1.8.3"
+
 jobs:
   publish_preview:
     name: Build and Publish for Preview
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # It's only one Python version specified in a "matrix", but on purpose to stay DRY
-        python-version: ["3.12"]
     defaults:
       run:
         shell: bash
+    outputs:
+      next_ver: ${{ steps.dev_ver.outputs.next_ver }}
     steps:
       - name: Checkout the repo
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
@@ -37,7 +45,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install poetry
-        run: pipx install poetry==1.8.3
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
@@ -47,25 +55,27 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: 'poetry'
 
       - name: Install the project with poetry
         run: |
-          poetry env use python${{ matrix.python-version }}
+          poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock
           poetry lock --no-update --no-cache
           poetry install --verbose --no-root --sync --with test,ci
 
       - name: Make developmental release version
+        id: dev_ver
         # poetry version rules do not provide for developmental releases as specified in PEP440.
         # It can be pieced together with these commands.
         run: |
           curr_ver=$(poetry version --short)
-          next_ver=$(poetry run semantic-release -vv version --print)
+          next_ver=$(poetry run semantic-release -v version --print)
           if [ "${curr_ver}" = "${next_ver}" ]; then
-            next_ver=$(poetry run semantic-release -vv version --print --patch)
+            next_ver=$(poetry run semantic-release -v version --print --patch)
           fi
+          echo "next_ver=${next_ver}" >> "${GITHUB_OUTPUT}"
           poetry version "${next_ver}.dev${GITHUB_RUN_NUMBER}"
 
       - name: Run tox via poetry
@@ -80,8 +90,98 @@ jobs:
           name: dist
           path: ./dist/
           if-no-files-found: error
-          retention-days: 7
 
       - name: Publish to TestPyPI
         if: inputs.TestPyPI
         run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
+
+  build_windows:
+    name: Build Windows standalone binary
+    if: inputs.CompileWindows
+    needs: publish_preview
+    runs-on: windows-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+        # Nuitka needs the packaged form and not the editable install Poetry provides
+        # Ref: https://github.com/Nuitka/Nuitka/issues/2965
+      - name: Download build artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+
+      - name: Set up Python
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        run: pipx install --python ${{ env.PYTHON_VERSION }} poetry==${{ env.POETRY_VERSION }}
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install the project with poetry
+        run: |
+          poetry check --lock
+          poetry lock --no-update --no-cache
+          poetry install --verbose --no-root --sync --with compile
+          poetry run python -m pip install --find-links dist --no-index phylum
+
+      - name: Compile binary with Nuitka
+        env:
+          PREVIEW_VER: ${{ needs.publish_preview.outputs.next_ver }}
+        run: |
+          poetry run python -m nuitka `
+            --onefile `
+            --output-dir=build `
+            --output-filename="phylum-ci.exe" `
+            --include-package=phylum `
+            --include-package-data=phylum `
+            --include-distribution-metadata=phylum `
+            --onefile-tempdir-spec="{CACHE_DIR}/{PRODUCT}/{VERSION}" `
+            --product-name=phylum-ci `
+            --product-version=${env:PREVIEW_VER} `
+            --file-version=${env:GITHUB_RUN_NUMBER} `
+            --company-name="Phylum, Inc." `
+            --copyright="Copyright (C) 2024 Phylum, Inc." `
+            --file-description="Analyze dependencies in CI with Phylum" `
+            --windows-icon-from-ico="docs/img/favicon.ico" `
+            --warn-implicit-exceptions `
+            --warn-unusual-code `
+            --assume-yes-for-downloads `
+            --report=nuitka-compilation-report.xml `
+            --deployment `
+            src/phylum/ci/cli.py
+
+      - name: Confirm operation of binary
+        env:
+          PHYLUM_API_KEY: ${{ secrets.PHYLUM_TOKEN }}
+          PHYLUM_BYPASS_CI_DETECTION: true
+        run: |
+          ./build/phylum-ci.exe -h
+          ./build/phylum-ci.exe -vvaf
+
+      - name: Upload standalone binary
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: phylum-ci.exe
+          path: ./build/phylum-ci.exe
+          if-no-files-found: error
+
+      - name: Upload compilation report
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: nuitka-compilation-report.xml
+          path: ./nuitka-compilation-report.xml
+          if-no-files-found: warn
+
+      # Nuitka will create a crash report with a static name when there are failures
+      - name: Upload crash report
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: nuitka-crash-report.xml
+          path: ./nuitka-crash-report.xml
+          if-no-files-found: ignore

@@ -95,7 +95,13 @@ class CIBase(ABC):
         """
         cmd = [str(self.cli_path), "status", "--json"]
         try:
-            status_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            status_output = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             msg = "Phylum status check failed"
             raise PhylumCalledProcessError(err, msg) from err
@@ -128,7 +134,13 @@ class CIBase(ABC):
         """Find all the lockfiles and manifests at the current directory or below."""
         cmd = [str(self.cli_path), "find-dependency-files"]
         try:
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            result = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             msg = "Phylum `find-dependency-files` command failed"
             raise PhylumCalledProcessError(err, msg) from err
@@ -350,7 +362,7 @@ class CIBase(ABC):
             LOG.debug("Project name provided as argument: %s", project_name)
             return project_name
 
-        LOG.info("Project name not provided as argument. Checking `.phylum_project` file ...")
+        LOG.info("Project name not provided as argument. Checking project file ...")
         project_name = self._project_settings.get("project")
         if project_name:
             LOG.debug("Project name provided in `.phylum_project` file: %s", project_name)
@@ -385,7 +397,7 @@ class CIBase(ABC):
                 LOG.warning(cleandoc(msg))
             return group_name
 
-        LOG.debug("Group name not provided as argument. Checking `.phylum_project` file...")
+        LOG.debug("Group name not provided as argument. Checking project file ...")
         group_name = self._project_settings.get("group")
         if group_name:
             LOG.debug("Group name provided in `.phylum_project` file: %s", group_name)
@@ -415,6 +427,8 @@ class CIBase(ABC):
             "--api-uri", self.args.uri,
         ]
         # fmt: on
+        install_args.extend("--verbose" for _ in range(self.args.verbose))
+        install_args.extend("--quiet" for _ in range(self.args.quiet))
         cli_path, cli_version = get_phylum_bin_path()
         if cli_path is None:
             LOG.warning("Existing Phylum CLI instance not found. Installing version `%s` ...", specified_version)
@@ -591,7 +605,7 @@ class CIBase(ABC):
             LOG.warning("Attempting to create a Phylum project outside the top level of a `git` repository")
 
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as outer_err:
             # The Phylum CLI will return a unique error code when a project/group pairing
             # that already exists is attempted to be created. This situation is recognized
@@ -618,7 +632,7 @@ class CIBase(ABC):
 
             # A missing group was created, which means we need to try to create the project again.
             try:
-                subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+                subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
             except subprocess.CalledProcessError as inner_err:
                 # Check for this error code again because it is possible the same
                 # project/group pairing was created elsewhere since the last check.
@@ -652,7 +666,7 @@ class CIBase(ABC):
         LOG.info("Attempting to create a Phylum group with name: %s ...", self.phylum_group)
         cmd = [str(self.cli_path), "group", "create", self.phylum_group]
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as err:
             # The Phylum CLI will return a unique error code when a group that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
@@ -685,7 +699,13 @@ class CIBase(ABC):
             LOG.debug("Using Phylum group: %s", self.phylum_group)
             cmd.extend(["--group", self.phylum_group])
         try:
-            cmd_output = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # noqa: S603
+            cmd_output = subprocess.run(  # noqa: S603
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             msg = """
@@ -725,7 +745,7 @@ class CIBase(ABC):
             cmd.extend(["--group", self.phylum_group])
         LOG.debug("Using command: %s", shlex.join(cmd))
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as err:
             pprint_subprocess_error(err)
             msg = """
@@ -801,7 +821,13 @@ class CIBase(ABC):
             LOG.info("Performing analysis. This may take a few seconds.")
             LOG.debug("Using analysis command: %s", shlex.join(cmd))
             try:
-                analysis_result = subprocess.run(cmd, check=True, capture_output=True, text=True).stdout  # noqa: S603
+                analysis_result = subprocess.run(  # noqa: S603
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                ).stdout
             except subprocess.CalledProcessError as err:
                 # The Phylum project will fail analysis if the configured policy criteria are not met.
                 # This causes the return code to be 100 and lands us here. Check for this case to proceed.

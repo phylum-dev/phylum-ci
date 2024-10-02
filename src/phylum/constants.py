@@ -3,12 +3,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Adhering to the CLI major version release breaking changes started with v6.0.0-rc3
-MIN_CLI_VER_FOR_INSTALL = "v6.0.0-rc3"
+# Support for analysis on Windows was enabled in v7.1.0-rc1
+MIN_CLI_VER_FOR_INSTALL = "v7.1.0-rc1"
 
 # This is the minimum CLI version supported for existing installs.
-# Adhering to the CLI major version release breaking changes started with v6.0.0-rc3
-MIN_CLI_VER_INSTALLED = "v6.0.0-rc3"
+# Support for analysis on Windows was enabled in v7.1.0-rc1
+MIN_CLI_VER_INSTALLED = "v7.1.0-rc1"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
@@ -24,6 +24,7 @@ SUPPORTED_ARCHES = {
 SUPPORTED_PLATFORMS = {
     "linux": "unknown-linux-gnu",
     "darwin": "apple-darwin",
+    "windows": "pc-windows-msvc",
 }
 
 # Timeout value, in seconds, to tell the Python Requests package to stop waiting for a response.
