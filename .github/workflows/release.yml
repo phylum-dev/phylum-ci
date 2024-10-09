@@ -118,7 +118,17 @@ jobs:
       # step(s) worked as intended before approving the release to proceed.
       - name: Verify the package
         if: github.ref_name == 'main'
+        timeout-minutes: 3
         run: |
+          echo "Waiting for TestPyPI release to be ready..."
+          until pipx run \
+            --index-url https://test.pypi.org/simple/ \
+            --spec "phylum==${{ steps.get_vers.outputs.phylum_rel_ver }}" \
+            --pip-args="--extra-index-url=https://pypi.org/simple/" \
+            phylum-ci --version >/dev/null 2>&1; do
+              sleep 5
+              echo "Waiting for TestPyPI release to be ready..."
+          done
           pipx run \
             --index-url https://test.pypi.org/simple/ \
             --spec "phylum==${{ steps.get_vers.outputs.phylum_rel_ver }}" \
@@ -338,7 +348,13 @@ jobs:
 
       # This is the safety net for the previous step allowing "continue-on-error"
       - name: Verify PyPI release
+        timeout-minutes: 3
         run: |
+          echo "Waiting for PyPI release to be ready..."
+          until pipx run --spec "phylum==${{ env.PHYLUM_REL_VER }}" phylum-ci --version >/dev/null 2>&1; do
+            sleep 5
+            echo "Waiting for PyPI release to be ready..."
+          done
           pipx run --spec "phylum==${{ env.PHYLUM_REL_VER }}" phylum-init -h
           pipx run --spec "phylum==${{ env.PHYLUM_REL_VER }}" phylum-ci -h
 
