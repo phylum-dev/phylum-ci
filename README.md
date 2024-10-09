@@ -50,13 +50,25 @@ pipx run --spec phylum phylum-ci <options>
 These installation methods require Python 3.9+ to run.
 For a self contained environment, consider using the Docker image as described below.
 
-A Windows binary, `phylum-ci.exe`, is offered as a [release artifact][latest_rels] and does not require Python to run.
-Simply [download the latest version][latest_artifact] and run it to access the same
-[`phylum-ci` script entry point features][anchor_script].
+Windows binaries are offered as [release artifacts][latest_rels] for a "standalone" solution that does not require
+Python or Docker to run. There are two options for this installation method:
+
+* `phylum-ci.zip`
+  * [Download the latest archive version][latest_zip] and extract it
+  * Add the extracted directory to `PATH` or reference the contained `phylum-ci.exe` binary directly
+* `phylum-ci.exe`
+  * [Download the latest executable version][latest_exe] and place this binary on `PATH` or reference it directly
+  * This is a self-extracting executable that adds a version-specific directory in the local user cache
+
+An advantage to the self-extracting archive is that it is a single file.
+A disadvantage is that the file may trigger AV since it uses a packer and is not digitally signed.
+
+Either Windows "installation" method allows access to the same [`phylum-ci` script entry point features][anchor_script].
 
 [pipx]: https://pypa.github.io/pipx/
 [latest_rels]: https://github.com/phylum-dev/phylum-ci/releases/latest
-[latest_artifact]: https://github.com/phylum-dev/phylum-ci/releases/latest/download/phylum-ci.exe
+[latest_zip]: https://github.com/phylum-dev/phylum-ci/releases/latest/download/phylum-ci.zip
+[latest_exe]: https://github.com/phylum-dev/phylum-ci/releases/latest/download/phylum-ci.exe
 [anchor_script]: #phylum-ci-script-entry-point
 
 ### Usage

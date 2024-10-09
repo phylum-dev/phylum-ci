@@ -172,7 +172,7 @@ commit_author = "phylum-bot <69485888+phylum-bot@users.noreply.github.com>"
 logging_use_named_masks = true
 
 [tool.semantic_release.publish]
-dist_glob_patterns = ["dist/*", "build/phylum-ci.exe"]
+dist_glob_patterns = ["dist/*", "build/phylum-ci.exe", "build/phylum-ci.zip"]
 
 [tool.semantic_release.changelog.environment]
 trim_blocks = true
