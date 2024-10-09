@@ -54,13 +54,13 @@ Windows binaries are offered as [release artifacts][latest_rels] for a "standalo
 Python or Docker to run. There are two options for this installation method:
 
 * `phylum-ci.zip`
-  * [Download the latest archive version][latest_zip] and extract the archive
+  * [Download the latest archive version][latest_zip] and extract it
   * Add the extracted directory to `PATH` or reference the contained `phylum-ci.exe` binary directly
 * `phylum-ci.exe`
   * [Download the latest executable version][latest_exe] and place this binary on `PATH` or reference it directly
   * This is a self-extracting executable that adds a version-specific directory in the local user cache
 
-An advantage to the self-extracting archive solution is that it is a single file.
+An advantage to the self-extracting archive is that it is a single file.
 A disadvantage is that the file may trigger AV since it uses a packer and is not digitally signed.
 
 Either Windows "installation" method allows access to the same [`phylum-ci` script entry point features][anchor_script].
