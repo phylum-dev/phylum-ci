@@ -13,6 +13,16 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+## [v0.51.0](https://github.com/phylum-dev/phylum-ci/compare/v0.50.0...v0.51.0) (2024-10-09)
+
+### Feature
+
+* Add windows standalone archive install option ([#481](https://github.com/phylum-dev/phylum-ci/pull/481)) ([`83538a0`](https://github.com/phylum-dev/phylum-ci/commit/83538a03368330e04a9dfa49074b435c10b012ce))
+
+### Fix
+
+* Include `phylum-ci.exe` in release artifacts ([#477](https://github.com/phylum-dev/phylum-ci/pull/477)) ([`23c1e28`](https://github.com/phylum-dev/phylum-ci/commit/23c1e286aa52780c36dd715b56cf4682566e11ad))
+
 ## [v0.50.0](https://github.com/phylum-dev/phylum-ci/compare/v0.49.0...v0.50.0) (2024-10-02)
 
 ### Breaking
