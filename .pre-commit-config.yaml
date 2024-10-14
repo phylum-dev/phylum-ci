@@ -23,7 +23,7 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: b965c2a5026f8ba399283ba3e01898b012853c79  # frozen: 24.8.0
+    rev: 1b2427a2b785cc4aac97c19bb4b9a0de063f9547  # frozen: 24.10.0
     hooks:
       - id: black
 
