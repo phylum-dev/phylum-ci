@@ -1,7 +1,7 @@
 [build-system]
 # NOTE: Changes to the build system values should be inspected closely!
-# Python 3.12 was added in `poetry-core` v1.8
-requires = ["poetry-core>=1.8.1"]
+# Python 3.13 was added in `poetry-core` v1.9.1
+requires = ["poetry-core>=1.9.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
