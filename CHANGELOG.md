@@ -13,6 +13,8 @@ and understanding.
 [conventional commits]: https://www.conventionalcommits.org
 [Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
 
+<!--next-version-placeholder-->
+
 ## [v0.51.0](https://github.com/phylum-dev/phylum-ci/compare/v0.50.0...v0.51.0) (2024-10-09)
 
 ### Feature

@@ -1,4 +1,5 @@
-{% set included_commit_types = ("breaking", "feature", "fix", "performance", "documentation") %}
+{% set included_commit_types = ("breaking", "features", "fixes", "performance improvements", "documentation") %}
+
 {% for commit_type in included_commit_types if commit_type in release.elements %}
 ### {{ commit_type | capitalize }}
 

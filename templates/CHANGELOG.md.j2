@@ -2,43 +2,17 @@
     This is a Jinja template for generating the CHANGELOG with Python Semantic Release.
     Ref: https://python-semantic-release.readthedocs.io/en/latest/changelog_templates.html
 #}
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is partially based on [Keep a Changelog], and this project adheres to
-[Semantic Versioning]. The entries in this changelog are primarily automatically
-generated through the use of [conventional commits] and the [Python Semantic Release]
-tool. However, some entries may be manually edited, where it helps for clarity
-and understanding.
-
-[Keep a Changelog]: https://keepachangelog.com/en/1.0.0/
-[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
-[conventional commits]: https://www.conventionalcommits.org
-[Python Semantic Release]: https://python-semantic-release.readthedocs.io/en/latest/index.html
-
-{#
-    The filter for releases that aren't already in the historic CHANGELOG (which
-    gets included at the end of this template) is done by release tag timestamp
-    instead of version since the version comparison is only possible as strings,
-    which does not properly account for individual components of the version.
-    New timestamps can be computed in Python as:
-
-    min_release_timestamp = datetime.datetime(year=2024, month=1, day=6).timestamp()
-#}
-{% set min_release_timestamp = 1704520800.0 %}
-{% for version, release in context.history.released.items() if
-    release.tagged_date.timestamp() > min_release_timestamp
-    and ("unknown" not in release.elements or release.elements | length > 1)
-%}
-    {% if loop.nextitem %}
-        {% set prev_version = "v{}".format(loop.nextitem[0]) %}
-        {% set ver_compare_url = prev_version | compare_url("v{}".format(version)) %}
-## [{{ version.as_tag() }}]({{ ver_compare_url }}) ({{ release.tagged_date.strftime("%Y-%m-%d") }})
-    {% else %}
-## {{ version.as_tag() }} ({{ release.tagged_date.strftime("%Y-%m-%d") }})
-    {% endif %}
-
+{% set releases = ctx.history.released.items() | list %}
+{% set release = releases[0][1] %}
+{% set curr_version = releases[0][0].as_tag() %}
+{% set prev_version = releases[1][0].as_tag() %}
+{% set ver_compare_url = prev_version | compare_url(curr_version) %}
+{% set insertion_flag = ctx.changelog_insertion_flag %}
+{% set prev_changelog_contents = ctx.prev_changelog_file | read_file | safe %}
+{% set changelog_parts = prev_changelog_contents.split(insertion_flag, maxsplit=1) %}
+{% set prev_changelog_top = changelog_parts[0] | trim %}
+{% set prev_changelog_bottom = changelog_parts[1] | trim %}
+{{ "%s\n\n%s\n" | format(prev_changelog_top, insertion_flag | trim) }}
+## [{{ curr_version }}]({{ ver_compare_url }}) ({{ release.tagged_date.strftime("%Y-%m-%d") }})
 {% include ".changes.j2" %}
-{% endfor %}
-{% include ".CHANGELOG_historic.md" %}
+{{ "%s" | format(prev_changelog_bottom) }}
