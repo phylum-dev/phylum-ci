@@ -182,3 +182,7 @@ insertion_flag = "<!--next-version-placeholder-->"
 trim_blocks = true
 lstrip_blocks = true
 keep_trailing_newline = true
+
+# TODO: REMOVE THIS BEFORE PR
+[tool.semantic_release.branches.all]
+match = ".*"
