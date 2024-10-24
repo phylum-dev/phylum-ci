@@ -156,7 +156,6 @@ jobs:
             --company-name="Phylum, Inc." `
             --copyright="Copyright (C) 2024 Phylum, Inc." `
             --file-description="Analyze dependencies in CI with Phylum" `
-            --windows-icon-from-ico="docs/img/favicon.ico" `
             --warn-implicit-exceptions `
             --warn-unusual-code `
             --assume-yes-for-downloads `
