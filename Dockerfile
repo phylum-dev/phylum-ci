@@ -300,4 +300,5 @@ RUN \
     rm -rf /tmp/*; \
     find / -type f -name '*.pyc' -delete;
 
+USER non-root
 CMD ["phylum-ci"]
