@@ -2,7 +2,7 @@
     This is a Jinja template for generating release notes with Python Semantic Release.
     Ref: https://python-semantic-release.readthedocs.io/en/latest/changelog_templates.html
 #}
-{% set releases = ctx.history.released.items() | list %}
+{% set releases = context.history.released.items() | list %}
 {% set prev_version = releases[1][0].as_tag() %}
 {% include ".changes.j2" %}
 **Full Changelog**: {{ prev_version | compare_url(version.as_tag()) }}
