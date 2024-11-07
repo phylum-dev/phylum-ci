@@ -273,7 +273,7 @@ def is_token_set(phylum_settings_path: Path, token: Optional[str] = None) -> boo
     """
     try:
         settings_data = phylum_settings_path.read_text(encoding="utf-8")
-    except FileNotFoundError:
+    except OSError:
         return False
 
     yaml = YAML()

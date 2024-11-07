@@ -167,6 +167,14 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
             A deterministic project name will be used when neither are provided.""",
     )
     analysis_group.add_argument(
+        "-o",
+        "--org",
+        help="""Optional organization name. Can also specify this option's value in the Phylum settings file:
+        https://docs.phylum.io/cli/commands/phylum_org_link. The value specified with this option takes precedence when
+        both are provided. When an org is specified, a group name must also be specified. Orgs require a paid account:
+        https://phylum.io/pricing""",
+    )
+    analysis_group.add_argument(
         "-g",
         "--group",
         help="""Optional group name, which will be the owner of the project. Can also specify this option's value in the
