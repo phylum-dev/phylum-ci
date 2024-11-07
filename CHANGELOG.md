@@ -15,13 +15,6 @@ and understanding.
 
 <!--next-version-placeholder-->
 
-## [v0.52.0](https://github.com/phylum-dev/phylum-ci/compare/v0.51.0...v0.52.0) (2024-11-07)
-
-### Breaking
-
-* Add organization support ([#499](https://github.com/phylum-dev/phylum-ci/pull/499)) ([`1ad0ea7`](https://github.com/phylum-dev/phylum-ci/commit/1ad0ea723d897455cf5e3c6cba5a130a3e41f876))
-  * Phylum CLI installs before v7.1.4-rc1 are no longer supported. That release is the first one providing support for analysis with organizations via extensions.
-
 ## [v0.51.0](https://github.com/phylum-dev/phylum-ci/compare/v0.50.0...v0.51.0) (2024-10-09)
 
 ### Feature
