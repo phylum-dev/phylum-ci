@@ -252,9 +252,9 @@ Values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a [CI
     # Group - https://docs.gitlab.com/ee/user/group/settings/group_access_tokens.html
     GITLAB_TOKEN: $GITLAB_TOKEN_VARIABLE_OR_SECRET_HERE
 
-    # Contact Phylum (phylum.io/contact-us) or register (app.phylum.io/register) to gain
-    # access. See also `phylum auth register` (docs.phylum.io/cli/commands/phylum_auth_register)
-    # command documentation. Consider using a bot or group account for this token.
+    # Contact Phylum (phylum.io/contact-us) or register (app.phylum.io/register)
+    # to gain access. Consider using a bot or group account for this token.
+    # See https://docs.phylum.io/knowledge_base/api-keys
     PHYLUM_API_KEY: $PHYLUM_TOKEN_VARIABLE_OR_SECRET_HERE
 ```
 
@@ -286,12 +286,11 @@ view the [script options output][script_options] for the latest release.
     # casting the widest net for strict adherence to Quality Assurance (QA) standards.
     - phylum-ci --all-deps
 
-    # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
-    # they can be named differently and may or may not contain strict dependencies.
-    # In these cases it is best to specify an explicit path, either with the `--depfile`
-    # option or in a `.phylum_project` file. The easiest way to do that is with the
-    # Phylum CLI, using the `phylum init` command (docs.phylum.io/cli/commands/phylum_init)
-    # and committing the generated `.phylum_project` file.
+    # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in
+    # that they can be named differently and may or may not contain strict
+    # dependencies. In these cases it is best to specify an explicit path, either
+    # with the `--depfile` option or in a `.phylum_project` file. For more, see:
+    # https://docs.phylum.io/knowledge_base/phylum_project_files
     - phylum-ci --depfile requirements-prod.txt
 
     # Specify multiple explicit dependency file paths.
@@ -311,8 +310,10 @@ view the [script options output][script_options] for the latest release.
     # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
     - phylum-ci --force-analysis --all-deps --depfile Cargo.toml
 
-    # Perform analysis as part of a group-owned project.
-    # A paid account is needed to use groups: https://phylum.io/pricing
+    # Perform analysis as part of an organization and/or group-owned project.
+    # When an org is specified, a group name must also be specified.
+    # A paid account is needed to use orgs or groups: https://phylum.io/pricing
+    - phylum-ci --org my_org --group my_group
     - phylum-ci --group my_group
 
     # Analyze all dependencies in audit mode, to gain insight without failing builds.
@@ -329,6 +330,8 @@ view the [script options output][script_options] for the latest release.
     - |
       phylum-ci \
         -vv \
+        --org my_org \
+        --group my_group \
         --depfile requirements-dev.txt \
         --depfile requirements-prod.txt path/to/dependency.file \
         --depfile Cargo.toml \

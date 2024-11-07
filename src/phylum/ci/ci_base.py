@@ -24,6 +24,7 @@ from typing import Optional
 from packaging.version import Version
 import pathspec
 from rich.markdown import Markdown
+from ruamel.yaml import YAML
 
 from phylum.ci.common import (
     CLIExitCode,
@@ -41,7 +42,7 @@ from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.exts.ci import CI_EXT_PATH
-from phylum.init.cli import get_phylum_bin_path
+from phylum.init.cli import get_phylum_bin_path, get_phylum_settings_path
 from phylum.init.cli import main as phylum_init
 from phylum.logger import LOG, MARKUP, progress_spinner
 
@@ -374,6 +375,48 @@ class CIBase(ABC):
         return project_name
 
     @cached_property
+    def phylum_org(self) -> Optional[str]:
+        """Get the effective Phylum organization in use.
+
+        The Phylum organization name can be specified as an option or contained in the `settings.yaml` file.
+        An org name provided as an input option will be preferred over an entry in the Phylum settings file.
+
+        It is not possible to specify an org without a group. Raise an exception when this happens.
+
+        Return `None` when the org name is not available.
+        """
+        missing_group_err_msg = """
+            An organization was specified without a group. Specify one
+            with `--group` option or within a `.phylum_project` file:
+            https://docs.phylum.io/knowledge_base/phylum_project_files"""
+
+        org_name = self.args.org
+        if org_name:
+            LOG.debug("Org name provided as argument: %s", org_name)
+            if not self.phylum_group:
+                raise SystemExit(cleandoc(missing_group_err_msg))
+            return org_name
+
+        LOG.debug("Org name not provided as argument. Checking Phylum settings file ...")
+        phylum_settings_path = get_phylum_settings_path()
+        try:
+            settings_data = phylum_settings_path.read_text(encoding="utf-8")
+        except OSError:
+            LOG.warning("Could not open `%s`. Assuming no org ...", phylum_settings_path)
+            return None
+        yaml = YAML()
+        settings_dict: dict = yaml.load(settings_data)
+        org_name = settings_dict.get("organization")
+        if org_name:
+            LOG.debug("Org name provided in Phylum settings file: %s", org_name)
+            if not self.phylum_group:
+                raise SystemExit(cleandoc(missing_group_err_msg))
+            return org_name
+
+        LOG.debug("Org name not found in Phylum settings file. Assuming no org ...")
+        return None
+
+    @cached_property
     def phylum_group(self) -> Optional[str]:
         """Get the effective Phylum group in use.
 
@@ -585,6 +628,36 @@ class CIBase(ABC):
             msg = "`git` is required to be installed and available on the PATH"
             raise SystemExit(msg)
 
+    def _cmd_extender(
+        self,
+        cmd: list[str],
+        *,
+        show_log: bool = True,
+        org: bool = True,
+        group: bool = True,
+        repo_url: bool = False,
+    ) -> list[str]:
+        """Given a command list, extend it with common `phylum` options and return the new command.
+
+        Specify `show_log` to include log output for each added option.
+        Specify `org` to add the `--org` option.
+        Specify `group` to add the `--group` option.
+        Specify `repo_url` to add the `--repository-url` option.
+        """
+        if org and self.phylum_org:
+            if show_log:
+                LOG.info("Using Phylum org: %s", self.phylum_org)
+            cmd.extend(["--org", self.phylum_org])
+        if group and self.phylum_group:
+            if show_log:
+                LOG.info("Using Phylum group: %s", self.phylum_group)
+            cmd.extend(["--group", self.phylum_group])
+        if repo_url and self.repo_url:
+            if show_log:
+                LOG.debug("Using repository URL: %s", self.repo_url)
+            cmd.extend(["--repository-url", self.repo_url])
+        return cmd
+
     @progress_spinner("Ensuring a Phylum project exists")
     def _ensure_project_exists(self) -> None:
         """Ensure a Phylum project is created and in place.
@@ -594,12 +667,7 @@ class CIBase(ABC):
         """
         LOG.info("Attempting to create a Phylum project with name: %s ...", self.phylum_project)
         cmd = [str(self.cli_path), "project", "create"]
-        if self.phylum_group:
-            LOG.info("Using Phylum group: %s", self.phylum_group)
-            cmd.extend(["--group", self.phylum_group])
-        if self.repo_url:
-            LOG.debug("Using repository URL: %s", self.repo_url)
-            cmd.extend(["--repository-url", self.repo_url])
+        cmd = self._cmd_extender(cmd, repo_url=True)
         cmd.append(self.phylum_project)
         if not Path.cwd().joinpath(".git").is_dir():
             LOG.warning("Attempting to create a Phylum project outside the top level of a `git` repository")
@@ -607,12 +675,13 @@ class CIBase(ABC):
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as outer_err:
-            # The Phylum CLI will return a unique error code when a project/group pairing
+            # The Phylum CLI will return a unique error code when a project/org/group combo
             # that already exists is attempted to be created. This situation is recognized
             # and allowed to happen since it means the project exists as expected.
             project_exists_msg = f"""
-                Project/group pairing already exists. Continuing with it.
+                Project/org/group combo already exists. Continuing with it.
                     Project: {self.phylum_project}
+                    Org:     {self.phylum_org or '(no org)'}
                     Group:   {self.phylum_group or '(no group)'}"""
             if outer_err.returncode == CLIExitCode.ALREADY_EXISTS.value:
                 LOG.info(cleandoc(project_exists_msg))
@@ -620,8 +689,9 @@ class CIBase(ABC):
                 return
 
             err_msg = """
-                There was a problem creating the project. A paid account is needed to
-                use groups or create more than five projects: https://phylum.io/pricing
+                There was a problem creating the project.
+                A paid account is needed to use orgs, groups, or
+                create more than five projects: https://phylum.io/pricing
                 If the command was expected to succeed, please report this as a bug."""
 
             # The problem may be that a group was specified but does not exist yet. Check for that case and create it,
@@ -635,7 +705,7 @@ class CIBase(ABC):
                 subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
             except subprocess.CalledProcessError as inner_err:
                 # Check for this error code again because it is possible the same
-                # project/group pairing was created elsewhere since the last check.
+                # project/org/group combo was created elsewhere since the last check.
                 if inner_err.returncode == CLIExitCode.ALREADY_EXISTS.value:
                     LOG.info(cleandoc(project_exists_msg))
                     self._set_repo_url()
@@ -644,8 +714,9 @@ class CIBase(ABC):
                 raise PhylumCalledProcessError(inner_err, cleandoc(err_msg)) from inner_err
 
         project_created_msg = f"""
-            Project/group pairing created successfully.
+            Project/org/group combo created successfully.
                 Project: {self.phylum_project}
+                Org:     {self.phylum_org or '(no org)'}
                 Group:   {self.phylum_group or '(no group)'}"""
         LOG.info(cleandoc(project_created_msg))
         if self._project_file_already_existed:
@@ -664,23 +735,36 @@ class CIBase(ABC):
             return False
 
         LOG.info("Attempting to create a Phylum group with name: %s ...", self.phylum_group)
-        cmd = [str(self.cli_path), "group", "create", self.phylum_group]
+        cmd = [str(self.cli_path), "group", "create"]
+        cmd = self._cmd_extender(cmd, group=False)
+        cmd.append(self.phylum_group)
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
         except subprocess.CalledProcessError as err:
-            # The Phylum CLI will return a unique error code when a group that already
+            # The Phylum CLI will return a unique error code when an org/group pairing that already
             # exists is attempted to be created. This situation is recognized and allowed to happen
-            # since it means the group exists as expected. Any other exit code is an error.
+            # since it means the org/group pairing exists as expected. Any other exit code is an error.
             if err.returncode == CLIExitCode.ALREADY_EXISTS.value:
-                LOG.info("Group %s already exists. Continuing with it ...", self.phylum_group)
+                group_exists_msg = f"""
+                    Org/group pairing already exists. Continuing with it.
+                        Org:    {self.phylum_org or '(no org)'}
+                        Group:  {self.phylum_group}"""
+                LOG.info(cleandoc(group_exists_msg))
                 return False
-            msg = """
-                There was a problem creating the group.
-                A paid account is needed to use groups: https://phylum.io/pricing
+            msg = f"""
+                There was a problem creating the org/group pairing:
+                    Org:    {self.phylum_org or '(no org)'}
+                    Group:  {self.phylum_group}
+                If an org was specified, does it exist and the user have access?
+                A paid account is needed to use orgs/groups: https://phylum.io/pricing
                 If the command was expected to succeed, please report this as a bug."""
             raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
-        LOG.info("Successfully created group: %s", self.phylum_group)
+        group_created_msg = f"""
+            Org/group pairing created successfully.
+                Org:    {self.phylum_org or '(no org)'}
+                Group:  {self.phylum_group}"""
+        LOG.info(cleandoc(group_created_msg))
         return True
 
     def _set_repo_url(self) -> None:
@@ -695,9 +779,7 @@ class CIBase(ABC):
 
         LOG.info("Checking project for existing repository URL ...")
         cmd = [str(self.cli_path), "project", "status", "--project", self.phylum_project, "--json"]
-        if self.phylum_group:
-            LOG.debug("Using Phylum group: %s", self.phylum_group)
-            cmd.extend(["--group", self.phylum_group])
+        cmd = self._cmd_extender(cmd)
         try:
             cmd_output = subprocess.run(  # noqa: S603
                 cmd,
@@ -716,7 +798,7 @@ class CIBase(ABC):
             return
         project_status: dict = json.loads(cmd_output)
         project_id = project_status.get("id")
-        repo_url = project_status.get("repository_url")
+        repo_url = project_status.get("repositoryUrl")
         if not project_id:
             msg = """
                 Could not find the project ID. Skipping repository URL check.
@@ -741,8 +823,7 @@ class CIBase(ABC):
 
         LOG.info("Repository URL not set. Setting it to: %s", self.repo_url)
         cmd = [str(self.cli_path), "project", "update", "--project-id", project_id, "--repository-url", self.repo_url]
-        if self.phylum_group:
-            cmd.extend(["--group", self.phylum_group])
+        cmd = self._cmd_extender(cmd, show_log=False)
         LOG.debug("Using command: %s", shlex.join(cmd))
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8")  # noqa: S603
@@ -781,9 +862,7 @@ class CIBase(ABC):
             self.phylum_project,
             self.phylum_label,
         ]
-
-        if self.phylum_group:
-            cmd.extend(["--group", self.phylum_group])
+        cmd = self._cmd_extender(cmd, show_log=False)
 
         current_packages = sorted({pkg for depfile in self.depfiles for pkg in depfile.deps})
         LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))

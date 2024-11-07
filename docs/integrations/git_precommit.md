@@ -137,8 +137,9 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
         # Some lockfile types (e.g., Python/pip `requirements.txt`) are ambiguous in that
         # they can be named differently and may be a manifest or a lockfile. In cases where
-        # only specific dependency files are meant to be analyzed, it is best to specify
-        # an explicit path to them.
+        # only specific dependency files are meant to be analyzed, it is best to specify an
+        # explicit path, either with the `--depfile` option or in a `.phylum_project` file.
+        # For more, see: https://docs.phylum.io/knowledge_base/phylum_project_files
         args: [--depfile=requirements-prod.txt]
 
         # Specify multiple explicit dependency file paths.
@@ -162,9 +163,11 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # for *workspace* manifest files where there is no companion lockfile (e.g., libraries).
         args: [--force-analysis, --all-deps, --depfile=Cargo.toml]
 
-        # Perform analysis as part of a group-owned project.
-        # A paid account is needed to use groups: https://phylum.io/pricing
-        args: [--group, my_group]
+        # Perform analysis as part of an organization and/or group-owned project.
+        # When an org is specified, a group name must also be specified.
+        # A paid account is needed to use orgs or groups: https://phylum.io/pricing
+        args: [--org=my_org, --group=my_group]
+        args: [--group=my_group]
 
         # Ensure the latest Phylum CLI is installed.
         args: [--force-install]
@@ -175,6 +178,8 @@ with `--help` output as specified in the [Usage section of the top-level README.
         # Mix and match for your specific use case.
         args:
           - -vv
+          - --org=my_org
+          - --group=my_group
           - --depfile=requirements-prod.txt
           - --depfile=path/to/dependency.file
           - --depfile=Cargo.toml

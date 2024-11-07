@@ -4,17 +4,34 @@ import { Package, PackageWithOrigin, PhylumApi } from "phylum";
 const args = Deno.args.slice(0);
 if (args.length < 4) {
     console.error(
-        "Usage: phylum ci <PROJECT> <LABEL> [--group <GROUP>] <BASE> <CURRENT>",
+        "Usage: phylum ci [--org <ORG>] [--group <GROUP>] <PROJECT> <LABEL> <BASE> <CURRENT>",
     );
     Deno.exit(1);
 }
 
-// Find optional groups argument.
+// Find optional org argument.
+let org = undefined;
+const orgArgsIndex = args.indexOf("--org");
+if (orgArgsIndex != -1) {
+    const orgArgs = args.splice(orgArgsIndex, 2);
+    org = orgArgs[1];
+}
+
+// Find optional group argument.
 let group = undefined;
 const groupArgsIndex = args.indexOf("--group");
 if (groupArgsIndex != -1) {
     const groupArgs = args.splice(groupArgsIndex, 2);
     group = groupArgs[1];
+}
+
+// It is not possible to specify an org without a group.
+if (org !== undefined && group === undefined) {
+    console.error(
+        "An organization was specified without a group.",
+        "Specify one with `--group` option.",
+    );
+    Deno.exit(1);
 }
 
 // Parse remaining arguments.
@@ -43,6 +60,7 @@ const jobID = await PhylumApi.analyze(
     project,
     group,
     label,
+    org,
 );
 
 // Get analysis job results.

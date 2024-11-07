@@ -3,12 +3,12 @@
 from phylum import __version__
 
 # This is the minimum CLI version supported for new installs.
-# Support for analysis on Windows was enabled in v7.1.0-rc1
-MIN_CLI_VER_FOR_INSTALL = "v7.1.0-rc1"
+# Support for analysis with organizations via extensions was enabled in v7.1.4-rc1
+MIN_CLI_VER_FOR_INSTALL = "v7.1.4-rc1"
 
 # This is the minimum CLI version supported for existing installs.
-# Support for analysis on Windows was enabled in v7.1.0-rc1
-MIN_CLI_VER_INSTALLED = "v7.1.0-rc1"
+# Support for analysis with organizations via extensions was enabled in v7.1.4-rc1
+MIN_CLI_VER_INSTALLED = "v7.1.4-rc1"
 
 # Keys are lowercase machine hardware names as returned from `uname -m`.
 # Values are the mapped rustc architecture.
