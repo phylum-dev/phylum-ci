@@ -10,7 +10,7 @@ from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 import rich.traceback
 
-from phylum import PKG_NAME
+from phylum import PKG_NAME, __version__
 from phylum.console import console
 
 # Import and use this throughout the `phylum` package to write consistent log entries
@@ -125,6 +125,7 @@ def set_logger_level(level: int) -> None:
 
     # Set the level _after_ adding trace logging to avoid tracing the tracing setup
     LOG.setLevel(logging_level)
+    LOG.debug("Using package: %s v%s", PKG_NAME, __version__)
     LOG.debug("Logging initialized to level %s (%s)", logging_level, logging.getLevelName(logging_level))
 
 
