@@ -37,7 +37,7 @@ from phylum.ci.common import (
     ReturnCode,
 )
 from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_depfile
-from phylum.ci.git import git_hash_object, git_repo_name, git_worktree
+from phylum.ci.git import git_hash_object, git_repo_name, git_root_dir, git_worktree
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -506,6 +506,11 @@ class CIBase(ABC):
         LOG.info("Using Phylum CLI instance: %s at %s", cli_version, cli_path)
         return cli_path
 
+    @cached_property
+    def git_root_dir(self) -> Path:
+        """Get the root directory of the git working tree."""
+        return git_root_dir()
+
     @property
     def analysis_report(self) -> str:
         """Get the report from the overall analysis, in markdown format."""
@@ -615,6 +620,7 @@ class CIBase(ABC):
         The current prerequisites for *all* CI environments/platforms are:
           * A Phylum CLI version at least as new as the minimum supported version
           * Have `git` installed and available for use on the PATH
+          * Operating within the context of a git repository
         """
         LOG.info("Confirming prerequisites ...")
 
@@ -622,11 +628,13 @@ class CIBase(ABC):
             msg = f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}"
             raise SystemExit(msg)
 
-        if shutil.which("git"):
-            LOG.debug("`git` binary found on the PATH")
-        else:
+        if not shutil.which("git"):
             msg = "`git` is required to be installed and available on the PATH"
             raise SystemExit(msg)
+        LOG.debug("`git` binary found on the PATH")
+
+        # Referencing this property is enough to ensure the prerequisite
+        LOG.debug("Root directory of git repository: %s", self.git_root_dir)
 
     def _cmd_extender(
         self,
@@ -936,7 +944,7 @@ class CIBase(ABC):
         base_packages: set[Package] = set()
         with git_worktree(self.common_ancestor_commit, env=self._env) as temp_dir:
             for depfile in self.depfiles:
-                prev_depfile_path = temp_dir / depfile.path.relative_to(Path.cwd())
+                prev_depfile_path = temp_dir / depfile.path.relative_to(self.git_root_dir)
                 try:
                     prev_depfile_pkgs = parse_depfile(
                         self.cli_path,
