@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import sys
 from typing import Optional
 
 from phylum.ci.ci_base import CIBase
@@ -77,8 +76,8 @@ class CIPreCommit(CIBase):
             if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
                 LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
-            LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
-            sys.exit(0)
+            LOG.warning("No dependency file included in extra args. Nothing to do. Exiting ...")
+            raise SystemExit(self.returncode)
 
         # Allow for a pre-commit config set up to filter the files sent to the hook
         if all(extra_arg in staged_files for extra_arg in self.extra_args):
@@ -86,8 +85,8 @@ class CIPreCommit(CIBase):
             if any(depfile.path in extra_arg_paths for depfile in self.depfiles):
                 LOG.info("Valid pre-commit scenario found: dependency file(s) found in extra arguments")
                 return
-            LOG.warning("A dependency file is not included in extra args. Nothing to do. Exiting ...")
-            sys.exit(0)
+            LOG.warning("No dependency file included in extra args. Nothing to do. Exiting ...")
+            raise SystemExit(self.returncode)
 
         # Allow for cases where the dependency file is included or explicitly specified.
         # Example: `pre-commit run --all-files`
@@ -100,9 +99,9 @@ class CIPreCommit(CIBase):
         #       `psutil` to acquire the command line from the parent process and inspect it for `pre-commit` usage.
         #       That is a heavyweight solution and one that will not be pursued until the need for it is more clear.
         else:
-            LOG.warning("A dependency file was not included in the extra args...possible invalid pre-commit scenario")
+            LOG.warning("No dependency file included in extra args...possible invalid pre-commit scenario")
             LOG.error("Unrecognized arguments: [code]%s[/]", " ".join(self.extra_args), extra=MARKUP)
-            sys.exit(0)
+            raise SystemExit(self.returncode)
 
     @cached_property
     def phylum_label(self) -> str:

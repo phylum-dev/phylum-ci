@@ -204,6 +204,7 @@ following non-zero codes otherwise:
 |6|Phylum analysis is incomplete and contains a policy violation.|
 |10|Dependency file(s) failed filtering and excluded from analysis. See [this FAQ][FAQ] for more.|
 |11|No dependency files were provided or detected.|
+|12|No dependencies found in any current dependency file.|
 |20|A manifest is attempted to be parsed but lockfile generation has been disabled.|
 
 [FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-a-successful-analysis-comment

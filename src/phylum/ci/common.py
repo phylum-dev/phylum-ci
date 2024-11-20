@@ -115,6 +115,8 @@ class ReturnCode(IntEnum):
     DEPFILE_FILTER = 10
     # No dependency files were provided or detected
     NO_DEPFILES_PROVIDED = 11
+    # No dependencies found in any current dependency file
+    NO_CURRENT_DEPS_FOUND = 12
     # A manifest is attempted to be parsed but lockfile generation has been disabled
     MANIFEST_WITHOUT_GENERATION = 20
 

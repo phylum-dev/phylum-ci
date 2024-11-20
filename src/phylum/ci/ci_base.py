@@ -190,9 +190,9 @@ class CIBase(ABC):
                 return valid_depfiles
 
         msg = """
-            No valid dependency files were detected.
-            Consider specifying at least one with
-            `--depfile` argument or in `.phylum_project` file."""
+            No valid dependency files were detected. Consider specifying at
+            least one with `--depfile` argument or in `.phylum_project` file:
+            https://docs.phylum.io/knowledge_base/phylum_project_files"""
         LOG.error(cleandoc(msg))
         if not self.returncode:
             self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
@@ -865,6 +865,17 @@ class CIBase(ABC):
         cmd = self._cmd_extender(cmd, show_log=False)
 
         current_packages = sorted({pkg for depfile in self.depfiles for pkg in depfile.deps})
+        if not current_packages:
+            msg = f"""
+                No dependencies found in any current dependency file, possibly due to
+                an unsupported format. Please report this if you believe there are
+                valid dependencies in the current set of provided dependency files
+                at revision [code]{self.common_ancestor_commit}[/]."""
+            LOG.error(cleandoc(msg), extra=MARKUP)
+            if not self.returncode:
+                self.returncode = ReturnCode.NO_CURRENT_DEPS_FOUND
+            raise SystemExit(self.returncode)
+
         LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
@@ -908,17 +919,11 @@ class CIBase(ABC):
                     encoding="utf-8",
                 ).stdout
             except subprocess.CalledProcessError as err:
-                # The Phylum project will fail analysis if the configured policy criteria are not met.
-                # This causes the return code to be 100 and lands us here. Check for this case to proceed.
-                cli_exit_code_failed_policy = 100
-                if err.returncode == cli_exit_code_failed_policy:
-                    analysis_result = err.stdout
-                else:
-                    msg = """
-                        There was a problem analyzing the project.
-                        A paid account is needed to use groups: https://phylum.io/pricing
-                        If the command was expected to succeed, please report this as a bug."""
-                    raise PhylumCalledProcessError(err, cleandoc(msg)) from err
+                msg = """
+                    There was a problem analyzing the project.
+                    A paid account is needed to use orgs/groups: https://phylum.io/pricing
+                    If the command was expected to succeed, please report this as a bug."""
+                raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
         self._parse_analysis_result(analysis_result)
 
@@ -967,7 +972,11 @@ class CIBase(ABC):
 
     def _parse_analysis_result(self, analysis_result: str) -> None:
         """Parse the results of a Phylum analysis command output."""
-        analysis = JobPolicyEvalResult(**json.loads(analysis_result))
+        analysis_dict = json.loads(analysis_result)
+        if not analysis_dict:
+            LOG.warning("No analysis results. Exiting ...")
+            raise SystemExit(self.returncode)
+        analysis = JobPolicyEvalResult(**analysis_dict)
 
         self._analysis_report = analysis.report
 
