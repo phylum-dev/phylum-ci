@@ -15,6 +15,13 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.52.1](https://github.com/phylum-dev/phylum-ci/compare/v0.52.0...v0.52.1) (2024-11-21)
+
+### Bug Fixes
+
+* Account for analysis started in repo sub-dirs ([#504](https://github.com/phylum-dev/phylum-ci/pull/504)) ([`3055ce8`](https://github.com/phylum-dev/phylum-ci/commit/3055ce82d68a5efe1e2878e1a7bbdaa671f525f1))
+* Exit cleanly when no current dependencies ([#503](https://github.com/phylum-dev/phylum-ci/pull/503)) ([`d43a047`](https://github.com/phylum-dev/phylum-ci/commit/d43a047d5ac37f74d2a7d3434e605e135ce6d3c0))
+
 ## [v0.52.0](https://github.com/phylum-dev/phylum-ci/compare/v0.51.0...v0.52.0) (2024-11-07)
 
 ### Breaking
