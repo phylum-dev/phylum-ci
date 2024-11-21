@@ -12,7 +12,6 @@ import json
 import os
 from pathlib import Path
 import shlex
-import shutil
 import subprocess
 from typing import Optional
 
@@ -53,13 +52,9 @@ class Depfile:
         self._path = provided_depfile.path.resolve()
         self._type = provided_depfile.type
         self.cli_path = cli_path
-        self.disable_lockfile_generation = disable_lockfile_generation
         self._depfile_type = depfile_type
+        self.disable_lockfile_generation = disable_lockfile_generation
         self._is_depfile_changed: Optional[bool] = None
-
-        if not shutil.which("git"):
-            msg = "`git` is required to be installed and available on the PATH"
-            raise SystemExit(msg)
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Depfile` object."""

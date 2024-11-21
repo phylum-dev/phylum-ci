@@ -159,6 +159,28 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
     return default_branch_name
 
 
+def git_root_dir(git_c_path: Optional[Path] = None) -> Path:
+    """Get the top-level (root) directory of the git working tree and return it.
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
+    try:
+        git_root = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+        ).stdout.strip()
+    except subprocess.CalledProcessError as err:
+        msg = "Must be operating within the context of a git repository"
+        raise PhylumCalledProcessError(err, msg) from err
+    return Path(git_root).resolve()
+
+
 def git_curent_branch_name(git_c_path: Optional[Path] = None) -> str:
     """Get the current branch name and return it.
 
