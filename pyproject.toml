@@ -110,7 +110,7 @@ format = "github"
 ignore = [184]
 
 [tool.ruff]
-# Reference: https://beta.ruff.rs/docs/settings
+# Reference: https://docs.astral.sh/ruff/configuration/
 line-length = 120
 target-version = "py39"
 force-exclude = true
@@ -123,7 +123,7 @@ select = [
     "ALL",
 ]
 ignore = [
-    # Reference: https://beta.ruff.rs/docs/rules/
+    # Reference: https://docs.astral.sh/ruff/rules/
     #
     # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Prefer D211.
     "D203", # one-blank-line-before-class
@@ -145,7 +145,7 @@ ignore = [
     "S404", # suspicious-subprocess-import
     # These ignores will be removed during https://github.com/phylum-dev/phylum-ci/issues/238
     "ANN", # flake8-annotations
-    "TCH", # flake8-type-checking
+    "TC",  # flake8-type-checking
     "FA",  # flake8-future-annotations
 ]
 
