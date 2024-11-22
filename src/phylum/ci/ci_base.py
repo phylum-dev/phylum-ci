@@ -21,7 +21,6 @@ import subprocess
 import tempfile
 from typing import Optional
 
-from packaging.version import Version
 import pathspec
 from rich.markdown import Markdown
 from ruamel.yaml import YAML
@@ -42,7 +41,7 @@ from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.exts.ci import CI_EXT_PATH
-from phylum.init.cli import get_phylum_bin_path, get_phylum_settings_path
+from phylum.init.cli import get_phylum_bin_path, get_phylum_settings_path, is_installed_version_supported
 from phylum.init.cli import main as phylum_init
 from phylum.logger import LOG, MARKUP, progress_spinner
 
@@ -477,6 +476,7 @@ class CIBase(ABC):
             LOG.warning("Existing Phylum CLI instance not found. Installing version `%s` ...", specified_version)
             phylum_init(install_args)
         else:
+            cli_version = str(cli_version)
             LOG.debug("Existing Phylum CLI instance found: %s at %s", cli_version, cli_path)
             if cli_version != specified_version:
                 LOG.warning("Existing version %s does not match specified version %s", cli_version, specified_version)
@@ -485,7 +485,7 @@ class CIBase(ABC):
                     phylum_init(install_args)
                 else:
                     LOG.debug("Attempting to use existing version ...")
-                    if Version(str(cli_version)) < Version(MIN_CLI_VER_INSTALLED):
+                    if not is_installed_version_supported(cli_version):
                         msg = f"The existing CLI version must be at least {MIN_CLI_VER_INSTALLED}"
                         raise SystemExit(msg)
                     LOG.info("Version checks succeeded. Using existing version.")
@@ -624,7 +624,9 @@ class CIBase(ABC):
         """
         LOG.info("Confirming prerequisites ...")
 
-        if Version(self.args.version) < Version(MIN_CLI_VER_INSTALLED):
+        # This check is for the "installed version" instead of a "version to install" because that is the
+        # lowest possible supported version and there are other checks to ensure a "version to install" is valid.
+        if not is_installed_version_supported(self.args.version):
             msg = f"The CLI version must be at least {MIN_CLI_VER_INSTALLED}"
             raise SystemExit(msg)
 
@@ -634,7 +636,7 @@ class CIBase(ABC):
         LOG.debug("`git` binary found on the PATH")
 
         # Referencing this property is enough to ensure the prerequisite
-        LOG.debug("Root directory of git repository: %s", self.git_root_dir)
+        LOG.debug("Git repository root found: %s", self.git_root_dir)
 
     def _cmd_extender(
         self,

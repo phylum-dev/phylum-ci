@@ -2,11 +2,13 @@
 
 from phylum import __version__
 
-# This is the minimum CLI version supported for new installs.
+# This is the minimum CLI version supported for *new* installs.
 # Support for analysis with organizations via extensions was enabled in v7.1.4-rc1
 MIN_CLI_VER_FOR_INSTALL = "v7.1.4-rc1"
 
-# This is the minimum CLI version supported for existing installs.
+# This is the minimum CLI version supported for *existing* installs.
+# This version *may* be lower than the minimum version supported for new installs due to
+# logic sometimes accounting for new features or breaking changes in a phased approach.
 # Support for analysis with organizations via extensions was enabled in v7.1.4-rc1
 MIN_CLI_VER_INSTALLED = "v7.1.4-rc1"
 

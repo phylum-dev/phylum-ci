@@ -30,6 +30,7 @@ from phylum.constants import (
     HELP_MSG_TOKEN,
     HELP_MSG_VERSION,
     MIN_CLI_VER_FOR_INSTALL,
+    MIN_CLI_VER_INSTALLED,
     REQ_TIMEOUT,
     SUPPORTED_ARCHES,
     SUPPORTED_PLATFORMS,
@@ -151,16 +152,28 @@ def supported_releases() -> list[str]:
             msg = f"An invalid version was provided: {rel_ver}"
             raise SystemExit(msg) from err
     sorted_cli_releases = [rel for rel, _ in sorted(cli_releases.items(), key=operator.itemgetter(1), reverse=True)]
-    releases = itertools.takewhile(is_supported_version, sorted_cli_releases)
+    releases = itertools.takewhile(is_version_for_install_supported, sorted_cli_releases)
 
     return list(releases)
 
 
-def is_supported_version(version: str) -> bool:
-    """Predicate for determining if a given version is supported."""
+def is_version_for_install_supported(version: str) -> bool:
+    """Predicate for determining if a given Phylum CLI version for install is supported."""
     try:
         provided_version = Version(canonicalize_version(version))
         min_supported_version = Version(MIN_CLI_VER_FOR_INSTALL)
+    except InvalidVersion as err:
+        msg = f"An invalid version was provided: {version}"
+        raise SystemExit(msg) from err
+
+    return provided_version >= min_supported_version
+
+
+def is_installed_version_supported(version: str) -> bool:
+    """Predicate for determining if a given installed Phylum CLI version is supported."""
+    try:
+        provided_version = Version(canonicalize_version(version))
+        min_supported_version = Version(MIN_CLI_VER_INSTALLED)
     except InvalidVersion as err:
         msg = f"An invalid version was provided: {version}"
         raise SystemExit(msg) from err
@@ -206,22 +219,28 @@ def supported_targets(release_tag: str) -> list[str]:
     return list(set(targets))
 
 
+def normalize_version(version: str) -> str:
+    """Normalize a provided Phylum CLI version and return it."""
+    version = version.lower()
+    if not version.startswith("v"):
+        version = f"v{version}"
+    return version
+
+
 def version_check(version: str) -> str:
     """Check a given version for validity and return a normalized form of it."""
     supported_versions = supported_releases()
     if version == "latest":
         version = get_latest_version()
         if version not in supported_versions:
+            latest_pre_release = supported_versions[0]
             msg = f"""
                 The "latest" released Phylum CLI, {version}, is not supported.
-                The most recent pre-release, {supported_versions[0]}, is and will be used."""
+                The most recent pre-release, {latest_pre_release}, is and will be used."""
             LOG.info(cleandoc(msg))
-            version = supported_versions[0]
+            version = latest_pre_release
 
-    version = version.lower()
-    if not version.startswith("v"):
-        version = f"v{version}"
-
+    version = normalize_version(version)
     if version not in supported_versions:
         msg = f"Specified Phylum CLI version must be from a supported release: {', '.join(supported_versions)}"
         raise SystemExit(msg)
@@ -230,13 +249,26 @@ def version_check(version: str) -> str:
 
 
 def process_version(version: Optional[str]) -> str:
-    """Process the version argument and return it."""
+    """Process the version argument and return it.
+
+    Avoid external GitHub API calls when an existing Phylum CLI is installed and it's version is supported.
+    """
     if version:
         LOG.debug("Phylum CLI version was specified as: %s", version)
         version = version_check(version)
     else:
         LOG.debug("Phylum CLI version not specified")
-        version = version_check(default_phylum_cli_version())
+        default_cli_version = default_phylum_cli_version()
+        # When no Phylum CLI installed, do a version check to determine the "latest" version.
+        if default_cli_version == "latest":
+            version = version_check(default_cli_version)
+        # When a Phylum CLI already exists, ensure it meets the minimum version supported threshold.
+        elif is_installed_version_supported(default_cli_version):
+            LOG.debug("The installed Phylum CLI version is supported")
+            version = normalize_version(default_cli_version)
+        else:
+            msg = f"The installed Phylum CLI version is not supported: {default_cli_version}"
+            raise SystemExit(msg)
     LOG.info("Using Phylum CLI version: %s", version)
     return version
 
