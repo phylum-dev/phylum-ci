@@ -213,6 +213,7 @@ RUN \
         git-lfs \
         bundler \
         maven \
+        default-jdk-headless \
         procps \
         curl \
         unzip \
