@@ -15,6 +15,16 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.53.0](https://github.com/phylum-dev/phylum-ci/compare/v0.52.1...v0.53.0) (2024-11-26)
+
+### Features
+
+* Avoid github api calls during version check ([#505](https://github.com/phylum-dev/phylum-ci/pull/505)) ([`25d9c85`](https://github.com/phylum-dev/phylum-ci/commit/25d9c85ff644654e26470253abd8708274f4ef6b))
+
+### Bug Fixes
+
+* `gradle` lockfile generation requires `javac` ([#507](https://github.com/phylum-dev/phylum-ci/pull/507)) ([`17994a6`](https://github.com/phylum-dev/phylum-ci/commit/17994a61291070d431697fe5fcc2215bd140e27f))
+
 ## [v0.52.1](https://github.com/phylum-dev/phylum-ci/compare/v0.52.0...v0.52.1) (2024-11-21)
 
 ### Bug Fixes
