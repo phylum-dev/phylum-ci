@@ -92,6 +92,7 @@ type poetry && poetry --version || false
 type bundle && bundle --version || false
 type mvn && mvn --version || false
 type gradle && gradle --version || false
+type javac && javac --version || false
 type go && go version || false
 type cargo && cargo --version || false
 type rustup && rustup --version && rustup show || false

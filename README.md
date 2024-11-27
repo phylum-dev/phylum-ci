@@ -201,12 +201,18 @@ following non-zero codes otherwise:
 |---------|-------|
 |1|Default failure code. An unrecoverable error was encountered.|
 |2|Phylum analysis is complete and contains a policy violation.|
+|5|Phylum analysis is incomplete. Only used when enabled [by option][script_options].|
 |6|Phylum analysis is incomplete and contains a policy violation.|
 |10|Dependency file(s) failed filtering and excluded from analysis. See [this FAQ][FAQ] for more.|
 |11|No dependency files were provided or detected.|
 |12|No dependencies found in any current dependency file.|
 |20|A manifest is attempted to be parsed but lockfile generation has been disabled.|
 
+Exit codes of 10 or higher represent situations not directly linked to Phylum analysis. These errors are important
+because they indicate a complete Phylum analysis was not possible, which is cause for further investigation and
+correction. An [option is available][script_options] to explicitly prevent these errors from setting an exit code.
+
+[script_options]: #phylum-ci-script-entry-point
 [FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-a-successful-analysis-comment
 
 ## License
