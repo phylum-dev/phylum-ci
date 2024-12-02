@@ -191,7 +191,7 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
 The Phylum analysis hook will return a zero (0) exit code when it completes successfully and a non-zero code otherwise.
 The full and current list of exit codes is [documented here][exit_codes] and [options exist][script_options] to be
-strict or loose with setting them.
+loose with setting them.
 
 [exit_codes]: https://github.com/phylum-dev/phylum-ci#exit-codes
 

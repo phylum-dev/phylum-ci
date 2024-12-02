@@ -201,7 +201,6 @@ following non-zero codes otherwise:
 |---------|-------|
 |1|Default failure code. An unrecoverable error was encountered.|
 |2|Phylum analysis is complete and contains a policy violation.|
-|5|Phylum analysis is incomplete. Only used when enabled [by option][script_options].|
 |6|Phylum analysis is incomplete and contains a policy violation.|
 |10|Dependency file(s) failed filtering and excluded from analysis. See [this FAQ][FAQ] for more.|
 |11|No dependency files were provided or detected.|

@@ -130,6 +130,10 @@ class CIBase(ABC):
         if value == self._returncode:
             return
 
+        # Don't set a failure code when analysis results are unknown
+        if value == ReturnCode.ANALYSIS_INCOMPLETE:
+            return
+
         # Don't set non-analysis custom failure codes when flag to ignore errors specified
         if self.args.ignore_errors and value > ReturnCode.LARGEST_POSSIBLE_ANALYSIS_ERROR:
             msg = f"""
@@ -142,14 +146,6 @@ class CIBase(ABC):
         if self.audit_mode and value <= ReturnCode.LARGEST_POSSIBLE_ANALYSIS_ERROR:
             msg = f"""Audit mode enabled to keep return code {self._returncode} instead of setting to {value}"""
             LOG.info(cleandoc(msg))
-            return
-
-        # Don't set a failure code when analysis results are unknown unless told to
-        if value == ReturnCode.ANALYSIS_INCOMPLETE:
-            if self.args.fail_incomplete:
-                LOG.info("[code]--fail-incomplete[/] specified. Setting return code to: %s", value, extra=MARKUP)
-                self._returncode = value
-                return
             return
 
         # Don't allow setting a `SUCCESS` value once the return code has already been set to an error value
