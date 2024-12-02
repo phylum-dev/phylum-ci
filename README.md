@@ -207,6 +207,11 @@ following non-zero codes otherwise:
 |12|No dependencies found in any current dependency file.|
 |20|A manifest is attempted to be parsed but lockfile generation has been disabled.|
 
+Exit codes of 10 or higher represent situations not directly linked to Phylum analysis. These errors are important
+because they indicate a complete Phylum analysis was not possible, which necessitates further investigation. An
+[option is available][script_options] to explicitly prevent these errors from setting an exit code.
+
+[script_options]: #phylum-ci-script-entry-point
 [FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-a-successful-analysis-comment
 
 ## License

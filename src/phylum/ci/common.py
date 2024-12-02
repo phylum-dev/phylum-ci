@@ -100,17 +100,33 @@ DepfileEntries = list[DepfileEntry]
 class ReturnCode(IntEnum):
     """Integer enumeration to track return codes."""
 
+    # NOTE: Updates to this list should be kept in sync with the "Exit Codes" section of `README.md`.
+    #       They should also adhere to the guarantees made by `--audit` and `--ignore-errors` flags.
+    #       Analysis-related codes should have a value in the range from 2-9, inclusive.
+    #       All other custom codes should have a value of 10 or greater.
+
     SUCCESS = 0
     # NOTE: Don't create a unique entry here for the value `1`. That value is used for default
     #       failures (when a `SystemExit` exception is raised with a message instead of a code).
-    #       Updates to this list should be kept in sync with the "Exit Codes" section of `README.md`.
+    # DEFAULT_FAILURE = 1   # noqa: ERA001 ; we want commented code here as a reminder not to add it
+
+    # ========================================================================================
+    # Analysis results that contain a policy violation can be silenced with the `--audit` flag
+    # ========================================================================================
     #
     # Phylum analysis is complete and contains a policy violation
-    POLICY_FAILURE = 2
+    ANALYSIS_POLICY_FAILURE = 2
     # Phylum analysis is incomplete and does not contain any policy violations
-    INCOMPLETE = 5
+    ANALYSIS_INCOMPLETE = 5
     # Phylum analysis is incomplete and contains a policy violation
-    FAILURE_INCOMPLETE = 6
+    ANALYSIS_FAILURE_INCOMPLETE = 6
+    # Dummy value to check for analysis-related codes vs. all other custom codes (can be reused/repeated)
+    LARGEST_POSSIBLE_ANALYSIS_ERROR = 9
+
+    # =====================================================================
+    # Codes in this section can be silenced with the `--ignore-errors` flag
+    # =====================================================================
+    #
     # A provided or detected dependency file failed one of the filters and was not included for analysis
     DEPFILE_FILTER = 10
     # No dependency files were provided or detected

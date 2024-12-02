@@ -190,9 +190,10 @@ with `--help` output as specified in the [Usage section of the top-level README.
 ### Exit Codes
 
 The Phylum analysis hook will return a zero (0) exit code when it completes successfully and a non-zero code otherwise.
-The full and current list of exit codes is [documented here][exit_codes].
+The full and current list of exit codes is [documented here][exit_codes] and [options exist][script_options] to be
+loose with setting them.
 
-[exit_codes]: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes
+[exit_codes]: https://github.com/phylum-dev/phylum-ci#exit-codes
 
 ### Audit Mode
 
@@ -209,7 +210,7 @@ repos:
       - id: phylum
         # Additional args are possible, but `--audit` is the new one.
         args: [--audit]
-        # Since the hook will always pass in audit mode, forcing the output of the
-        # hook to be printed will ensure failures have a chance of being noticed.
+        # Since the hook will pass in audit mode, forcing the output of the hook
+        # to be printed will ensure failures have a chance of being noticed.
         verbose: true
 ```

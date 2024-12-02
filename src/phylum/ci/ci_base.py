@@ -126,8 +126,31 @@ class CIBase(ABC):
     @returncode.setter
     def returncode(self, value: ReturnCode) -> None:
         """Set the return code value."""
-        # Do not allow setting a `SUCCESS` value once the return code has already been set to an error value.
+        # Exit early when there is nothing to do
+        if value == self._returncode:
+            return
+
+        # Don't set a failure code when analysis results are unknown
+        if value == ReturnCode.ANALYSIS_INCOMPLETE:
+            return
+
+        # Don't set non-analysis custom failure codes when flag to ignore errors specified
+        if self.args.ignore_errors and value > ReturnCode.LARGEST_POSSIBLE_ANALYSIS_ERROR:
+            msg = f"""
+                [code]--ignore-errors[/] detected to keep return code {self._returncode} instead of setting to {value}
+                More info: https://github.com/phylum-dev/phylum-ci#exit-codes"""
+            LOG.warning(cleandoc(msg), extra=MARKUP)
+            return
+
+        # Don't set analysis failure codes in audit mode
+        if self.audit_mode and value <= ReturnCode.LARGEST_POSSIBLE_ANALYSIS_ERROR:
+            msg = f"""Audit mode enabled to keep return code {self._returncode} instead of setting to {value}"""
+            LOG.info(cleandoc(msg))
+            return
+
+        # Don't allow setting a `SUCCESS` value once the return code has already been set to an error value
         if self._returncode == ReturnCode.SUCCESS or value != ReturnCode.SUCCESS:
+            LOG.debug("Setting return code to: %s", value)
             self._returncode = value
 
     def _find_potential_depfiles(self) -> None:
@@ -193,8 +216,7 @@ class CIBase(ABC):
             least one with `--depfile` argument or in `.phylum_project` file:
             https://docs.phylum.io/knowledge_base/phylum_project_files"""
         LOG.error(cleandoc(msg))
-        if not self.returncode:
-            self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
+        self.returncode = ReturnCode.NO_DEPFILES_PROVIDED
         raise SystemExit(self.returncode)
 
     def _exclude_depfiles(self, provided_depfiles: DepfileEntries) -> DepfileEntries:
@@ -882,11 +904,14 @@ class CIBase(ABC):
                 valid dependencies in the current set of provided dependency files
                 at revision [code]{self.common_ancestor_commit}[/]."""
             LOG.error(cleandoc(msg), extra=MARKUP)
-            if not self.returncode:
-                self.returncode = ReturnCode.NO_CURRENT_DEPS_FOUND
+            self.returncode = ReturnCode.NO_CURRENT_DEPS_FOUND
             raise SystemExit(self.returncode)
 
-        LOG.debug("%s unique current dependencies from %s file(s)", len(current_packages), len(self.depfiles))
+        num_current_packages = len(current_packages)
+        num_depfiles = len(self.depfiles)
+        dep_txt = "dependency" if num_current_packages == 1 else "dependencies"
+        file_txt = "file" if num_depfiles == 1 else "files"
+        LOG.debug("%s unique current %s from %s %s", num_current_packages, dep_txt, num_depfiles, file_txt)
         if self.all_deps:
             LOG.info("Considering all current dependencies ...")
             base_packages = []
@@ -894,7 +919,9 @@ class CIBase(ABC):
             LOG.info("Only considering newly added dependencies ...")
             base_packages = self._get_base_packages()
             new_packages = sorted(set(current_packages).difference(set(base_packages)))
-            LOG.debug("%s new dependencies: %s", len(new_packages), new_packages)
+            num_new_packages = len(new_packages)
+            dep_txt = "dependency" if num_new_packages == 1 else "dependencies"
+            LOG.debug("%s new %s: %s", num_new_packages, dep_txt, new_packages)
 
         # TODO(maxrake): Better formatting with parenthesized context managers is available in Python 3.10+
         #     https://github.com/phylum-dev/phylum-ci/issues/357
@@ -995,16 +1022,16 @@ class CIBase(ABC):
         if analysis.incomplete_count == 0:
             if analysis.is_failure:
                 LOG.error("Analysis is complete and there were failures")
-                self.returncode = ReturnCode.POLICY_FAILURE
+                self.returncode = ReturnCode.ANALYSIS_POLICY_FAILURE
             else:
                 LOG.info("Analysis is complete and there were NO failures")
                 self.returncode = ReturnCode.SUCCESS
         elif analysis.is_failure:
             LOG.error("There were failures in one or more completed packages")
-            self.returncode = ReturnCode.FAILURE_INCOMPLETE
+            self.returncode = ReturnCode.ANALYSIS_FAILURE_INCOMPLETE
         else:
             LOG.warning("There were no failures in the packages that have completed so far")
-            self.returncode = ReturnCode.INCOMPLETE
+            self.returncode = ReturnCode.ANALYSIS_INCOMPLETE
 
 
 # Type alias

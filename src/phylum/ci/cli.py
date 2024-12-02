@@ -18,7 +18,6 @@ from phylum.ci.ci_gitlab import CIGitLab
 from phylum.ci.ci_jenkins import CIJenkins
 from phylum.ci.ci_none import CINone
 from phylum.ci.ci_precommit import CIPreCommit
-from phylum.ci.common import ReturnCode
 from phylum.constants import HELP_MSG_API_URI, HELP_MSG_TARGET, HELP_MSG_TOKEN, HELP_MSG_VERSION
 from phylum.init.cli import get_target_triple, process_version
 from phylum.logger import LOG, set_logger_level
@@ -181,17 +180,24 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
             `.phylum_project` file. The value specified with this option takes precedence when both are provided. Group
             will be created if it does not already exist. Groups require a paid account: https://phylum.io/pricing""",
     )
-    analysis_group.add_argument(
+
+    output_mod_group = parser.add_argument_group(title="Output Modification Options")
+    output_mod_group.add_argument(
         "-s",
         "--skip-comments",
         action="store_true",
         help="""Specify this flag to disable posting comments/notes on pull/merge requests. This flag is implicitly
             set when audit mode is enabled.""",
     )
-    analysis_group.add_argument(
+    output_mod_group.add_argument(
         "--audit",
         action="store_true",
         help="Specify this flag to enable audit mode: analysis is performed but results do not affect the exit code.",
+    )
+    output_mod_group.add_argument(
+        "--ignore-errors",
+        action="store_true",
+        help="Specify this flag to ignore non-analysis warnings and errors that would otherwise affect the exit code.",
     )
 
     cli_group = parser.add_argument_group(
@@ -235,6 +241,10 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     parsed_args, remainder_args = get_args(args=args)
     set_logger_level(parsed_args.verbose - parsed_args.quiet)
 
+    # Show how this entry point was called, for analyzing user-provided logs
+    main_args = args or sys.argv[1:]
+    LOG.debug("Called with args: %s", main_args)
+
     # Perform version check and normalization separately from the argument parsing so as to minimize GitHub
     # API calls when showing the help message but still bail early when the version provided is invalid.
     parsed_args.version = process_version(parsed_args.version)
@@ -265,14 +275,11 @@ def main(args: Optional[Sequence[str]] = None) -> int:
     # Output the results of the analysis
     ci_env.post_output()
 
-    # Don't return a failure code in audit mode or if analysis results are unknown at this point
-    returncode = 0 if ci_env.returncode == ReturnCode.INCOMPLETE else ci_env.returncode.value
-    if ci_env.audit_mode:
-        LOG.info("Audit mode enabled. Original return code: %s", returncode)
-        returncode = 0
+    # Exit with the effective return code
+    returncode = ci_env.returncode.value
     msg = f"""
         Return code: {returncode}
-        More info: https://github.com/phylum-dev/phylum-ci?tab=readme-ov-file#exit-codes"""
+        More info: https://github.com/phylum-dev/phylum-ci#exit-codes"""
     LOG.debug(cleandoc(msg))
     return returncode
 
