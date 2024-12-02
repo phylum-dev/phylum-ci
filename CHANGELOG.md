@@ -15,6 +15,12 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.54.0](https://github.com/phylum-dev/phylum-ci/compare/v0.53.0...v0.54.0) (2024-12-02)
+
+### Features
+
+* Allow for ignoring non-analysis errors ([#508](https://github.com/phylum-dev/phylum-ci/pull/508)) ([`a372523`](https://github.com/phylum-dev/phylum-ci/commit/a372523830b1e29b828a9ae2a5950b6910b977f5))
+
 ## [v0.53.0](https://github.com/phylum-dev/phylum-ci/compare/v0.52.1...v0.53.0) (2024-11-26)
 
 ### Features
