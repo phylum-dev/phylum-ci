@@ -189,7 +189,14 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         help="""Specify this flag to disable posting comments/notes on pull/merge requests. This flag is implicitly
             set when audit mode is enabled.""",
     )
-    output_mod_group.add_argument(
+    strict_loose_group = output_mod_group.add_mutually_exclusive_group()
+    strict_loose_group.add_argument(
+        "--fail-incomplete",
+        action="store_true",
+        help="""Specify this flag to set a failure code when some analysis results are unknown. Useful in environments
+            where strictness is desired to prevent adding any new dependency until it passes established policy.""",
+    )
+    strict_loose_group.add_argument(
         "--audit",
         action="store_true",
         help="Specify this flag to enable audit mode: analysis is performed but results do not affect the exit code.",
