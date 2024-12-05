@@ -451,6 +451,45 @@ def process_uri_option(args: argparse.Namespace) -> None:
             LOG.debug("The CLI will use the PRODUCTION instance: %s", configured_uri)
 
 
+def handle_install(args: argparse.Namespace) -> None:
+    """Handle the Phylum CLI install based on provided parsed arguments."""
+    target_triple = args.target
+    tag_name = args.version
+
+    if "-windows-" in target_triple:
+        # Phylum CLI Windows targets are not supported for automatic install.
+        # Install manually by downloading binary and placing in known location.
+        archive_name = f"phylum-{target_triple}.exe"
+        archive_url = get_archive_url(tag_name, archive_name)
+        binary_path = PHYLUM_PACKAGE_PATH / "phylum.exe"
+        save_file_from_url(archive_url, binary_path)
+
+    else:
+        archive_name = f"phylum-{target_triple}.zip"
+        sig_name = f"{archive_name}.signature"
+        archive_url = get_archive_url(tag_name, archive_name)
+        sig_url = f"{archive_url}.signature"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            archive_path = temp_dir_path / archive_name
+            sig_path = temp_dir_path / sig_name
+
+            save_file_from_url(archive_url, archive_path)
+            save_file_from_url(sig_url, sig_path)
+
+            verify_sig(archive_path, sig_path)
+
+            with zipfile.ZipFile(archive_path, mode="r") as zip_file:
+                if zip_file.testzip() is not None:
+                    msg = f"There was a bad file in the zip archive {archive_name}"
+                    raise zipfile.BadZipFile(msg)
+                extracted_dir = temp_dir_path / f"phylum-{target_triple}"
+                zip_file.extractall(path=temp_dir)
+
+            install_phylum_cli(args, extracted_dir)
+
+
 @progress_spinner("Installing the Phylum CLI")
 def install_phylum_cli(args: argparse.Namespace, extracted_dir: Path) -> None:
     """Install the Phylum CLI from an archive that has been extracted to the given path."""
@@ -631,38 +670,7 @@ def main(args: Optional[Sequence[str]] = None) -> int:
         msg = f"The identified target triple `{target_triple}` is not supported for release {tag_name}"
         raise SystemExit(msg)
 
-    if "-windows-" in target_triple:
-        # Phylum CLI Windows targets are not supported for automatic install.
-        # Install manually by downloading binary and placing in known location.
-        archive_name = f"phylum-{target_triple}.exe"
-        archive_url = get_archive_url(tag_name, archive_name)
-        binary_path = PHYLUM_PACKAGE_PATH / "phylum.exe"
-        save_file_from_url(archive_url, binary_path)
-    else:
-        archive_name = f"phylum-{target_triple}.zip"
-        sig_name = f"{archive_name}.signature"
-        archive_url = get_archive_url(tag_name, archive_name)
-        sig_url = f"{archive_url}.signature"
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_dir_path = Path(temp_dir)
-            archive_path = temp_dir_path / archive_name
-            sig_path = temp_dir_path / sig_name
-
-            save_file_from_url(archive_url, archive_path)
-            save_file_from_url(sig_url, sig_path)
-
-            verify_sig(archive_path, sig_path)
-
-            with zipfile.ZipFile(archive_path, mode="r") as zip_file:
-                if zip_file.testzip() is not None:
-                    msg = f"There was a bad file in the zip archive {archive_name}"
-                    raise zipfile.BadZipFile(msg)
-                extracted_dir = temp_dir_path / f"phylum-{target_triple}"
-                zip_file.extractall(path=temp_dir)
-
-            install_phylum_cli(parsed_args, extracted_dir)
-
+    handle_install(parsed_args)
     process_uri_option(parsed_args)
     process_token_option(parsed_args)
     confirm_setup()

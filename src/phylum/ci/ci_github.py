@@ -178,7 +178,7 @@ class CIGitHub(CIBase):
         err_msg = """
             Consider changing the `fetch-depth` input during checkout to fetch more
             branch history. For more info: https://github.com/actions/checkout"""
-        self.update_depfiles_change_status(pr_base_sha, err_msg)
+        self._update_depfiles_change_status(pr_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 

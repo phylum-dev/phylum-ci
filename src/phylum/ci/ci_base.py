@@ -533,7 +533,7 @@ class CIBase(ABC):
         return cli_path
 
     @cached_property
-    def git_root_dir(self) -> Path:
+    def _git_root_dir(self) -> Path:
         """Get the root directory of the git working tree."""
         return git_root_dir()
 
@@ -615,7 +615,7 @@ class CIBase(ABC):
         """
         raise NotImplementedError
 
-    def update_depfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
+    def _update_depfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
         """Update each dependency file's change status.
 
         The input `commit` is the one to use in a `git diff` command to view the changes relative to the working tree.
@@ -662,7 +662,7 @@ class CIBase(ABC):
         LOG.debug("`git` binary found on the PATH")
 
         # Referencing this property is enough to ensure the prerequisite
-        LOG.debug("Git repository root found: %s", self.git_root_dir)
+        LOG.debug("Git repository root found: %s", self._git_root_dir)
 
     def _cmd_extender(
         self,
@@ -977,7 +977,7 @@ class CIBase(ABC):
         base_packages: set[Package] = set()
         with git_worktree(self.common_ancestor_commit, env=self._env) as temp_dir:
             for depfile in self.depfiles:
-                prev_depfile_path = temp_dir / depfile.path.relative_to(self.git_root_dir)
+                prev_depfile_path = temp_dir / depfile.path.relative_to(self._git_root_dir)
                 try:
                     prev_depfile_pkgs = parse_depfile(
                         self.cli_path,

@@ -261,7 +261,7 @@ class CIAzure(CIBase):
             Consider changing the `fetchDepth` property in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://learn.microsoft.com/azure/devops/pipelines/yaml-schema/steps-checkout"""
-        self.update_depfiles_change_status(diff_base_sha, err_msg)
+        self._update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 

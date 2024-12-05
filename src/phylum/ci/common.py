@@ -46,16 +46,16 @@ class DepfileEntry:
     Current commands that return entries in this format include `status --json` and `find-dependency-files`.
     """
 
-    _path: dataclasses.InitVar[Union[str, Path]]
+    path_: dataclasses.InitVar[Union[str, Path]]
     type: str = "auto"
     path: Path = dataclasses.field(init=False)
 
-    def __post_init__(self, _path):
+    def __post_init__(self, path_):
         """Ensure the `path` field is actually a `Path` object."""
-        if isinstance(_path, str):
-            self.path = Path(_path).resolve()
-        elif isinstance(_path, Path):
-            self.path = _path.resolve()
+        if isinstance(path_, str):
+            self.path = Path(path_).resolve()
+        elif isinstance(path_, Path):
+            self.path = path_.resolve()
         else:
             msg = "Provided dependency file path is not `str` or `Path`"
             raise TypeError(msg)
