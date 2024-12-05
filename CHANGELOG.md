@@ -15,6 +15,12 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.55.0](https://github.com/phylum-dev/phylum-ci/compare/v0.54.0...v0.55.0) (2024-12-05)
+
+### Features
+
+* Add option to fail for incomplete analysis ([#510](https://github.com/phylum-dev/phylum-ci/pull/510)) ([`d2c21ae`](https://github.com/phylum-dev/phylum-ci/commit/d2c21aecad0abdb270d9b5000c3b83833ecb55a9))
+
 ## [v0.54.0](https://github.com/phylum-dev/phylum-ci/compare/v0.53.0...v0.54.0) (2024-12-02)
 
 ### Features
