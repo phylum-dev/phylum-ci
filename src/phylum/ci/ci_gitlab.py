@@ -174,7 +174,7 @@ class CIGitLab(CIBase):
             Consider changing the `GIT_DEPTH` variable in CI settings to
             clone/fetch more branch history. For more info, reference:
             https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
-        self.update_depfiles_change_status(diff_base_sha, err_msg)
+        self._update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
