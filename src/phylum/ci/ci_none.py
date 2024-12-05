@@ -90,7 +90,7 @@ class CINone(CIBase):
         """
         remote = git_remote()
         try:
-            self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+            self._update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
         except subprocess.CalledProcessError as outer_err:
             # The most likely problem is that the remote HEAD ref is not set. The attempt to set it here, inside
             # the except block, is due to wanting to minimize calling commands that require git credentials.
@@ -98,7 +98,7 @@ class CINone(CIBase):
             LOG.warning("Failed to get diff. Remote HEAD ref likely not set. Attempting to set it and try again ...")
             git_set_remote_head(remote)
             try:
-                self.update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
+                self._update_depfiles_change_status(f"refs/remotes/{remote}/HEAD...")
             except subprocess.CalledProcessError as inner_err:
                 msg = "Failed to get diff with remote HEAD ref even after setting it."
                 raise PhylumCalledProcessError(inner_err, msg) from outer_err

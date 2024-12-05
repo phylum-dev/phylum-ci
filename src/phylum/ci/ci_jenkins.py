@@ -148,7 +148,7 @@ class CIJenkins(CIBase):
             For more info, reference:
             * https://plugins.jenkins.io/workflow-scm-step/
             * https://www.jenkins.io/doc/pipeline/steps/credentials-binding/"""
-        self.update_depfiles_change_status(diff_base_sha, err_msg)
+        self._update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
 
