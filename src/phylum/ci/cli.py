@@ -149,8 +149,8 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
         "-f",
         "--force-analysis",
         action="store_true",
-        help="""Specify this flag to force analysis, even when no dependency file has changed. This flag is implicitly
-            set when *any* manifest is included, to maximize the chance that updated dependencies are accounted.""",
+        help="""Specify this flag to force analysis, even when no dependency file has changed. Implicitly set for newly
+            created projects or when *any* manifest is included, to account for possible dependency updates.""",
     )
     analysis_group.add_argument(
         "-k",

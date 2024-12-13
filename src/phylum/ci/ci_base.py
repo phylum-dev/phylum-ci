@@ -757,6 +757,8 @@ class CIBase(ABC):
         LOG.info(cleandoc(project_created_msg))
         if self._project_file_already_existed:
             LOG.warning("Overwrote previous `.phylum_project` file found at: %s", self._phylum_project_file)
+        LOG.warning("Forcing analysis to ensure new project is initially populated ...")
+        self._force_analysis = True
 
     def _created_group(self) -> bool:
         """Ensure a Phylum group is created and in place, when specified.
