@@ -15,6 +15,12 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.56.0](https://github.com/phylum-dev/phylum-ci/compare/v0.55.0...v0.56.0) (2024-12-13)
+
+### Features
+
+* Automatically analyze newly created projects ([#514](https://github.com/phylum-dev/phylum-ci/pull/514)) ([`2683fe4`](https://github.com/phylum-dev/phylum-ci/commit/2683fe4d1f4f972a3c9bcd606936ed7726438272))
+
 ## [v0.55.0](https://github.com/phylum-dev/phylum-ci/compare/v0.54.0...v0.55.0) (2024-12-05)
 
 ### Features
