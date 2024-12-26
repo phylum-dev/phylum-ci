@@ -36,7 +36,7 @@ from phylum.ci.common import (
     ReturnCode,
 )
 from phylum.ci.depfile import Depfile, Depfiles, DepfileType, parse_depfile
-from phylum.ci.git import git_hash_object, git_repo_name, git_root_dir, git_worktree
+from phylum.ci.git import ensure_git_repo_access, git_hash_object, git_repo_name, git_root_dir, git_worktree
 from phylum.console import console
 from phylum.constants import ENVVAR_NAME_TOKEN, MIN_CLI_VER_INSTALLED
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
@@ -647,6 +647,7 @@ class CIBase(ABC):
           * A Phylum CLI version at least as new as the minimum supported version
           * Have `git` installed and available for use on the PATH
           * Operating within the context of a git repository
+          * User account executing `git` has access to the repository
         """
         LOG.info("Confirming prerequisites ...")
 
@@ -661,8 +662,8 @@ class CIBase(ABC):
             raise SystemExit(msg)
         LOG.debug("`git` binary found on the PATH")
 
-        # Referencing this property is enough to ensure the prerequisite
-        LOG.debug("Git repository root found: %s", self._git_root_dir)
+        ensure_git_repo_access()
+        LOG.debug("Git repository root: %s", self._git_root_dir)
 
     def _cmd_extender(
         self,

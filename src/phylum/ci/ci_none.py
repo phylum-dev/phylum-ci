@@ -12,7 +12,7 @@ import subprocess
 from typing import Optional
 
 from phylum.ci.ci_base import CIBase
-from phylum.ci.git import git_curent_branch_name, git_remote, git_set_remote_head
+from phylum.ci.git import git_current_branch_name, git_remote, git_set_remote_head
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG
 
@@ -35,7 +35,7 @@ class CINone(CIBase):
     @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
-        current_branch = git_curent_branch_name()
+        current_branch = git_current_branch_name()
         label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
         label = re.sub(r"\s+", "-", label)
         return label

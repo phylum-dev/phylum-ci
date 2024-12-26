@@ -10,7 +10,7 @@ import tempfile
 from typing import Optional
 
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
-from phylum.logger import LOG
+from phylum.logger import LOG, MARKUP
 
 
 def git_base_cmd(git_c_path: Optional[Path] = None) -> list[str]:
@@ -22,6 +22,86 @@ def git_base_cmd(git_c_path: Optional[Path] = None) -> list[str]:
     if git_c_path is None or not git_c_path.exists():
         return ["git"]
     return ["git", "-C", str(git_c_path.resolve())]
+
+
+def is_in_git_repo(git_c_path: Optional[Path] = None) -> bool:
+    """Predicate for determining if operating within the context of an accessible git repository.
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
+
+    # We want the return code here and don't want to raise when non-zero.
+    return not bool(subprocess.run(cmd, check=False, capture_output=True).returncode)  # noqa: S603
+
+
+def ensure_git_repo_access(git_c_path: Optional[Path] = None) -> None:
+    """Ensure user account executing `git` has access to the repository.
+
+    The optional `git_c_path` is used to tell `git` to run as if it were started in that
+    path instead of the current working directory, which is the default when not provided.
+    """
+    if is_in_git_repo(git_c_path=git_c_path):
+        LOG.debug("Operating within git repository, with proper access")
+        return
+
+    # There are two likely reasons to fail the git repo membership test:
+    #
+    #   1. Not actually in a git repo, in which case there is nothing that can be done.
+    #   2. The repository is owned by a different user and we don't have access to it.
+    #      This can be remedied with a configuration change. References:
+    #      https://confluence.atlassian.com/pages/viewpage.action?pageId=1167744132
+    #      https://confluence.atlassian.com/pages/viewpage.action?pageId=1384121844
+    #      https://git-scm.com/docs/git-config/2.35.2#Documentation/git-config.txt-safedirectory
+
+    base_cmd = git_base_cmd(git_c_path=git_c_path)
+    cmd = [*base_cmd, "rev-parse", "--show-toplevel"]
+
+    try:
+        _ = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding="utf-8")  # noqa: S603
+    except subprocess.CalledProcessError as outer_err:
+        # Account for reason #1
+        std_err: str = outer_err.stderr
+        if "not a git repository" in std_err:
+            msg = "Must be operating within the context of a git repository"
+            raise PhylumCalledProcessError(outer_err, msg) from outer_err
+
+        # Account for reason #2
+        # The error message states the command to use to update the configuration, so use it
+        start_of_cmd = "git config --global --add safe.directory"
+        if start_of_cmd in std_err:
+            msg = """
+                This git repository is owned by a different user!
+                Adding repository directory to git global config as safe directory ..."""
+            LOG.warning(cleandoc(msg))
+            start_of_cmd_idx = std_err.find(start_of_cmd)
+            cmd_msg = std_err[start_of_cmd_idx:]
+            cmd_list = shlex.split(cmd_msg)
+            # Ensure the `git` part of the command takes into account the optional `git_c_path`
+            conf_cmd = [*base_cmd, *cmd_list[1:]]
+            num_tokens = len(conf_cmd)
+            # Ensure the "<DIR>" part of the command is only one token and that nothing comes after it:
+            # "<GIT_BASE_CMD> config --global --add safe.directory <DIR>"
+            expected_num_tokens = len(base_cmd) + 5
+            if num_tokens != expected_num_tokens:
+                msg = f"""
+                    {num_tokens} tokens provided but exactly {expected_num_tokens} were expected.
+                    Bailing instead of executing this unexpected command:
+                        [code]{shlex.join(conf_cmd)}[/]
+                    Please report this as a bug if you believe the command is correct."""
+                raise PhylumCalledProcessError(outer_err, cleandoc(msg)) from outer_err
+            LOG.debug("Executing command: [code]%s[/]", shlex.join(conf_cmd), extra=MARKUP)
+            try:
+                _ = subprocess.run(conf_cmd, check=True, text=True, capture_output=True, encoding="utf-8")  # noqa: S603
+            except subprocess.CalledProcessError as inner_err:
+                msg = "Unable to add repository to git global config as safe directory"
+                raise PhylumCalledProcessError(inner_err, msg) from inner_err
+            msg = f"""
+                Config updated. Undo for non-ephemeral environments with command:
+                    [code]{shlex.join(conf_cmd).replace("--add", "--unset", 1)}[/]"""
+            LOG.warning(cleandoc(msg), extra=MARKUP)
 
 
 def git_remote(git_c_path: Optional[Path] = None) -> str:
@@ -181,7 +261,7 @@ def git_root_dir(git_c_path: Optional[Path] = None) -> Path:
     return Path(git_root).resolve()
 
 
-def git_curent_branch_name(git_c_path: Optional[Path] = None) -> str:
+def git_current_branch_name(git_c_path: Optional[Path] = None) -> str:
     """Get the current branch name and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
