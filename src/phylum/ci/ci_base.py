@@ -977,6 +977,9 @@ class CIBase(ABC):
             return []
 
         base_packages: set[Package] = set()
+        # Use something other than worktrees here (e.g., git clone, checkout, unpack-file, etc.)?
+        # The git worktree can't be created due to not having permissions to write/create the `.git/worktree`
+        # directory. It might also be possible to automatically set the `--all-deps` flag when this happens.
         with git_worktree(self.common_ancestor_commit, env=self._env) as temp_dir:
             for depfile in self.depfiles:
                 prev_depfile_path = temp_dir / depfile.path.relative_to(self._git_root_dir)

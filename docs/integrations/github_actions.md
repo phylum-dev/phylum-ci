@@ -60,6 +60,8 @@ jobs:
       # lockfile generation. If that is desired, use the
       # `phylum-dev/phylum-analyze-pr-action` action instead.
       image: docker://ghcr.io/phylum-dev/phylum-ci:slim
+      # Container jobs only work for the `root` user
+      options: --user=root
       env:
         GITHUB_TOKEN: ${{ github.token }}
         PHYLUM_API_KEY: ${{ secrets.PHYLUM_TOKEN }}
@@ -80,9 +82,14 @@ The `GITHUB_TOKEN` and `PHYLUM_API_KEY` environment variables are required to ha
 Those environment variables and the rest of the options are more fully documented in the
 [Phylum Analyze PR action repository][repo].
 
+Container jobs [do not work when a non-root user is specified][1], like in the default `phylum-ci` image.
+[They will work][2] after specifying `options: --user=root` with the container options.
+
 [container_job]: https://docs.github.com/actions/using-jobs/running-jobs-in-a-container
 [ghcr_tags]: https://github.com/phylum-dev/phylum-ci/pkgs/container/phylum-ci
 [docker_hub_tags]: https://hub.docker.com/r/phylumio/phylum-ci/tags
+[1]: https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
+[2]: https://github.com/orgs/community/discussions/26811
 
 ### Container Steps
 

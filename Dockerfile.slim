@@ -177,6 +177,25 @@ ENV XDG_CACHE_HOME="${INSTALL_DIR}/.cache"
 COPY --from=builder ${PHYLUM_VENV} ${PHYLUM_VENV}
 
 RUN set -eux; \
+    # Create a non-root user/group, with a home directory (required by some CI environments).
+    # GitHub specifies that:
+    #   "Docker actions must be run by the default Docker user (root). Do not use the USER instruction
+    #    in your Dockerfile, because you won't be able to access the GITHUB_WORKSPACE directory."
+    # It is possible to work around this restriction, albeit in a hacky manner. Creating an image with
+    # the same `runner` user, with the same UID, will satisfy GitHub and ensure the user information
+    # matches between the running container and the host OS (which is also in a container). This is not
+    # fool-proof because the UID for the `runner` user is different depending on the GitHub-hosted runner in
+    # use (e.g., standard vs. large) and there is no guarantee that the user name or ID will remain consistent.
+    # The `docker` group is used to further match the configuration from the `actions-runner-dind` image.
+    # References:
+    # https://support.atlassian.com/bitbucket-cloud/docs/use-docker-images-as-build-environments/
+    # https://docs.github.com/en/actions/sharing-automations/creating-actions/dockerfile-support-for-github-actions#user
+    # https://github.com/orgs/community/discussions/26811
+    # https://github.com/actions/runner-images/issues/6930
+    # https://github.com/actions/runner/issues/2411
+    # https://github.com/actions/actions-runner-controller/blob/1e10417be8341df564a11abc970fe8f41a3b102c/runner/actions-runner-dind.ubuntu-22.04.dockerfile#L36
+    groupadd --system docker; \
+    useradd --create-home --no-log-init --system --uid 1001 --gid docker runner; \
     # Install prerequisites
     apt-get update; \
     apt-get upgrade --yes; \
@@ -199,4 +218,5 @@ RUN set -eux; \
     rm -rf /tmp/*; \
     find / -type f -name '*.pyc' -delete;
 
+USER runner:docker
 CMD ["phylum-ci"]
