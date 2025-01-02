@@ -117,9 +117,11 @@ echo " [+] Running with UID:GID of: ${USER}:${GROUP}"
 
 if [ -z "${SLIM:-}" ]; then
     echo " [+] \`--slim\` option not specified. Running all tests ..."
+    docker run --rm --entrypoint entrypoint.sh "${IMAGE}"
     docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${SLIM_COMMANDS}"
     docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${MANIFEST_COMMANDS}"
 else
     echo " [+] \`--slim\` option specified. Skipping the lockfile generation tests ..."
+    docker run --rm --entrypoint entrypoint.sh "${IMAGE}"
     docker run --rm --entrypoint entrypoint.sh --user "${USER}:${GROUP}" "${IMAGE}" "${SLIM_COMMANDS}"
 fi
