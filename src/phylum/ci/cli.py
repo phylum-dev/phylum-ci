@@ -6,7 +6,6 @@ from inspect import cleandoc
 import os
 import pathlib
 import sys
-from typing import Optional
 
 from phylum import __version__
 from phylum.ci import SCRIPT_NAME
@@ -86,7 +85,7 @@ def detect_ci_platform(args: argparse.Namespace, remainder: list[str]) -> CIBase
     return ci_env
 
 
-def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, list[str]]:
+def get_args(args: Sequence[str] | None = None) -> tuple[argparse.Namespace, list[str]]:
     """Get the arguments from the command line and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
@@ -243,7 +242,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> tuple[argparse.Namespace, 
     return parser.parse_known_args(args=args)
 
 
-def main(args: Optional[Sequence[str]] = None) -> int:
+def main(args: Sequence[str] | None = None) -> int:
     """Provide the main entrypoint."""
     parsed_args, remainder_args = get_args(args=args)
     set_logger_level(parsed_args.verbose - parsed_args.quiet)

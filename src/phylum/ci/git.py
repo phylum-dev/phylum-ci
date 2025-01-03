@@ -7,13 +7,12 @@ from pathlib import Path
 import shlex
 import subprocess
 import tempfile
-from typing import Optional
 
 from phylum.exceptions import PhylumCalledProcessError, pprint_subprocess_error
 from phylum.logger import LOG, MARKUP
 
 
-def git_base_cmd(git_c_path: Optional[Path] = None) -> list[str]:
+def git_base_cmd(git_c_path: Path | None = None) -> list[str]:
     """Provide a normalized base command list for use in constructing git commands.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -24,7 +23,7 @@ def git_base_cmd(git_c_path: Optional[Path] = None) -> list[str]:
     return ["git", "-C", str(git_c_path.resolve())]
 
 
-def is_in_git_repo(git_c_path: Optional[Path] = None) -> bool:
+def is_in_git_repo(git_c_path: Path | None = None) -> bool:
     """Predicate for determining if operating within the context of an accessible git repository.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -37,7 +36,7 @@ def is_in_git_repo(git_c_path: Optional[Path] = None) -> bool:
     return not bool(subprocess.run(cmd, check=False, capture_output=True).returncode)  # noqa: S603
 
 
-def ensure_git_repo_access(git_c_path: Optional[Path] = None) -> None:
+def ensure_git_repo_access(git_c_path: Path | None = None) -> None:
     """Ensure user account executing `git` has access to the repository.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -104,7 +103,7 @@ def ensure_git_repo_access(git_c_path: Optional[Path] = None) -> None:
             LOG.warning(cleandoc(msg), extra=MARKUP)
 
 
-def git_remote(git_c_path: Optional[Path] = None) -> str:
+def git_remote(git_c_path: Path | None = None) -> str:
     """Get the git remote and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -135,7 +134,7 @@ def git_remote(git_c_path: Optional[Path] = None) -> str:
     return remote
 
 
-def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path: Optional[Path] = None) -> None:
+def git_fetch(repo: str | None = None, ref: str | None = None, git_c_path: Path | None = None) -> None:
     """Execute a `git fetch` command with optional repository and refspec specified.
 
     See git documentation for more detail: https://git-scm.com/docs/git-fetch
@@ -158,7 +157,7 @@ def git_fetch(repo: Optional[str] = None, ref: Optional[str] = None, git_c_path:
         raise PhylumCalledProcessError(err, msg) from err
 
 
-def git_branch_exists(ref_path: str, git_c_path: Optional[Path] = None) -> bool:
+def git_branch_exists(ref_path: str, git_c_path: Path | None = None) -> bool:
     """Predicate for whether a given branch exists.
 
     `ref_path` is meant to be an "exact path" to a specific reference (e.g., `refs/remotes/origin/main`)
@@ -178,7 +177,7 @@ def git_branch_exists(ref_path: str, git_c_path: Optional[Path] = None) -> bool:
     return True
 
 
-def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
+def git_set_remote_head(remote: str, git_c_path: Path | None = None) -> None:
     """Set the remote HEAD ref for a given remote.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -197,7 +196,7 @@ def git_set_remote_head(remote: str, git_c_path: Optional[Path] = None) -> None:
         raise PhylumCalledProcessError(err, msg) from err
 
 
-def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> str:
+def git_default_branch_name(remote: str, git_c_path: Path | None = None) -> str:
     """Get the default branch name and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -239,7 +238,7 @@ def git_default_branch_name(remote: str, git_c_path: Optional[Path] = None) -> s
     return default_branch_name
 
 
-def git_root_dir(git_c_path: Optional[Path] = None) -> Path:
+def git_root_dir(git_c_path: Path | None = None) -> Path:
     """Get the top-level (root) directory of the git working tree and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -261,7 +260,7 @@ def git_root_dir(git_c_path: Optional[Path] = None) -> Path:
     return Path(git_root).resolve()
 
 
-def git_current_branch_name(git_c_path: Optional[Path] = None) -> str:
+def git_current_branch_name(git_c_path: Path | None = None) -> str:
     """Get the current branch name and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -283,7 +282,7 @@ def git_current_branch_name(git_c_path: Optional[Path] = None) -> str:
     return current_branch
 
 
-def git_hash_object(object_path: Path, git_c_path: Optional[Path] = None) -> str:
+def git_hash_object(object_path: Path, git_c_path: Path | None = None) -> str:
     """Get the unique key that git uses to refer to the blob type data object for the provided path and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -306,7 +305,7 @@ def git_hash_object(object_path: Path, git_c_path: Optional[Path] = None) -> str
     return hash_object
 
 
-def git_repo_name(git_c_path: Optional[Path] = None) -> str:
+def git_repo_name(git_c_path: Path | None = None) -> str:
     """Get the git repository name and return it.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
@@ -361,8 +360,8 @@ def git_repo_name(git_c_path: Optional[Path] = None) -> str:
 @contextlib.contextmanager
 def git_worktree(
     commit: str,
-    env: Optional[Mapping[str, str]] = None,
-    git_c_path: Optional[Path] = None,
+    env: Mapping[str, str] | None = None,
+    git_c_path: Path | None = None,
 ) -> Generator[Path, None, None]:
     """Create a git worktree at the given commit.
 
@@ -395,7 +394,7 @@ def git_worktree(
             remove_git_worktree(temp_dir_path)
 
 
-def remove_git_worktree(worktree: Path, git_c_path: Optional[Path] = None) -> None:
+def remove_git_worktree(worktree: Path, git_c_path: Path | None = None) -> None:
     """Remove a given git worktree.
 
     The optional `git_c_path` is used to tell `git` to run as if it were started in that

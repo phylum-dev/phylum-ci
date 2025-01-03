@@ -24,7 +24,6 @@ import os
 import re
 import shlex
 import subprocess
-from typing import Optional
 import urllib.parse
 
 import requests
@@ -122,7 +121,7 @@ class CIBitbucket(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit.
 
         Some pre-defined variables are used: https://support.atlassian.com/bitbucket-cloud/docs/variables-and-secrets/
@@ -221,7 +220,7 @@ class CIBitbucket(CIBase):
         return bool(self.most_recent_phylum_comment)
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # This is the "URL for the origin", which uses `HTTP:` instead of
         # `HTTPS:`, even though the value redirects to the `HTTPS:` site.
@@ -285,7 +284,7 @@ class CIBitbucket(CIBase):
         return headers
 
     @cached_property
-    def most_recent_phylum_comment(self) -> Optional[str]:
+    def most_recent_phylum_comment(self) -> str | None:
         """Get the raw text of the most recently posted Phylum-generated comment.
 
         Return `None` when one does not exist.

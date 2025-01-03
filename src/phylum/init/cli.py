@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Optional
 import zipfile
 
 from packaging.utils import canonicalize_version
@@ -77,7 +76,7 @@ def get_phylum_cli_version(cli_path: Path) -> str:
     return version
 
 
-def get_phylum_bin_path() -> tuple[Optional[Path], Optional[str]]:
+def get_phylum_bin_path() -> tuple[Path | None, str | None]:
     """Get the current path and corresponding version to the Phylum CLI binary and return them."""
     # Look for `phylum` on the PATH first
     which_cli_path = shutil.which("phylum")
@@ -248,7 +247,7 @@ def version_check(version: str) -> str:
     return version
 
 
-def process_version(version: Optional[str]) -> str:
+def process_version(version: str | None) -> str:
     """Process the version argument and return it.
 
     Avoid external GitHub API calls when an existing Phylum CLI is installed and it's version is supported.
@@ -298,7 +297,7 @@ def get_archive_url(tag_name: str, archive_name: str) -> str:
     return archive_url
 
 
-def is_token_set(phylum_settings_path: Path, token: Optional[str] = None) -> bool:
+def is_token_set(phylum_settings_path: Path, token: str | None = None) -> bool:
     """Check if any token is already set in the given CLI configuration file.
 
     Optionally, check if a specific given `token` is set.
@@ -562,7 +561,7 @@ def confirm_setup() -> None:
     LOG.debug(help_output)
 
 
-def get_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def get_args(args: Sequence[str] | None = None) -> argparse.Namespace:
     """Get the arguments from the command line or input parameter, parse and return them."""
     parser = argparse.ArgumentParser(
         prog=SCRIPT_NAME,
@@ -642,7 +641,7 @@ def get_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args=args)
 
 
-def main(args: Optional[Sequence[str]] = None) -> int:
+def main(args: Sequence[str] | None = None) -> int:
     """Provide the main entrypoint."""
     parsed_args = get_args(args=args)
     set_logger_level(parsed_args.verbose - parsed_args.quiet)
