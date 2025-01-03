@@ -3,7 +3,7 @@
 from inspect import cleandoc
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -25,7 +25,7 @@ DEFAULT_HEADERS = {
 PAT_REF = "https://docs.github.com/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
 
 
-def get_headers(github_token: Optional[str] = None) -> dict[str, str]:
+def get_headers(github_token: str | None = None) -> dict[str, str]:
     """Get the headers to use for a GitHub API request.
 
     Authenticated requests are made by providing a GitHub token. The token can be passed by parameter
@@ -50,8 +50,8 @@ def get_headers(github_token: Optional[str] = None) -> dict[str, str]:
 @progress_spinner("Making GitHub API request")
 def github_request(
     api_url: str,
-    params: Optional[dict] = None,
-    github_token: Optional[str] = None,
+    params: dict | None = None,
+    github_token: str | None = None,
     timeout: float = REQ_TIMEOUT,
 ) -> Any:
     """Make a request to a given GitHub API endpoint and return the response.

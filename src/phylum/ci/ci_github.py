@@ -19,7 +19,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-from typing import Optional
 
 import requests
 
@@ -157,7 +156,7 @@ class CIGitHub(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit."""
         return self.pr_event.get("pull_request", {}).get("base", {}).get("sha")
 
@@ -194,7 +193,7 @@ class CIGitHub(CIBase):
         return bool(get_most_recent_phylum_comment_github(self.comments_url, self.github_token))
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # Ref: https://docs.github.com/actions/learn-github-actions/variables#default-environment-variables
         server_url = os.getenv("GITHUB_SERVER_URL")
@@ -226,7 +225,7 @@ class CIGitHub(CIBase):
 # The function is meant to be used internally, where it is known that the comments on the PR at the time
 # of first execution will suffice for the duration of the rest of the lifetime of the running integration.
 @lru_cache(maxsize=1)
-def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) -> Optional[str]:
+def get_most_recent_phylum_comment_github(comments_url: str, github_token: str) -> str | None:
     """Get the raw text of the most recently posted Phylum-generated comment for GitHub PRs.
 
     Return `None` when one does not exist.

@@ -1,10 +1,11 @@
 """Configure the logging features for the package."""
 
+from collections.abc import Callable
 import inspect
 import logging
 import sys
 from types import FunctionType, MethodType
-from typing import Any, Callable, Optional
+from typing import Any
 
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
@@ -41,7 +42,7 @@ rich.traceback.install(console=console, word_wrap=True, show_locals=True)
 #  * https://stackoverflow.com/a/35804945
 #  * https://github.com/python/cpython/issues/75913#issuecomment-1093761548
 #  * https://github.com/madphysicist/haggis/blob/master/src/haggis/logs.py
-def add_logging_level(level_name: str, level_num: int, method_name: Optional[str] = None) -> None:
+def add_logging_level(level_name: str, level_num: int, method_name: str | None = None) -> None:
     """Add a new logging level to the `logging` module and the currently configured logging class.
 
     `level_name` becomes an attribute of the `logging` module with the value `level_num`.

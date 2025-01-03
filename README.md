@@ -47,7 +47,7 @@ pipx run --spec phylum phylum-init <options>
 pipx run --spec phylum phylum-ci <options>
 ```
 
-These installation methods require Python 3.9+ to run.
+These installation methods require Python 3.10+ to run.
 For a self contained environment, consider using the Docker image as described below.
 
 Windows binaries are offered as [release artifacts][latest_rels] for a "standalone" solution that does not require

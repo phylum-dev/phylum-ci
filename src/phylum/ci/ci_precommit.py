@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-from typing import Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_current_branch_name
@@ -112,7 +111,7 @@ class CIPreCommit(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit."""
         cmd = ["git", "rev-parse", "--verify", "HEAD"]
         try:
@@ -153,7 +152,7 @@ class CIPreCommit(CIBase):
         return False
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # There is no repository URL in this implementation
         return None

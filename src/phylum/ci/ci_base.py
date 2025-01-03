@@ -19,7 +19,6 @@ import shlex
 import shutil
 import subprocess
 import tempfile
-from typing import Optional
 
 import pathspec
 from rich.markdown import Markdown
@@ -62,7 +61,7 @@ class CIBase(ABC):
         self._force_analysis = args.force_analysis
         self._returncode = ReturnCode.SUCCESS
         self._analysis_report = "No analysis output yet"
-        self._env: Optional[Mapping[str, str]] = None
+        self._env: Mapping[str, str] | None = None
         self.ci_platform_name = "Unknown"
         self.disable_lockfile_generation = False
 
@@ -186,7 +185,7 @@ class CIBase(ABC):
 
         Detected dependency files can be modified with exclusion patterns provided as an argument.
         """
-        arg_depfiles: Optional[list[list[Path]]] = self.args.depfile
+        arg_depfiles: list[list[Path]] | None = self.args.depfile
         provided_arg_depfiles: DepfileEntries = []
         if arg_depfiles:
             # Flatten the list of lists
@@ -225,7 +224,7 @@ class CIBase(ABC):
 
     def _exclude_depfiles(self, provided_depfiles: DepfileEntries) -> DepfileEntries:
         """Apply exclusion patterns to provided dependency files and return the remaining ones."""
-        arg_exclusions: Optional[list[list[str]]] = self.args.exclude
+        arg_exclusions: list[list[str]] | None = self.args.exclude
         if not arg_exclusions:
             LOG.debug("No dependency file exclusion patterns provided.")
             return provided_depfiles
@@ -400,7 +399,7 @@ class CIBase(ABC):
         return project_name
 
     @cached_property
-    def phylum_org(self) -> Optional[str]:
+    def phylum_org(self) -> str | None:
         """Get the effective Phylum organization in use.
 
         The Phylum organization name can be specified as an option or contained in the `settings.yaml` file.
@@ -442,7 +441,7 @@ class CIBase(ABC):
         return None
 
     @cached_property
-    def phylum_group(self) -> Optional[str]:
+    def phylum_group(self) -> str | None:
         """Get the effective Phylum group in use.
 
         The Phylum group name can be specified as an option or contained in the `.phylum_project` file.
@@ -556,7 +555,7 @@ class CIBase(ABC):
 
     @property
     @abstractmethod
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata.
 
         The value should only exist for implementations that make use of a web hosted CI environment. The local use
@@ -589,7 +588,7 @@ class CIBase(ABC):
 
     @cached_property
     @abstractmethod
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit.
 
         When found, it should be returned as a string of the SHA1 sum representing the commit.
@@ -615,7 +614,7 @@ class CIBase(ABC):
         """
         raise NotImplementedError
 
-    def _update_depfiles_change_status(self, commit: str, err_msg: Optional[str] = None) -> None:
+    def _update_depfiles_change_status(self, commit: str, err_msg: str | None = None) -> None:
         """Update each dependency file's change status.
 
         The input `commit` is the one to use in a `git diff` command to view the changes relative to the working tree.
@@ -930,21 +929,10 @@ class CIBase(ABC):
             dep_txt = "dependency" if num_new_packages == 1 else "dependencies"
             LOG.debug("%s new %s: %s", num_new_packages, dep_txt, new_packages)
 
-        # TODO(maxrake): Better formatting with parenthesized context managers is available in Python 3.10+
-        #     https://github.com/phylum-dev/phylum-ci/issues/357
-        #     https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
-        #     https://stackoverflow.com/q/67808977
-        with tempfile.NamedTemporaryFile(
-            mode="w+",
-            encoding="utf-8",
-            prefix="base_",
-            suffix=".json",
-        ) as base_fd, tempfile.NamedTemporaryFile(
-            mode="w+",
-            encoding="utf-8",
-            prefix="curr_",
-            suffix=".json",
-        ) as curr_fd:
+        with (
+            tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd,
+            tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="curr_", suffix=".json") as curr_fd,
+        ):
             json.dump(base_packages, base_fd, cls=DataclassJSONEncoder)
             base_fd.flush()
             cmd.append(base_fd.name)
@@ -1024,21 +1012,19 @@ class CIBase(ABC):
 
         self._analysis_report = analysis.report
 
-        # TODO(maxrake): The logic below would make for a good match statement, which was introduced in Python 3.10
-        #     https://github.com/phylum-dev/phylum-ci/issues/357
-        if analysis.incomplete_count == 0:
-            if analysis.is_failure:
+        match (analysis.incomplete_count, analysis.is_failure):
+            case (0, True):
                 LOG.error("Analysis is complete and there were failures")
                 self.returncode = ReturnCode.ANALYSIS_POLICY_FAILURE
-            else:
+            case (0, False):
                 LOG.info("Analysis is complete and there were NO failures")
                 self.returncode = ReturnCode.SUCCESS
-        elif analysis.is_failure:
-            LOG.error("There were failures in one or more completed packages")
-            self.returncode = ReturnCode.ANALYSIS_FAILURE_INCOMPLETE
-        else:
-            LOG.warning("There were no failures in the packages that have completed so far")
-            self.returncode = ReturnCode.ANALYSIS_INCOMPLETE
+            case (_, True):
+                LOG.error("There were failures in one or more completed packages")
+                self.returncode = ReturnCode.ANALYSIS_FAILURE_INCOMPLETE
+            case (_, False):
+                LOG.warning("There were no failures in the packages that have completed so far")
+                self.returncode = ReturnCode.ANALYSIS_INCOMPLETE
 
 
 # Type alias

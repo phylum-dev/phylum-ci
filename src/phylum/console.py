@@ -5,7 +5,6 @@ Reference: https://rich.readthedocs.io/en/latest/index.html
 """
 
 from collections.abc import Mapping
-from typing import Union
 
 from rich.console import Console
 from rich.style import Style
@@ -19,7 +18,7 @@ from rich.theme import Theme
 # References:
 #   * https://rich.readthedocs.io/en/latest/style.html
 #   * https://rich.readthedocs.io/en/latest/appendix/colors.html
-PHYLUM_STYLES: Mapping[str, Union[str, Style]] = {
+PHYLUM_STYLES: Mapping[str, str | Style] = {
     # Styles that have been added to the default:
     "logging.level.trace": Style(dim=True),
     # Styles that have been modified from the default:

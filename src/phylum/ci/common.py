@@ -5,7 +5,6 @@ from enum import IntEnum
 import json
 import os
 from pathlib import Path
-from typing import Union
 
 
 @dataclasses.dataclass(order=True, frozen=True)
@@ -46,7 +45,7 @@ class DepfileEntry:
     Current commands that return entries in this format include `status --json` and `find-dependency-files`.
     """
 
-    path_: dataclasses.InitVar[Union[str, Path]]
+    path_: dataclasses.InitVar[str | Path]
     type: str = "auto"
     path: Path = dataclasses.field(init=False)
 

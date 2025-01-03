@@ -9,7 +9,6 @@ import argparse
 from functools import cached_property
 import re
 import subprocess
-from typing import Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_current_branch_name, git_remote, git_set_remote_head
@@ -41,7 +40,7 @@ class CINone(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit."""
         remote = git_remote()
         cmd = ["git", "merge-base", "HEAD", f"refs/remotes/{remote}/HEAD"]
@@ -112,7 +111,7 @@ class CINone(CIBase):
         return False
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # There is no repository URL in this implementation
         return None

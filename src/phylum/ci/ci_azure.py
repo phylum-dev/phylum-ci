@@ -24,7 +24,6 @@ import os
 import re
 import shlex
 import subprocess
-from typing import Optional
 import urllib.parse
 
 import requests
@@ -176,7 +175,7 @@ class CIAzure(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit."""
         remote = git_remote()
 
@@ -294,7 +293,7 @@ class CIAzure(CIBase):
         return False
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # Ref: https://learn.microsoft.com/azure/devops/pipelines/build/variables
         if self.triggering_repo == "TfsGit":
@@ -365,7 +364,7 @@ def get_pr_branches() -> tuple[str, str]:
 # The function is meant to be used internally, where it is known that the comments on the PR at the time
 # of first execution will suffice for the duration of the rest of the lifetime of the running integration.
 @lru_cache(maxsize=1)
-def get_most_recent_phylum_comment_azure(azure_token: str) -> Optional[str]:
+def get_most_recent_phylum_comment_azure(azure_token: str) -> str | None:
     """Get the raw text of the most recently posted Phylum-generated comment for Azure Repos PRs.
 
     Return `None` when one does not exist.

@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
-from typing import Optional
 
 from phylum.ci.common import CLIExitCode, DepfileEntry, Package, Packages
 from phylum.exceptions import PhylumCalledProcessError
@@ -54,7 +53,7 @@ class Depfile:
         self.cli_path = cli_path
         self._depfile_type = depfile_type
         self.disable_lockfile_generation = disable_lockfile_generation
-        self._is_depfile_changed: Optional[bool] = None
+        self._is_depfile_changed: bool | None = None
 
     def __repr__(self) -> str:
         """Return a debug printable string representation of the `Depfile` object."""
@@ -88,7 +87,7 @@ class Depfile:
         return self._type
 
     @property
-    def is_depfile_changed(self) -> Optional[bool]:
+    def is_depfile_changed(self) -> bool | None:
         """Predicate for detecting if the dependency file has changed."""
         return self._is_depfile_changed
 
@@ -158,7 +157,7 @@ def parse_depfile(
     depfile_type: str,
     depfile_path: Path,
     *,
-    start: Optional[Path] = None,
+    start: Path | None = None,
     disable_lockfile_generation: bool = False,
 ) -> Packages:
     """Parse a dependency file and return its packages.
