@@ -16,7 +16,6 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
-from typing import Optional
 
 import requests
 
@@ -103,7 +102,7 @@ class CIGitLab(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit.
 
         Some pre-defined variables are used: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
@@ -184,7 +183,7 @@ class CIGitLab(CIBase):
         return bool(self.most_recent_phylum_note)
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # Ref: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
         return os.getenv("CI_PROJECT_URL")
@@ -234,7 +233,7 @@ class CIGitLab(CIBase):
         return headers
 
     @cached_property
-    def most_recent_phylum_note(self) -> Optional[str]:
+    def most_recent_phylum_note(self) -> str | None:
         """Get the raw text of the most recently posted Phylum-generated note.
 
         Return `None` when one does not exist.

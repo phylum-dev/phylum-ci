@@ -104,26 +104,26 @@ Here's how to set up `phylum-ci` for local development.
 3. Ensure all supported Python versions are installed locally
    1. The strategy is to support the current/latest release plus the previous three minor versions of Python
    2. The current list
-      1. at the time of this writing is 3.9, 3.10, 3.11, and 3.12
+      1. at the time of this writing is 3.10, 3.11, 3.12, and 3.13
       2. can be inferred with the Python Developer's Guide, which maintains the
          [status of active Python releases](https://devguide.python.org/versions/)
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
 
     ```sh
     # Use `pyenv install --list` to get available versions and usually install the
-    # latest patch version. For example, use `pyenv install --list |grep 3.9.` to
-    # show latest patch version for the cpython 3.9 minor release.
+    # latest patch version. For example, use `pyenv install --list |grep 3.10.` to
+    # show latest patch version for the cpython 3.10 minor release.
 
     # NOTE: These versions are examples; the latest patch version available from
     #       pyenv should be used in place of `.x`.
-    pyenv install 3.9.x
     pyenv install 3.10.x
     pyenv install 3.11.x
     pyenv install 3.12.x
+    pyenv install 3.13.x
     pyenv rehash
 
     # Ensure all environments are available globally (helps tox to find them)
-    pyenv global 3.12.x 3.11.x 3.10.x 3.9.x
+    pyenv global 3.13.x 3.12.x 3.11.x 3.10.x
     ```
 
 4. Ensure [poetry v1.7+](https://python-poetry.org/docs/) is installed
@@ -217,7 +217,7 @@ Before you submit a pull request, check that it meets these guidelines:
 * Have you created sufficient tests?
 * Have you updated all affected documentation?
 
-The pull request should work for Python 3.9, 3.10, 3.11, and 3.12.
+The pull request should work for Python 3.10, 3.11, 3.12 and 3.13.
 Check <https://github.com/phylum-dev/phylum-ci/actions> and make sure that the tests
 pass for all supported Python versions.
 
@@ -254,10 +254,10 @@ poetry run -- tox run -e py310 -- --help
 poetry run -- tox run-parallel -- tests/unit/test_package_metadata.py
 
 # run a specific test module across a specific test environment
-poetry run -- tox run -e py39 -- tests/unit/test_package_metadata.py
+poetry run -- tox run -e py310 -- tests/unit/test_package_metadata.py
 
 # run a specific test function within a test module, in a specific test environment
-poetry run -- tox run -e py310 -- tests/unit/test_package_metadata.py::test_python_version
+poetry run -- tox run -e py311 -- tests/unit/test_package_metadata.py::test_python_version
 ```
 
 To run a script entry point with the local checkout of the code (in develop mode), use `poetry`:

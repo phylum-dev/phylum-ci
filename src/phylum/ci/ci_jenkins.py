@@ -18,7 +18,6 @@ import os
 import re
 import shlex
 import subprocess
-from typing import Optional
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.git import git_remote, git_set_remote_head
@@ -83,7 +82,7 @@ class CIJenkins(CIBase):
         return label
 
     @cached_property
-    def common_ancestor_commit(self) -> Optional[str]:
+    def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit.
 
         Some pre-defined variables are used:
@@ -159,7 +158,7 @@ class CIJenkins(CIBase):
         return False
 
     @property
-    def repo_url(self) -> Optional[str]:
+    def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
         # This is the "Remote URL of the first git repository in the workspace."
         # It comes from the git plugin and may not be set depending on the context.

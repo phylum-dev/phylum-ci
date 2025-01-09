@@ -27,10 +27,10 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Software Development :: Quality Assurance",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 packages = [
     { include = "phylum", from = "src" },
@@ -46,7 +46,7 @@ phylum-init = "phylum.init.cli:main"
 phylum-ci = "phylum.ci.cli:script_main"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.14"
 requests = "*"
 cryptography = "*"
 packaging = "*"
@@ -103,7 +103,7 @@ paths = ["src", "tests"]
 exclude = ["conftest.py"]
 
 [tool.refurb]
-python_version = "3.9"
+python_version = "3.10"
 format = "github"
 # FURB184 (use-fluent-interface) is ignored because the benefits of "chaining" calls identified by this rule are not
 # outweighed by the type checking based autocompletion and syntax highlighting provided by the IDE with the calls split.
@@ -112,7 +112,7 @@ ignore = [184]
 [tool.ruff]
 # Reference: https://docs.astral.sh/ruff/configuration/
 line-length = 120
-target-version = "py39"
+target-version = "py310"
 force-exclude = true
 src = ["src", "tests"]
 
