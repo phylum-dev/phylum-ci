@@ -15,6 +15,17 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.57.0](https://github.com/phylum-dev/phylum-ci/compare/v0.56.0...v0.57.0) (2025-01-09)
+
+### Breaking
+
+* Add python 3.13 support and drop python 3.9 support ([#522](https://github.com/phylum-dev/phylum-ci/pull/522)) ([`5ac96e0`](https://github.com/phylum-dev/phylum-ci/commit/5ac96e042a7e66bc39d6d86b48f6b847a5342e01))
+  * Support for Python 3.9 was removed.
+
+### Features
+
+* Ensure git repository access as prerequisite ([#518](https://github.com/phylum-dev/phylum-ci/pull/518)) ([`5317fd9`](https://github.com/phylum-dev/phylum-ci/commit/5317fd98af3c2084a1d49c6fcf40a20b68b89129))
+
 ## [v0.56.0](https://github.com/phylum-dev/phylum-ci/compare/v0.55.0...v0.56.0) (2024-12-13)
 
 ### Features
