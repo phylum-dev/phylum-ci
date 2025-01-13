@@ -16,6 +16,7 @@ comments is provided. The CI job will return an error (i.e., fail the build) if 
 to meet the established policy unless audit mode is specified.
 
 There will be no note if no dependencies were added or modified for a given MR.
+There will be no note when the results of the analysis are successful.
 If one or more dependencies are still processing (no results available), then the note will make that clear and
 the CI job will only fail if dependencies that have _completed analysis results_ do not meet the active policy.
 

@@ -30,6 +30,7 @@ import requests
 
 from phylum.ci.ci_base import CIBase
 from phylum.ci.ci_github import get_most_recent_phylum_comment_github, post_github_comment
+from phylum.ci.common import ReturnCode
 from phylum.ci.git import git_default_branch_name, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 from phylum.exceptions import pprint_subprocess_error
@@ -329,6 +330,9 @@ class CIAzure(CIBase):
 
         if not is_in_pr():
             # Can't post the output to the PR when there is no PR
+            return
+
+        if self.returncode == ReturnCode.SUCCESS:
             return
 
         if self.skip_comments:
