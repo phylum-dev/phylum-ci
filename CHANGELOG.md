@@ -15,6 +15,13 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.58.0](https://github.com/phylum-dev/phylum-ci/compare/v0.57.0...v0.58.0) (2025-01-14)
+
+### Breaking
+
+* Remove `success` comments from prs/mrs ([#526](https://github.com/phylum-dev/phylum-ci/pull/526)) ([`6cca5bd`](https://github.com/phylum-dev/phylum-ci/commit/6cca5bdf4f288952a7d277537b4e2df3c6c1a39c))
+  * PRs/MRs will no longer have `SUCCESS` comments.
+
 ## [v0.57.0](https://github.com/phylum-dev/phylum-ci/compare/v0.56.0...v0.57.0) (2025-01-09)
 
 ### Breaking
