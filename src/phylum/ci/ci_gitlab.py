@@ -20,6 +20,7 @@ import subprocess
 import requests
 
 from phylum.ci.ci_base import CIBase
+from phylum.ci.common import ReturnCode
 from phylum.ci.git import git_branch_exists, git_default_branch_name, git_fetch, git_remote
 from phylum.constants import PHYLUM_HEADER, PHYLUM_USER_AGENT, REQ_TIMEOUT
 from phylum.exceptions import pprint_subprocess_error
@@ -199,6 +200,9 @@ class CIGitLab(CIBase):
 
         if not is_in_mr():
             # Can't post the output to the MR when there is no MR
+            return
+
+        if self.returncode == ReturnCode.SUCCESS:
             return
 
         if self.skip_comments:

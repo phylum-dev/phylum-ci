@@ -23,6 +23,7 @@ import subprocess
 import requests
 
 from phylum.ci.ci_base import CIBase
+from phylum.ci.common import ReturnCode
 from phylum.constants import PHYLUM_HEADER, REQ_TIMEOUT
 from phylum.exceptions import PhylumCalledProcessError
 from phylum.github import get_headers, github_request
@@ -213,6 +214,9 @@ class CIGitHub(CIBase):
         Optionally post output as a comment on the GitHub Pull Request (PR).
         """
         super().post_output()
+
+        if self.returncode == ReturnCode.SUCCESS:
+            return
 
         if self.skip_comments:
             LOG.debug("Posting analysis output as comments on the pull request was disabled.")

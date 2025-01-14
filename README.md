@@ -213,7 +213,7 @@ because they indicate a complete Phylum analysis was not possible, which necessi
 [option is available][script_options] to explicitly prevent these errors from setting an exit code.
 
 [script_options]: #phylum-ci-script-entry-point
-[FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-a-successful-analysis-comment
+[FAQ]: https://github.com/marketplace/actions/phylum-analyze-pr#why-does-phylum-report-a-failing-status-check-if-it-shows-successful-analysis
 
 ## License
 
