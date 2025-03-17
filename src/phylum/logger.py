@@ -72,7 +72,7 @@ def add_logging_level(level_name: str, level_num: int, method_name: str | None =
             self._log(level_num, message, args, **kwargs)
 
     def for_logging_module(message, *args, **kwargs):
-        logging.log(level_num, message, *args, **kwargs)
+        logging.log(level_num, message, *args, **kwargs)  # noqa: LOG015 ; this is meant for the root logger
 
     logging.addLevelName(level_num, level_name)
     setattr(logging, level_name, level_num)
