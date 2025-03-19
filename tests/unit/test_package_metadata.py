@@ -27,8 +27,8 @@ def test_python_version():
 
 def test_author_email_metadata():
     """Ensure the project and package metadata for author and email match and are correct."""
-    assert __author__ == "Phylum, Inc.", "The company name should be used instead of individual developers"
-    assert __email__ == "engineering@phylum.io", "The engineering group email account should be used"
+    assert __author__ == "Veracode, Inc.", "The company name should be used instead of individual developers"
+    assert __email__ == "dl-phylum-engineering@veracode.com", "The engineering distribution list should be used"
     # Package authors in Poetry are specified as a list of "name <email>" entries
     expected_poetry_author = f"{__author__} <{__email__}>"
     poetry_authors = PYPROJECT.get("tool", {}).get("poetry", {}).get("authors", [])

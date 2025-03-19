@@ -141,7 +141,7 @@ ARG GITHUB_TOKEN
 ARG TARGETOS
 ARG TARGETARCH
 
-LABEL maintainer="Phylum, Inc. <engineering@phylum.io>"
+LABEL maintainer="Veracode, Inc. <dl-phylum-engineering@veracode.com>"
 LABEL org.opencontainers.image.source="https://github.com/phylum-dev/phylum-ci"
 
 ENV PHYLUM_VENV="/opt/venv"

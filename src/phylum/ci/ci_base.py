@@ -726,8 +726,7 @@ class CIBase(ABC):
 
             err_msg = """
                 There was a problem creating the project.
-                A paid account is needed to use orgs, groups, or
-                create more than five projects: https://phylum.io/pricing
+                Does this account have access to the org/group?
                 If the command was expected to succeed, please report this as a bug."""
 
             # The problem may be that a group was specified but does not exist yet. Check for that case and create it,
@@ -794,7 +793,6 @@ class CIBase(ABC):
                     Org:    {self.phylum_org or '(no org)'}
                     Group:  {self.phylum_group}
                 If an org was specified, does it exist and the user have access?
-                A paid account is needed to use orgs/groups: https://phylum.io/pricing
                 If the command was expected to succeed, please report this as a bug."""
             raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 
@@ -953,7 +951,6 @@ class CIBase(ABC):
             except subprocess.CalledProcessError as err:
                 msg = """
                     There was a problem analyzing the project.
-                    A paid account is needed to use orgs/groups: https://phylum.io/pricing
                     If the command was expected to succeed, please report this as a bug."""
                 raise PhylumCalledProcessError(err, cleandoc(msg)) from err
 

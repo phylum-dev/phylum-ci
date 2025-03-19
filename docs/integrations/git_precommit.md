@@ -165,7 +165,6 @@ with `--help` output as specified in the [Usage section of the top-level README.
 
         # Perform analysis as part of an organization and/or group-owned project.
         # When an org is specified, a group name must also be specified.
-        # A paid account is needed to use orgs or groups: https://phylum.io/pricing
         args: [--org=my_org, --group=my_group]
         args: [--group=my_group]
 

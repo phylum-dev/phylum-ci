@@ -311,7 +311,6 @@ release.
 
           // Perform analysis as part of an organization and/or group-owned project.
           // When an org is specified, a group name must also be specified.
-          // A paid account is needed to use orgs or groups: https://phylum.io/pricing
           sh 'phylum-ci --org my_org --group my_group'
           sh 'phylum-ci --group my_group'
 
