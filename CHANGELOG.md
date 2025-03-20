@@ -15,6 +15,12 @@ and understanding.
 
 <!--next-version-placeholder-->
 
+## [v0.58.1](https://github.com/phylum-dev/phylum-ci/compare/v0.58.0...v0.58.1) (2025-03-20)
+
+### Documentation
+
+* Update language for veracode transition ([#543](https://github.com/phylum-dev/phylum-ci/pull/543)) ([`42d05ac`](https://github.com/phylum-dev/phylum-ci/commit/42d05acd61749d72733c315be96794fd943dfdac))
+
 ## [v0.58.0](https://github.com/phylum-dev/phylum-ci/compare/v0.57.0...v0.58.0) (2025-01-14)
 
 ### Breaking
