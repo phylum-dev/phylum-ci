@@ -169,15 +169,14 @@ def get_args(args: Sequence[str] | None = None) -> tuple[argparse.Namespace, lis
         "--org",
         help="""Optional organization name. Can also specify this option's value in the Phylum settings file:
         https://docs.phylum.io/cli/commands/phylum_org_link. The value specified with this option takes precedence when
-        both are provided. When an org is specified, a group name must also be specified. Orgs require a paid account:
-        https://phylum.io/pricing""",
+        both are provided. When an org is specified, a group name must also be specified.""",
     )
     analysis_group.add_argument(
         "-g",
         "--group",
         help="""Optional group name, which will be the owner of the project. Can also specify this option's value in the
             `.phylum_project` file. The value specified with this option takes precedence when both are provided. Group
-            will be created if it does not already exist. Groups require a paid account: https://phylum.io/pricing""",
+            will be created if it does not already exist.""",
     )
 
     output_mod_group = parser.add_argument_group(title="Output Modification Options")

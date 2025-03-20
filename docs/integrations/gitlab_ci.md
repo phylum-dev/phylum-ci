@@ -313,7 +313,6 @@ view the [script options output][script_options] for the latest release.
 
     # Perform analysis as part of an organization and/or group-owned project.
     # When an org is specified, a group name must also be specified.
-    # A paid account is needed to use orgs or groups: https://phylum.io/pricing
     - phylum-ci --org my_org --group my_group
     - phylum-ci --group my_group
 
