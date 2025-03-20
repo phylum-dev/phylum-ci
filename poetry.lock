@@ -1460,13 +1460,13 @@ docs = ["markdown_include", "mkdocs", "mkdocs-glightbox", "mkdocs-material-exten
 
 [[package]]
 name = "rich-codex"
-version = "1.2.10"
+version = "1.2.7"
 description = "Generate rich images for the GitHub Action 'rich-codex'"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "rich_codex-1.2.10-py3-none-any.whl", hash = "sha256:38664e4b82cc71e42c03e78cb7b33336b6426a7b018b9a10793b03fe4e937b3e"},
-    {file = "rich_codex-1.2.10.tar.gz", hash = "sha256:8e9137af0e928865b730b9f39ed5e64e0d30a7130f0992be9fa45d242cc1b3ca"},
+    {file = "rich-codex-1.2.7.tar.gz", hash = "sha256:68e29dfcf56285a618a2ca50b4447aafb5f2ae38bd73a99bdc1e4c6700e56335"},
+    {file = "rich_codex-1.2.7-py3-none-any.whl", hash = "sha256:d0a360d21e15736bbaef6ed45aab62a5859045a1c83296cf440fa3778f269029"},
 ]
 
 [package.dependencies]
@@ -1961,4 +1961,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.14"
-content-hash = "de4dff7ccf2316cb801fbda552c775dcda28152c4d93f6470688cb784f9a4f63"
+content-hash = "f591ac3502d962eceb0fd984e6f06bf53c5bf0642ee7d74adca409ed8057c541"
