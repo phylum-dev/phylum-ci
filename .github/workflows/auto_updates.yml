@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
   # Run every Monday at 1435 UTC
   schedule:
-    - cron: '35 14 * * 1'
+    - cron: '35 3 * * 1'
 
 jobs:
   workflow-auto-updates:
@@ -17,6 +17,7 @@ jobs:
     env:
       PYTHON_VERSION: "3.13"
       POETRY_VERSION: "1.8.5"
+      UPDATE_BRANCH_NAME: workflow-auto-updates
     defaults:
       run:
         shell: bash
@@ -74,15 +75,20 @@ jobs:
 
       - name: Commit changes
         id: commit
+        # There may not be any updates to commit/push
         continue-on-error: true
         # NOTE: The git user name and email used for commits is already configured,
         #       by the crazy-max/ghaction-import-gpg action.
         run: |
           git commit -a -m "build: bump \`poetry.lock\` dependencies and \`pre-commit\` hooks"
-          git push --force origin HEAD:workflow-auto-updates
+          git push --force origin HEAD:${{ env.UPDATE_BRANCH_NAME }}
 
       - name: Create Pull Request
+        id: pr
         if: ${{ steps.commit.outcome == 'success' }}
+        # The PR may already exist (e.g., created in previous week and not merged yet) so we
+        # allow it here and check in the next step so workflow failures will be extraordinary
+        continue-on-error: true
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
@@ -91,9 +97,15 @@ jobs:
             const response = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: "workflow-auto-updates",
+              head: "${{ env.UPDATE_BRANCH_NAME }}",
               base: context.ref,
               title: "build: bump `poetry.lock` dependencies and `pre-commit` hooks",
               body: "Bump dependencies in `poetry.lock` and hooks in `.pre-commit-config.yaml`.",
             });
             console.log(response);
+
+      - name: Verify PR exists
+        if: ${{ steps.pr.outcome == 'failure' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr view ${{ env.UPDATE_BRANCH_NAME }}
