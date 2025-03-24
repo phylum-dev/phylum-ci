@@ -119,7 +119,7 @@ jobs:
       # Nuitka needs the packaged form and not the editable install Poetry provides
       # Ref: https://github.com/Nuitka/Nuitka/issues/2965
       - name: Download build artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
 
       - name: Set up Python
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
