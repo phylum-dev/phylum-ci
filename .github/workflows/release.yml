@@ -55,7 +55,7 @@ jobs:
           poetry config repositories.testpypi https://test.pypi.org/legacy/
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'poetry'
@@ -166,7 +166,7 @@ jobs:
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -270,7 +270,7 @@ jobs:
 
       # This GPG key is for the `phylum-bot` account and used in order to ensure commits and tags are signed/verified.
       - name: Import GPG key for bot account
-        uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5 # v6.2.0
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
         with:
           gpg_private_key: ${{ secrets.PHYLUM_BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PHYLUM_BOT_GPG_PASSPHRASE }}
@@ -298,7 +298,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'poetry'
