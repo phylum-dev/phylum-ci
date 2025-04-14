@@ -1,22 +1,26 @@
 """Test the package metadata."""
 
 import sys
+from typing import Any
 
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from phylum import PKG_NAME, PKG_SUMMARY, __author__, __email__, __version__
 from tests.constants import PYPROJECT
 
+PROJECT_TABLE: dict[str, Any] = PYPROJECT.get("project", {})
 
-def test_project_version():
+
+def test_project_version() -> None:
     """Ensure the source version can be normalized as specified in PEP-440."""
     package_version = Version(__version__)
-    source_version = Version(PYPROJECT.get("tool", {}).get("poetry", {}).get("version", "0.0.0"))
+    source_version = Version(PROJECT_TABLE.get("version", "0.0.0"))
     assert package_version == source_version
 
 
-def test_python_version():
+def test_python_version() -> None:
     """Ensure the python version used to test is a supported version."""
     supported_minor_versions = (10, 11, 12, 13)
     python_version = sys.version_info
@@ -25,30 +29,31 @@ def test_python_version():
     assert python_version.minor in supported_minor_versions, "Attempting to run unsupported Python version"
 
 
-def test_author_email_metadata():
+def test_author_email_metadata() -> None:
     """Ensure the project and package metadata for author and email match and are correct."""
-    assert __author__ == "Veracode, Inc.", "The company name should be used instead of individual developers"
+    assert __author__ == "Veracode Inc.", "The company name should be used instead of individual developers"
+    assert "," not in __author__, "Author name must not contain commas (according to pyproject.toml spec)"
     assert __email__ == "dl-phylum-engineering@veracode.com", "The engineering distribution list should be used"
-    # Package authors in Poetry are specified as a list of "name <email>" entries
-    expected_poetry_author = f"{__author__} <{__email__}>"
-    poetry_authors = PYPROJECT.get("tool", {}).get("poetry", {}).get("authors", [])
-    assert expected_poetry_author in poetry_authors, "Package author/email should be defined in pyproject.toml only"
+    poetry_authors: list = PROJECT_TABLE.get("authors", [])
     assert len(poetry_authors) == 1, "There should only be one author - the company, with it's engineering group email"
+    poetry_author: dict = poetry_authors[0]
+    assert __author__ == poetry_author.get("name"), "Package author name should be defined in pyproject.toml only"
+    assert __email__ == poetry_author.get("email"), "Package author email should be defined in pyproject.toml only"
 
 
-def test_package_name():
+def test_package_name() -> None:
     """Ensure the package name is traced through from the pyproject.toml definition."""
-    expected_pkg_name = PYPROJECT.get("tool", {}).get("poetry", {}).get("name", "")
+    expected_pkg_name: str = PROJECT_TABLE.get("name", "")
     assert expected_pkg_name == PKG_NAME, "The package name should be defined in pyproject.toml only"
 
 
-def test_package_description():
+def test_package_description() -> None:
     """Ensure the package description is traced through from the pyproject definition."""
-    expected_pkg_desc = PYPROJECT.get("tool", {}).get("poetry", {}).get("description", "")
+    expected_pkg_desc: str = PROJECT_TABLE.get("description", "")
     assert expected_pkg_desc == PKG_SUMMARY, "The package description should be defined in pyproject.toml only"
 
 
-def test_build_system():
+def test_build_system() -> None:
     """Ensure the PEP 517/518 build system has not changed without explicit review.
 
     Arbitrary code execution can occur when building/installing packages from source distributions. This test guards
@@ -58,12 +63,18 @@ def test_build_system():
     is possible for the values to be changed to malicious entries that seek to cause harm in CI systems.
     """
     # NOTE: Changes to these values should be inspected closely!
-    expected_build_requirement = "poetry-core"
+    expected_build_req_name = "poetry-core"
+    expected_build_req_spec = SpecifierSet(">=2.1,<3.0")
     expected_build_backend = "poetry.core.masonry.api"
 
-    requires = PYPROJECT.get("build-system", {}).get("requires", [])
+    build_system: dict[str, Any] = PYPROJECT.get("build-system", {})
+
+    requires: list = build_system.get("requires", [])
     assert len(requires) == 1, "There should be only one build system requirement"
-    req = Requirement(requires[0])
-    assert expected_build_requirement == req.name, "This package uses `poetry-core` for building"
-    build_backend = PYPROJECT.get("build-system", {}).get("build-backend")
+
+    build_req = Requirement(requires[0])
+    assert expected_build_req_name == build_req.name, f"This package uses `{expected_build_req_name}` for building"
+    assert expected_build_req_spec == build_req.specifier, f"Possible breaking version of `{expected_build_req_name}`"
+
+    build_backend: str = build_system.get("build-backend", "")
     assert expected_build_backend == build_backend, "Be wary if the build backend changes"

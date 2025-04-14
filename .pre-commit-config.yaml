@@ -28,7 +28,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 971923581912ef60a6b70dbf0c3e9a39563c9d47  # frozen: v0.11.4
+    rev: 8304991d8f6fe14b2c347b1fa35f3eef713446ae # frozen: v0.11.5
     hooks:
       - id: ruff
 
@@ -52,12 +52,12 @@ repos:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
     # NOTE: This `rev` should be manually updated whenever `poetry` is updated. The `rev` can be found by checking out
     #       the `poetry` repository and running the command: `git show-ref --tags <tag_name>`
-    rev: 19a2f7bddb9bdf931a229ea0913a84021f3f9b93  # frozen: 1.8.5
+    rev: 2950bd6e9a387cea84ecc808a598473443ad9b9c  # frozen: 2.1.2
     hooks:
       - id: poetry-check
-        args: [--lock]
+        args: [--lock, --strict]
       - id: poetry-lock
-        args: [--no-update, --no-cache]
+        args: [--no-cache]
 
   # NOTE: Don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" at https://docs.phylum.io/phylum-ci/git_precommit
