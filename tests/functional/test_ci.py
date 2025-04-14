@@ -26,7 +26,7 @@ def test_run_as_module():
 
 def test_run_as_script():
     """Ensure the CLI can be called by it's script entry point."""
-    scripts = PYPROJECT.get("tool", {}).get("poetry", {}).get("scripts", {})
+    scripts = PYPROJECT.get("project", {}).get("scripts", {})
     assert scripts, "There should be at least one script entry point"
     assert SCRIPT_NAME in scripts, f"The {SCRIPT_NAME} script should be a defined entry point"
     ret = subprocess.run([SCRIPT_NAME, "-h"], check=False)

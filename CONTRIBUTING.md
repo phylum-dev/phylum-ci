@@ -110,28 +110,23 @@ Here's how to set up `phylum-ci` for local development.
    3. It is recommended to use [`pyenv`](https://github.com/pyenv/pyenv) to manage multiple Python installations
 
     ```sh
-    # Use `pyenv install --list` to get available versions and usually install the
-    # latest patch version. For example, use `pyenv install --list |grep 3.10.` to
-    # show latest patch version for the cpython 3.10 minor release.
+    # Take advantage of the `pyenv` feature that automatically resolves
+    # specified minor versions to the latest patch version
+    pyenv install 3.10
+    pyenv install 3.11
+    pyenv install 3.12
+    pyenv install 3.13
 
-    # NOTE: These versions are examples; the latest patch version available from
-    #       pyenv should be used in place of `.x`.
-    pyenv install 3.10.x
-    pyenv install 3.11.x
-    pyenv install 3.12.x
-    pyenv install 3.13.x
+    # Rebuild the shim files
     pyenv rehash
 
     # Ensure all environments are available globally (helps tox to find them)
-    pyenv global 3.13.x 3.12.x 3.11.x 3.10.x
+    pyenv global 3.13 3.12 3.11 3.10
     ```
 
-4. Ensure [poetry v1.7+](https://python-poetry.org/docs/) is installed
-   1. The dependency group syntax feature was added in Poetry v1.2.0, and it's use in `phylum-ci` means the project will
-      no longer build with Poetry v1.1
-   2. A new `poetry.lock` lockfile format was added in Poetry v1.3.0
-   3. The `--lock` option for the `poetry check` command was added in Poetry v1.6.0
-   4. Official support for Python 3.12 was added in Poetry v1.7.0
+4. Ensure [poetry v2.1+](https://python-poetry.org/docs/) is installed
+   1. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
+   2. Support for alternate build backends was added in Poetry v2.1.0
 5. Install dependencies with `poetry`, which will automatically create a virtual environment:
 
     ```sh
@@ -139,15 +134,15 @@ Here's how to set up `phylum-ci` for local development.
 
     # Verify the lockfile corresponds to the current version of `pyproject.toml`
     # and validate the content of the `pyproject.toml` file:
-    poetry check --lock
+    poetry check --lock --strict
 
     # Install the main dependencies only:
-    poetry install --sync
+    poetry sync
 
     # Alternatively, specific dependency groups can be installed at the
     # same time. It makes sense to add the "test" and "qa" groups now
     # if new code is going to be added and tested:
-    poetry install --sync --with test,qa
+    poetry sync --with test,qa
     ```
 
 6. Create a branch for local development:
@@ -163,37 +158,52 @@ Here's how to set up `phylum-ci` for local development.
 
     ```sh
     # Unless there is a reason to do so, prefer to add dependencies without constraints
-    poetry add "new-dependency-name==*"
+    poetry add --lock "new-dependency-name==*"
 
     # When a version constraint is not specified, poetry chooses one. For example, the command:
     #
-    #   $ poetry add new-dependency-name
+    #   $ poetry add --lock --group qa new-dependency-name
     #
-    # results in a caret-style version constraint added to the dependency in pyproject.toml:
+    # results in a caret-style version constraint added to the "qa" group dependency in pyproject.toml:
     #
     #   new-dependency-name = "^1.2.3"
     #
     # Unless the constraint was intentional, change the pyproject.toml entry to remove the constraint:
     #
     #   new-dependency-name = "*"
+    #
+    # Similarly, the command:
+    #
+    #   $ poetry add --lock new-dependency-name
+    #
+    # results in a PEP 508 compliant dependency specifier added to the "main" dependencies:
+    #
+    #   "new-dependency-name (>=1.2.3,<2.0.0)"
+    #
+    # Unless the constraint was intentional, change the pyproject.toml entry to remove the constraint:
+    #
+    #   "new-dependency-name"
 
     # Update the lockfile and the local environment to get the latest versions of dependencies
-    poetry update --no-cache
+    poetry update --lock --no-cache
 
     # Dependencies will be checked automatically in CI during a PR. They will also be checked
     # with the local pre-commit hook, if enabled. Manually checking locally is also possible:
     phylum analyze poetry.lock
+
+    # If the dependencies pass the active Phylum policy, they can be installed locally:
+    poetry sync --with test,qa
     ```
 
     **NOTE:** The version of `poetry` used to make changes to the lockfile must match the one specified
     in CI configuration files. Otherwise, the QA status check will fail when submitting a PR. The current
-    version can be found in the `.github/workflows/*.yml` files by searching for `pipx install poetry`.
+    version can be found in the `.github/workflows/*.yml` files by searching for `POETRY_VERSION`.
 
 8. When you're done making changes, check that your changes pass QA and the tests:
 
     ```sh
     # Ensure the "test" and "qa" dependency groups are installed, if not done previously
-    poetry install --sync --with test,qa
+    poetry sync --with test,qa
     poetry run tox run -e qa
     poetry run tox run-parallel
     ```
@@ -264,7 +274,7 @@ To run a script entry point with the local checkout of the code (in develop mode
 
 ```sh
 # If not done previously, ensure the project is installed by poetry (only required once)
-poetry install --sync
+poetry install --only-root
 
 # Use the `poetry run` command to ensure the installed project is used
 poetry run phylum-init -h

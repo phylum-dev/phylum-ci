@@ -6,7 +6,7 @@ name: Update Deps
 
 on:
   workflow_dispatch:
-  # Run every Monday at 1435 UTC
+  # Run every Monday at 0335 UTC
   schedule:
     - cron: '35 3 * * 1'
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: "3.13"
-      POETRY_VERSION: "1.8.5"
+      POETRY_VERSION: "2.1.2"
       UPDATE_BRANCH_NAME: workflow-auto-updates
     defaults:
       run:
@@ -49,15 +49,16 @@ jobs:
       - name: Install the project with poetry
         run: |
           poetry env use python${{ env.PYTHON_VERSION }}
-          poetry check --lock
-          poetry lock --no-update --no-cache
-          poetry install --verbose --no-root --sync --with qa
+          poetry check --lock --strict
+          poetry lock --no-cache
+          poetry sync --verbose --no-root --with qa
 
       # Update hooks before dependencies because otherwise `pre-commit` may be updated and used before it can be trusted
       #
       # NOTE: Specific repos are specified for update since the autoupdated/frozen version here may not always be the
       # latest version. This is the case for `poetry`, which has described the limitations of `pre-commit` here:
       # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
+      # Consider using the `pre-commit-update` package here instead: https://pypi.org/project/pre-commit-update/
       - name: Update pre-commit hooks
         run: |
           poetry run pre-commit autoupdate --freeze \
@@ -71,7 +72,7 @@ jobs:
       - name: Update Python dependencies
         run: |
           poetry update -vv --lock --no-cache
-          poetry check --lock
+          poetry check --lock --strict
 
       - name: Commit changes
         id: commit
