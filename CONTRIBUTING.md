@@ -125,13 +125,8 @@ Here's how to set up `phylum-ci` for local development.
     ```
 
 4. Ensure [poetry v2.1+](https://python-poetry.org/docs/) is installed
-   1. The dependency group syntax feature was added in Poetry v1.2.0, and it's use in `phylum-ci` means the project will
-      no longer build with Poetry v1.1
-   2. A new `poetry.lock` lockfile format was added in Poetry v1.3.0
-   3. The `--lock` option for the `poetry check` command was added in Poetry v1.6.0
-   4. Official support for Python 3.12 was added in Poetry v1.7.0
-   5. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
-   6. Support for alternate build backends was added in Poetry v2.1.0
+   1. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
+   2. Support for alternate build backends was added in Poetry v2.1.0
 5. Install dependencies with `poetry`, which will automatically create a virtual environment:
 
     ```sh
