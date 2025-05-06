@@ -274,7 +274,7 @@ To run a script entry point with the local checkout of the code (in develop mode
 
 ```sh
 # If not done previously, ensure the project is installed by poetry (only required once)
-poetry install --only-root
+poetry sync
 
 # Use the `poetry run` command to ensure the installed project is used
 poetry run phylum-init -h
