@@ -1,12 +1,22 @@
 # This is the configuration file for GitHub's Dependabot, used here for version updates.
 # See the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# https://docs.github.com/code-security/dependabot/working-with-dependabot/dependabot-options-reference
 ---
 version: 2
+
+registries:
+  phylum:
+    type: python-index
+    url: https://pypi.phylum.io/simple/
+    username: Phylum%2FPhylum
+    password: ${{ secrets.PHYLUM_TOKEN }}
+    replaces-base: true
+
 updates:
   # "pip" also covers Poetry
   - package-ecosystem: "pip"
+    registries: phylum
     directory: "/"
     schedule:
       interval: weekly
@@ -17,6 +27,12 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      # The `python-semantic-release` package is pinned in `pyproject.toml` and
+      # should not be updated until all the breaking changes are considered.
+      # TODO: Remove this entry
+      #       https://github.com/phylum-dev/phylum-ci/issues/565
+      - dependency-name: "python-semantic-release"
+        update-types: ["version-update:semver-major"]
 
   # All GitHub actions should be pinned to an explicit SHA instead of a tag name.
   # Each pin should include a comment about the version of the action to which it corresponds.

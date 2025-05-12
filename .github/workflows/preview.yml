@@ -45,12 +45,14 @@ jobs:
           fetch-depth: 0
 
       - name: Install poetry
-        run: pipx install poetry==${{ env.POETRY_VERSION }}
+        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+          poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
           poetry config virtualenvs.in-project true
           poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config http-basic.phylum "Phylum%2FPhylum" "${{ secrets.PHYLUM_TOKEN }}"
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -127,10 +129,13 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install poetry
-        run: pipx install --python ${{ env.PYTHON_VERSION }} poetry==${{ env.POETRY_VERSION }}
+        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+          --python ${{ env.PYTHON_VERSION }} poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
-        run: poetry config virtualenvs.in-project true
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry config http-basic.phylum "Phylum%2FPhylum" "${{ secrets.PHYLUM_TOKEN }}"
 
       - name: Install the project with poetry
         run: |

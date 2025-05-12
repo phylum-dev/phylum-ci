@@ -28,12 +28,12 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: f0fe93c067104b76ffb58852abe79673a8429bd1  # frozen: v0.11.8
+    rev: d19233b89771be2d89273f163f5edc5a39bbc34a  # frozen: v0.11.12
     hooks:
       - id: ruff
 
   - repo: https://github.com/dosisod/refurb
-    rev: 2e31f0033b6c00bf99912fc6a8b5fd00460c9ba0  # frozen: v2.0.0
+    rev: 6310068b3faa547fb36240fd52e5bd282c29289f  # frozen: v2.1.0
     hooks:
       - id: refurb
 
@@ -56,8 +56,6 @@ repos:
     hooks:
       - id: poetry-check
         args: [--lock, --strict]
-      - id: poetry-lock
-        args: [--no-cache]
 
   # NOTE: Don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" at https://docs.phylum.io/phylum-ci/git_precommit

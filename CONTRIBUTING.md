@@ -91,8 +91,11 @@ Here's how to set up `phylum-ci` for local development.
 2. Optional: Install [pre-commit](https://pre-commit.com/) and the local hooks
 
     ```sh
-    # If the `pre-commit` tool is not already installed, the recommended method is to use pipx
-    pipx install pre-commit
+    # If the `pre-commit` tool is not already installed, the recommended method is to use `pipx`,
+    # with the PyPI Package Firewall (https://docs.phylum.io/package_firewall/pypi)
+    pipx install \
+      --index-url https://<PHYLUM_ORG>%2F<PHYLUM_GROUP>:<PHYLUM_API_KEY>@pypi.phylum.io/simple/ \
+      pre-commit
 
     # Installing with homebrew is another good option
     brew install pre-commit
@@ -127,10 +130,27 @@ Here's how to set up `phylum-ci` for local development.
 4. Ensure [poetry v2.1+](https://python-poetry.org/docs/) is installed
    1. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
    2. Support for alternate build backends was added in Poetry v2.1.0
-5. Install dependencies with `poetry`, which will automatically create a virtual environment:
+5. Configure `poetry` to make use of the [PyPI Package Firewall](https://docs.phylum.io/package_firewall/pypi)
 
     ```sh
     cd phylum-ci
+
+    # Add the Poetry package firewall as the primary source
+    poetry source add --priority primary phylum https://pypi.phylum.io/simple/
+
+    # Configure credentials to make use of the source
+    poetry config http-basic.phylum "<PHYLUM_ORG>%2F<PHYLUM_GROUP>" "<PHYLUM_API_KEY>"
+
+    # NOTE: Internal developers (employees of Veracode) should use the `Phylum/Phylum` org/group
+    #
+    # poetry config http-basic.phylum "Phylum%2fPhylum" "$(phylum auth token)"
+    ```
+
+6. Install dependencies with `poetry`, which will automatically create a virtual environment:
+
+    ```sh
+    # OPTIONAL: Configure Poetry to use an "in-project" virtual environment
+    poetry config virtualenvs.in-project true
 
     # Verify the lockfile corresponds to the current version of `pyproject.toml`
     # and validate the content of the `pyproject.toml` file:
@@ -145,7 +165,7 @@ Here's how to set up `phylum-ci` for local development.
     poetry sync --with test,qa
     ```
 
-6. Create a branch for local development:
+7. Create a branch for local development:
 
     ```sh
     git checkout -b <name-of-your-branch>
@@ -153,7 +173,7 @@ Here's how to set up `phylum-ci` for local development.
 
     Now you can make your changes locally.
 
-7. If new dependencies are added, do so in a way that does not add upper version constraints and ensure
+8. If new dependencies are added, do so in a way that does not add upper version constraints and ensure
    the `poetry.lock` file is updated (and committed):
 
     ```sh
@@ -199,7 +219,7 @@ Here's how to set up `phylum-ci` for local development.
     in CI configuration files. Otherwise, the QA status check will fail when submitting a PR. The current
     version can be found in the `.github/workflows/*.yml` files by searching for `POETRY_VERSION`.
 
-8. When you're done making changes, check that your changes pass QA and the tests:
+9. When you're done making changes, check that your changes pass QA and the tests:
 
     ```sh
     # Ensure the "test" and "qa" dependency groups are installed, if not done previously
@@ -208,7 +228,7 @@ Here's how to set up `phylum-ci` for local development.
     poetry run tox run-parallel
     ```
 
-9. Commit your changes and push your branch to GitHub:
+10. Commit your changes and push your branch to GitHub:
 
     ```sh
     git add .
@@ -216,7 +236,7 @@ Here's how to set up `phylum-ci` for local development.
     git push --set-upstream origin <name-of-your-branch>
     ```
 
-10. Submit a pull request (PR) through the GitHub website
+11. Submit a pull request (PR) through the GitHub website
 
 ## Pull Request Guidelines
 
