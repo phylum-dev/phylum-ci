@@ -17,6 +17,12 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+      # The `python-semantic-release` package is pinned in `pyproject.toml` and
+      # should not be updated until all the breaking changes are considered.
+      # TODO: Remove this entry
+      #       https://github.com/phylum-dev/phylum-ci/issues/565
+      - dependency-name: "python-semantic-release"
+        update-types: ["version-update:semver-major"]
 
   # All GitHub actions should be pinned to an explicit SHA instead of a tag name.
   # Each pin should include a comment about the version of the action to which it corresponds.
