@@ -47,9 +47,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install poetry
-        run: pipx install \
-          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
-          poetry==${{ env.POETRY_VERSION }}
+        run: |
+          pipx install \
+            --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
+            poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
@@ -174,9 +175,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install poetry
-        run: pipx install \
-          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
-          poetry==${{ env.POETRY_VERSION }}
+        run: |
+          pipx install \
+            --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
+            poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
@@ -300,9 +302,10 @@ jobs:
           merge-multiple: true
 
       - name: Install poetry
-        run: pipx install \
-          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
-          poetry==${{ env.POETRY_VERSION }}
+        run: |
+          pipx install \
+            --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
+            poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
         run: |
