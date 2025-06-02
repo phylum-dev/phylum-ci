@@ -27,7 +27,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install poetry
-        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+        run: pipx install \
+          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
           poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
@@ -73,7 +74,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install poetry
-        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+        run: pipx install \
+          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
           poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
@@ -117,7 +119,8 @@ jobs:
 
       - name: Install poetry
         if: ${{ matrix.build == 'wheel' }}
-        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+        run: pipx install \
+          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
           poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry

@@ -111,7 +111,6 @@ ARG PHYLUM_GROUP="Phylum"
 # $ docker build --tag phylum-ci --secret id=PHYLUM_TOKEN .
 ARG PHYLUM_TOKEN
 
-
 ENV APP_PATH="/app"
 ENV POETRY_VENV="${APP_PATH}/.venv"
 ENV POETRY_PATH="${POETRY_VENV}/bin/poetry"

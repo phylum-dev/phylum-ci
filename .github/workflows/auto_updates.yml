@@ -35,7 +35,8 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Install poetry
-        run: pipx install --index-url https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/ \
+        run: pipx install \
+          --index-url "https://Phylum%2FPhylum:${{ secrets.PHYLUM_TOKEN }}@pypi.phylum.io/simple/" \
           poetry==${{ env.POETRY_VERSION }}
 
       - name: Configure poetry
