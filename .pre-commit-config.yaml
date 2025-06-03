@@ -56,8 +56,6 @@ repos:
     hooks:
       - id: poetry-check
         args: [--lock, --strict]
-      - id: poetry-lock
-        args: [--no-cache]
 
   # NOTE: Don't use this config for your own repositories. Instead, see
   #       "Git pre-commit Integration" at https://docs.phylum.io/phylum-ci/git_precommit

@@ -43,6 +43,7 @@ jobs:
         shell: bash
     env:
       DOCKER_BUILDKIT: 1
+      PHYLUM_TOKEN: ${{ secrets.PHYLUM_TOKEN }}
     steps:
       - name: Get latest phylum-ci release version
         id: get_vers
@@ -86,6 +87,7 @@ jobs:
             --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --secret id=PHYLUM_TOKEN \
             .
 
       - name: Test default docker image with latest phylum wheel
@@ -100,6 +102,7 @@ jobs:
             --build-arg CLI_VER=${{ github.event.client_payload.CLI_version }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --secret id=PHYLUM_TOKEN \
             --file Dockerfile.slim \
             .
 

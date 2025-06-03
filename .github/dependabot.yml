@@ -1,12 +1,22 @@
 # This is the configuration file for GitHub's Dependabot, used here for version updates.
 # See the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# https://docs.github.com/code-security/dependabot/working-with-dependabot/dependabot-options-reference
 ---
 version: 2
+
+registries:
+  phylum:
+    type: python-index
+    url: https://pypi.phylum.io/simple/
+    username: Phylum%2FPhylum
+    password: ${{ secrets.PHYLUM_TOKEN }}
+    replaces-base: true
+
 updates:
   # "pip" also covers Poetry
   - package-ecosystem: "pip"
+    registries: phylum
     directory: "/"
     schedule:
       interval: weekly

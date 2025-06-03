@@ -12,6 +12,11 @@ files = [
     {file = "annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "attrs"
 version = "25.3.0"
@@ -32,6 +37,11 @@ docs = ["cogapp", "furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphi
 tests = ["cloudpickle ; platform_python_implementation == \"CPython\"", "hypothesis", "mypy (>=1.11.1) ; platform_python_implementation == \"CPython\" and python_version >= \"3.10\"", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins ; platform_python_implementation == \"CPython\" and python_version >= \"3.10\"", "pytest-xdist[psutil]"]
 tests-mypy = ["mypy (>=1.11.1) ; platform_python_implementation == \"CPython\" and python_version >= \"3.10\"", "pytest-mypy-plugins ; platform_python_implementation == \"CPython\" and python_version >= \"3.10\""]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "cachetools"
 version = "6.0.0"
@@ -44,6 +54,11 @@ files = [
     {file = "cachetools-6.0.0.tar.gz", hash = "sha256:f225782b84438f828328fc2ad74346522f27e5b1440f4e9fd18b20ebfd1aa2cf"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "certifi"
 version = "2025.4.26"
@@ -55,6 +70,11 @@ files = [
     {file = "certifi-2025.4.26-py3-none-any.whl", hash = "sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3"},
     {file = "certifi-2025.4.26.tar.gz", hash = "sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "cffi"
@@ -137,6 +157,11 @@ markers = {main = "platform_python_implementation != \"PyPy\"", compile = "platf
 [package.dependencies]
 pycparser = "*"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "cfgv"
 version = "3.4.0"
@@ -149,6 +174,11 @@ files = [
     {file = "cfgv-3.4.0.tar.gz", hash = "sha256:e52591d4c5f5dead8e0f673fb16db7949d2cfb3f7da4582893288f0ded8fe560"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "chardet"
 version = "5.2.0"
@@ -160,6 +190,11 @@ files = [
     {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
     {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "charset-normalizer"
@@ -263,6 +298,11 @@ files = [
     {file = "charset_normalizer-3.4.2.tar.gz", hash = "sha256:5baececa9ecba31eff645232d59845c07aa030f0c81ee70184a90d35099a0e63"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "click"
 version = "8.2.1"
@@ -277,6 +317,11 @@ files = [
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "click-option-group"
@@ -299,6 +344,11 @@ docs = ["m2r2", "pallets-sphinx-themes", "sphinx"]
 test = ["pytest"]
 test-cov = ["pytest", "pytest-cov"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -311,12 +361,17 @@ files = [
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "cryptography"
 version = "45.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 optional = false
-python-versions = "!=3.9.0,!=3.9.1,>=3.7"
+python-versions = ">=3.7, !=3.9.0, !=3.9.1"
 groups = ["main"]
 files = [
     {file = "cryptography-45.0.3-cp311-abi3-macosx_10_9_universal2.whl", hash = "sha256:7573d9eebaeceeb55285205dbbb8753ac1e962af3d9640791d12b36864065e71"},
@@ -371,6 +426,11 @@ ssh = ["bcrypt (>=3.1.5)"]
 test = ["certifi (>=2024)", "cryptography-vectors (==45.0.3)", "pretend (>=0.7)", "pytest (>=7.4.0)", "pytest-benchmark (>=4.0)", "pytest-cov (>=2.10.1)", "pytest-xdist (>=3.5.0)"]
 test-randomorder = ["pytest-randomly"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "distlib"
 version = "0.3.9"
@@ -383,6 +443,11 @@ files = [
     {file = "distlib-0.3.9.tar.gz", hash = "sha256:a60f20dea646b8a33f3e7772f74dc0b2d0772d2837ee1342a00645c81edf9403"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "dotty-dict"
 version = "1.3.1"
@@ -394,6 +459,11 @@ files = [
     {file = "dotty_dict-1.3.1-py3-none-any.whl", hash = "sha256:5022d234d9922f13aa711b4950372a06a6d64cb6d6db9ba43d0ba133ebfce31f"},
     {file = "dotty_dict-1.3.1.tar.gz", hash = "sha256:4b016e03b8ae265539757a53eba24b9bfda506fb94fbce0bee843c6f05541a15"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "dulwich"
@@ -462,6 +532,11 @@ https = ["urllib3 (>=1.24.1)"]
 paramiko = ["paramiko"]
 pgp = ["gpg"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "exceptiongroup"
 version = "1.3.0"
@@ -481,6 +556,11 @@ typing-extensions = {version = ">=4.6.0", markers = "python_version < \"3.13\""}
 [package.extras]
 test = ["pytest (>=6)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "filelock"
 version = "3.18.0"
@@ -498,6 +578,11 @@ docs = ["furo (>=2024.8.6)", "sphinx (>=8.1.3)", "sphinx-autodoc-typehints (>=3)
 testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)", "pytest (>=8.3.4)", "pytest-asyncio (>=0.25.2)", "pytest-cov (>=6)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.28.1)"]
 typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "gitdb"
 version = "4.0.12"
@@ -512,6 +597,11 @@ files = [
 
 [package.dependencies]
 smmap = ">=3.0.1,<6"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "gitpython"
@@ -532,6 +622,11 @@ gitdb = ">=4.0.1,<5"
 doc = ["sphinx (>=7.1.2,<7.2)", "sphinx-autodoc-typehints", "sphinx_rtd_theme"]
 test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock ; python_version < \"3.8\"", "mypy", "pre-commit", "pytest (>=7.3.1)", "pytest-cov", "pytest-instafail", "pytest-mock", "pytest-sugar", "typing-extensions ; python_version < \"3.11\""]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "identify"
 version = "2.6.12"
@@ -547,6 +642,11 @@ files = [
 [package.extras]
 license = ["ukkonen"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "idna"
 version = "3.10"
@@ -561,6 +661,11 @@ files = [
 
 [package.extras]
 all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "importlib-resources"
@@ -582,6 +687,11 @@ enabler = ["pytest-enabler (>=2.2)"]
 test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "zipp (>=3.17)"]
 type = ["pytest-mypy"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "iniconfig"
 version = "2.1.0"
@@ -593,6 +703,11 @@ files = [
     {file = "iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760"},
     {file = "iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "jinja2"
@@ -611,6 +726,11 @@ MarkupSafe = ">=2.0"
 
 [package.extras]
 i18n = ["Babel (>=2.7)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "jsonschema"
@@ -634,6 +754,11 @@ rpds-py = ">=0.7.1"
 format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3987", "uri-template", "webcolors (>=1.11)"]
 format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "uri-template", "webcolors (>=24.6.0)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "jsonschema-specifications"
 version = "2025.4.1"
@@ -648,6 +773,11 @@ files = [
 
 [package.dependencies]
 referencing = ">=0.31.0"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "levenshtein"
@@ -756,6 +886,11 @@ files = [
 [package.dependencies]
 rapidfuzz = ">=3.9.0,<4.0.0"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "markdown-it-py"
 version = "3.0.0"
@@ -780,6 +915,11 @@ plugins = ["mdit-py-plugins"]
 profiling = ["gprof2dot"]
 rtd = ["jupyter_sphinx", "mdit-py-plugins", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
 testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "markupsafe"
@@ -852,6 +992,11 @@ files = [
     {file = "markupsafe-3.0.2.tar.gz", hash = "sha256:ee55d3edf80167e48ea11a923c7386f4669df67d7994554387f84e7d8b0a2bf0"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "mdurl"
 version = "0.1.2"
@@ -864,17 +1009,27 @@ files = [
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "nodeenv"
 version = "1.9.1"
 description = "Node.js virtual environment builder"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*"
 groups = ["qa"]
 files = [
     {file = "nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9"},
     {file = "nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "nuitka"
@@ -891,6 +1046,11 @@ files = [
 ordered-set = ">=4.1.0"
 zstandard = ">=0.15"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "ordered-set"
 version = "4.1.0"
@@ -906,6 +1066,11 @@ files = [
 [package.extras]
 dev = ["black", "mypy", "pytest"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "packaging"
 version = "25.0"
@@ -918,6 +1083,11 @@ files = [
     {file = "packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "pathspec"
 version = "0.12.1"
@@ -929,6 +1099,11 @@ files = [
     {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
     {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "platformdirs"
@@ -947,6 +1122,11 @@ docs = ["furo (>=2024.8.6)", "proselint (>=0.14)", "sphinx (>=8.1.3)", "sphinx-a
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.4)", "pytest-cov (>=6)", "pytest-mock (>=3.14)"]
 type = ["mypy (>=1.14.1)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "pluggy"
 version = "1.6.0"
@@ -962,6 +1142,11 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pre-commit"
@@ -982,6 +1167,11 @@ nodeenv = ">=0.11.1"
 pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "pycparser"
 version = "2.22"
@@ -994,6 +1184,11 @@ files = [
     {file = "pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6"},
 ]
 markers = {main = "platform_python_implementation != \"PyPy\"", compile = "platform_python_implementation == \"PyPy\""}
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pydantic"
@@ -1016,6 +1211,11 @@ typing-inspection = ">=0.4.0"
 [package.extras]
 email = ["email-validator (>=2.0.0)"]
 timezone = ["tzdata ; python_version >= \"3.9\" and platform_system == \"Windows\""]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pydantic-core"
@@ -1129,6 +1329,11 @@ files = [
 [package.dependencies]
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "pygments"
 version = "2.19.1"
@@ -1143,6 +1348,11 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pyproject-api"
@@ -1163,6 +1373,11 @@ tomli = {version = ">=2.2.1", markers = "python_version < \"3.11\""}
 [package.extras]
 docs = ["furo (>=2024.8.6)", "sphinx-autodoc-typehints (>=3.2)"]
 testing = ["covdefaults (>=2.3)", "pytest (>=8.3.5)", "pytest-cov (>=6.1.1)", "pytest-mock (>=3.14)", "setuptools (>=80.3.1)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pytest"
@@ -1187,6 +1402,11 @@ tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 [package.extras]
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "pytest-github-actions-annotate-failures"
 version = "0.3.0"
@@ -1201,6 +1421,11 @@ files = [
 
 [package.dependencies]
 pytest = ">=6.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "python-gitlab"
@@ -1222,6 +1447,11 @@ requests-toolbelt = ">=1.0.0"
 autocompletion = ["argcomplete (>=1.10.0,<3)"]
 graphql = ["gql[httpx] (>=3.5.0,<4)"]
 yaml = ["PyYaml (>=6.0.1)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "python-semantic-release"
@@ -1255,6 +1485,11 @@ dev = ["pre-commit (>=3.5,<4.0)", "ruff (==0.6.1)", "tox (>=4.11,<5.0)"]
 docs = ["Sphinx (>=6.0,<7.0)", "furo (>=2024.1,<2025.0)", "sphinx-autobuild (==2024.2.4)", "sphinxcontrib-apidoc (==0.5.0)"]
 mypy = ["mypy (==1.11.2)", "types-requests (>=2.32.0,<2.33.0)"]
 test = ["coverage[toml] (>=7.0,<8.0)", "pytest (>=8.3,<9.0)", "pytest-clarity (>=1.0,<2.0)", "pytest-cov (>=5.0,<6.0)", "pytest-env (>=1.0,<2.0)", "pytest-lazy-fixtures (>=1.1.1,<1.2.0)", "pytest-mock (>=3.0,<4.0)", "pytest-pretty (>=1.2,<2.0)", "pytest-xdist (>=3.0,<4.0)", "pyyaml (>=6.0,<7.0)", "requests-mock (>=1.10,<2.0)", "responses (>=0.25.0,<0.26.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "pyyaml"
@@ -1318,6 +1553,11 @@ files = [
     {file = "PyYAML-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8"},
     {file = "pyyaml-6.0.2.tar.gz", hash = "sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "rapidfuzz"
@@ -1426,6 +1666,11 @@ files = [
 [package.extras]
 all = ["numpy"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "referencing"
 version = "0.36.2"
@@ -1442,6 +1687,11 @@ files = [
 attrs = ">=22.2.0"
 rpds-py = ">=0.7.0"
 typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "requests"
@@ -1465,6 +1715,11 @@ urllib3 = ">=1.21.1,<3"
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
@@ -1479,6 +1734,11 @@ files = [
 
 [package.dependencies]
 requests = ">=2.0.1,<3.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "rich"
@@ -1500,6 +1760,11 @@ typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.1
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "rich-click"
 version = "1.8.9"
@@ -1520,6 +1785,11 @@ typing_extensions = ">=4"
 [package.extras]
 dev = ["mypy", "packaging", "pre-commit", "pytest", "pytest-cov", "rich-codex", "ruff", "types-setuptools"]
 docs = ["markdown_include", "mkdocs", "mkdocs-glightbox", "mkdocs-material-extensions", "mkdocs-material[imaging] (>=9.5.18,<9.6.0)", "mkdocs-rss-plugin", "mkdocstrings[python]", "rich-codex"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "rich-codex"
@@ -1544,6 +1814,11 @@ rich-click = ">=1.5"
 [package.extras]
 cairo = ["CairoSVG (>=2.5.2)"]
 dev = ["pre-commit"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "rpds-py"
@@ -1672,6 +1947,11 @@ files = [
     {file = "rpds_py-0.25.1.tar.gz", hash = "sha256:8960b6dac09b62dac26e75d7e2c4a22efb835d827a7278c34f72b2b84fa160e3"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "ruamel-yaml"
 version = "0.18.12"
@@ -1690,6 +1970,11 @@ files = [
 [package.extras]
 docs = ["mercurial (>5.7)", "ryd"]
 jinja2 = ["ruamel.yaml.jinja2 (>=0.2)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "ruamel-yaml-clib"
@@ -1748,6 +2033,11 @@ files = [
     {file = "ruamel.yaml.clib-0.2.12.tar.gz", hash = "sha256:6c8fbb13ec503f99a91901ab46e0b07ae7941cd527393187039aec586fdfd36f"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "shellingham"
 version = "1.5.4"
@@ -1760,6 +2050,11 @@ files = [
     {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "smmap"
 version = "5.0.2"
@@ -1771,6 +2066,11 @@ files = [
     {file = "smmap-5.0.2-py3-none-any.whl", hash = "sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e"},
     {file = "smmap-5.0.2.tar.gz", hash = "sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "tomli"
@@ -1814,6 +2114,11 @@ files = [
     {file = "tomli-2.2.1.tar.gz", hash = "sha256:cd45e1dc79c835ce60f7404ec8119f2eb06d38b1deba146f07ced3bbc44505ff"},
 ]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "tomlkit"
 version = "0.13.2"
@@ -1825,6 +2130,11 @@ files = [
     {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
     {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "tox"
@@ -1854,6 +2164,11 @@ virtualenv = ">=20.31"
 [package.extras]
 test = ["devpi-process (>=1.0.2)", "pytest (>=8.3.4)", "pytest-mock (>=3.14)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "tox-gh-actions"
 version = "3.3.0"
@@ -1872,6 +2187,11 @@ tox = ">=4,<5"
 [package.extras]
 testing = ["black ; platform_python_implementation == \"CPython\"", "devpi-process", "flake8 (>=6,<7) ; python_version >= \"3.8\"", "mypy ; platform_python_implementation == \"CPython\"", "pytest (>=7)", "pytest-cov (>=4)", "pytest-mock (>=3)", "pytest-randomly (>=3)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "types-requests"
 version = "2.32.0.20250602"
@@ -1887,6 +2207,11 @@ files = [
 [package.dependencies]
 urllib3 = ">=2"
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [[package]]
 name = "typing-extensions"
 version = "4.13.2"
@@ -1899,6 +2224,11 @@ files = [
     {file = "typing_extensions-4.13.2.tar.gz", hash = "sha256:e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef"},
 ]
 markers = {main = "python_version == \"3.10\"", qa = "python_version == \"3.10\"", test = "python_version == \"3.10\""}
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "typing-inspection"
@@ -1914,6 +2244,11 @@ files = [
 
 [package.dependencies]
 typing-extensions = ">=4.12.0"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "urllib3"
@@ -1932,6 +2267,11 @@ brotli = ["brotli (>=1.0.9) ; platform_python_implementation == \"CPython\"", "b
 h2 = ["h2 (>=4,<5)"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "virtualenv"
@@ -1953,6 +2293,11 @@ platformdirs = ">=3.9.1,<5"
 [package.extras]
 docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8) ; platform_python_implementation == \"PyPy\" or platform_python_implementation == \"GraalVM\" or platform_python_implementation == \"CPython\" and sys_platform == \"win32\" and python_version >= \"3.13\"", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10) ; platform_python_implementation == \"CPython\""]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
 
 [[package]]
 name = "zstandard"
@@ -2067,7 +2412,12 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 [package.extras]
 cffi = ["cffi (>=1.11)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.phylum.io/simple"
+reference = "phylum"
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "f62bf3cd1dac6b22242a2f36ba292ade8eb18a6cde442d3877a494a9e9e86e92"
+content-hash = "7598174d7c9bf1e87d35c6a0b8a8cbe4af2ea72867d9cf3d3330a0c80ce1d8f0"

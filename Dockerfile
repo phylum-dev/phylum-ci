@@ -2,54 +2,74 @@
 # The syntax statement above is to make use of buildkit's build mounts for caching
 
 ##########################################################################################
-# This Dockerfile makes use of BuildKit mode, which needs to be enabled client side first:
+# This Dockerfile makes use of BuildKit mode, which needs to be enabled client-side first:
 #
 # $ export DOCKER_BUILDKIT=1
 #
+# The following build args (e.g., `--build-arg`) are exposed to direct the usage of the
+# PyPI Package Firewall within the image build itself:
+#
+#   * PHYLUM_ORG: The organization to use (defaults to `Phylum`)
+#   * PHYLUM_GROUP: The group to use (defaults to `Phylum`)
+#   * PHYLUM_TOKEN: Phylum token from a user with access to the org/group
+#      * This is required and expected to be passed in as a build secret
+#
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --secret id=PHYLUM_TOKEN .
+#
 # This Dockerfile can be used to build the project's package within the image it creates.
-# To do so, simply build the image WITHOUT any build args specified (e.g., `--build-arg`):
+# To do so, build the image WITHOUT any optional build args specified:
 #
-# $ docker build --tag phylum-ci .
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --secret id=PHYLUM_TOKEN .
 #
-# This Dockerfile can also be used in CI, as part of the release pipeline.
-# The goal there is to ensure that the exact Python package that was built and
-# released is the one that is installed while creating this image. Prerequisites are:
+# This Dockerfile can also be used in CI, as part of the release pipeline. The goal there
+# is to ensure that the exact Python package that was built and released is the one that
+# is installed while creating this image. Prerequisites are:
 #
 #   * The package has already been built (e.g., `poetry build -vvv`)
 #   * There is exactly one wheel available to reference by glob expression
 #
-# To make use of this feature, build the image WITH build args specified:
+# To make use of this feature, build the image WITH these build args specified:
 #
+# $ export PHYLUM_TOKEN=$(phylum auth token)
 # $ export PKG_SRC=dist/phylum-*.whl
 # $ export PKG_NAME=phylum-*.whl
-# $ docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME .
+# $ docker build --tag phylum-ci --build-arg PKG_SRC --build-arg PKG_NAME \
+#       --secret id=PHYLUM_TOKEN .
 #
 # Another build arg is exposed to optionally specify the Phylum CLI version to install:
 #
-# $ docker build --tag phylum-ci --build-arg CLI_VER=v4.8.0 .
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --build-arg CLI_VER=v4.8.0 --secret id=PHYLUM_TOKEN .
 #
 # The PHYLUM_API_URI build arg is exposed to optionally specify the URI of a Phylum API
 # instance to use:
 #
+# $ export PHYLUM_TOKEN=$(phylum auth token)
 # $ export PHYLUM_API_URI=https://api.staging.phylum.io
-# $ docker build --tag phylum-ci --build-arg PHYLUM_API_URI .
+# $ docker build --tag phylum-ci --build-arg PHYLUM_API_URI --secret id=PHYLUM_TOKEN .
 #
 # Another build arg is exposed to optionally specify a GitHub Personal Access Token (PAT):
 #
-# $ docker build --tag phylum-ci --build-arg GITHUB_TOKEN .
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --build-arg GITHUB_TOKEN --secret id=PHYLUM_TOKEN .
 #
 # Providing a build argument like this (without a value) works when there is already an
 # environment variable defined with the same name. Providing a GitHub PAT is useful to
-# make authenticated requests and therefore increase the API rate limit.
+# make authenticated requests and increase the API rate limit.
 #
 # To make use of BuildKit's inline layer caching feature, add the `BUILDKIT_INLINE_CACHE`
 # build argument to any instance of building an image. Then, that image can be used
 # locally or remotely (if it was pushed to a repository) to warm the build cache by using
 # the `--cache-from` argument:
 #
-# $ docker build --tag phylumio/phylum-ci:cache --build-arg BUILDKIT_INLINE_CACHE=1 .
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylumio/phylum-ci:cache --build-arg BUILDKIT_INLINE_CACHE=1 \
+#       --secret id=PHYLUM_TOKEN .
 # $ docker push phylumio/phylum-ci:cache && docker image rm phylumio/phylum-ci:cache
-# $ docker build --tag phylumio/phylum-ci:faster --cache-from phylumio/phylum-ci:cache .
+# $ docker build --tag phylumio/phylum-ci:faster --cache-from phylumio/phylum-ci:cache \
+#       --secret id=PHYLUM_TOKEN .
 #
 # There is no ENTRYPOINT in this Dockerfile by design. That way, it is possible to provide
 # unquoted extra parameters to run arbitrary commands in the context of the container:
@@ -65,7 +85,8 @@
 #
 # Images built from this Dockerfile can be tested for basic functionality:
 #
-# $ docker build --tag phylum-ci .
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --secret id=PHYLUM_TOKEN .
 # $ scripts/docker_tests.sh --image phylum-ci
 ##########################################################################################
 
@@ -76,6 +97,19 @@ FROM python:3.13-slim-bookworm AS builder
 # the values will default to the root of the package (i.e., `pyproject.toml` path).
 ARG PKG_SRC
 ARG PKG_NAME
+
+# Package Firewall Variables:
+#
+# PHYLUM_ORG and PHYLUM_GROUP specify the org and group, respectively, of the account
+# to be used when accessing the Package Firewall. Both default to `Phylum`.
+ARG PHYLUM_ORG="Phylum"
+ARG PHYLUM_GROUP="Phylum"
+# PHYLUM_TOKEN is required and passed as a build secret that can be used to specify the
+# Phylum token for a user with access to the org/group used for the Package Firewall.
+#
+# $ export PHYLUM_TOKEN=$(phylum auth token)
+# $ docker build --tag phylum-ci --secret id=PHYLUM_TOKEN .
+ARG PHYLUM_TOKEN
 
 ENV APP_PATH="/app"
 ENV POETRY_VENV="${APP_PATH}/.venv"
@@ -88,9 +122,13 @@ ENV POETRY_VERSION="2.1.3"
 
 WORKDIR ${APP_PATH}
 
-RUN set -eux; \
-    python -m venv ${PHYLUM_VENV}; \
-    ${PHYLUM_VENV_PIP} install --no-cache-dir --upgrade pip setuptools
+RUN python -m venv ${PHYLUM_VENV}
+# Isolate the use of the `PHYLUM_TOKEN` secret to a single RUN command so as not
+# to leak the value in logs with `set -eux` command
+RUN --mount=type=secret,id=PHYLUM_TOKEN,env=PHYLUM_TOKEN,required=true \
+    ${PHYLUM_VENV_PIP} config set global.index-url \
+        "https://${PHYLUM_ORG}%2F${PHYLUM_GROUP}:${PHYLUM_TOKEN}@pypi.phylum.io/simple/"
+RUN ${PHYLUM_VENV_PIP} install --no-cache-dir --upgrade pip setuptools
 RUN set -eux; \
     python -m venv ${POETRY_VENV}; \
     ${POETRY_VENV}/bin/pip install --no-cache-dir --upgrade pip setuptools; \
@@ -100,11 +138,13 @@ RUN set -eux; \
 # This will enable better layer caching and faster builds when iterating locally.
 # `--without-hashes` is used to ensure the `pip` cache mount is used for packages that
 # would otherwise only match the sdist and therefore have to be built for every run.
+# `--without-urls` is used to ensure the globally set pip index-url is used when installing
+# these dependencies in a later step, to make use of the PyPI Package Firewall.
 # References:
 #   * https://pythonspeed.com/articles/pipenv-docker/
 #   * https://hub.docker.com/r/docker/dockerfile
 COPY pyproject.toml poetry.lock ./
-RUN ${POETRY_PATH} export --without-hashes --format requirements.txt --output requirements.txt
+RUN ${POETRY_PATH} export --without-hashes --without-urls --format requirements.txt --output requirements.txt
 
 # Cache the pip installed dependencies for faster builds when iterating locally.
 # NOTE: This `--mount` feature requires BUILDKIT to be used

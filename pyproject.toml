@@ -114,6 +114,11 @@ optional = true
 [tool.poetry.group.compile.dependencies]
 nuitka = "*"
 
+[[tool.poetry.source]]
+name = "phylum"
+url = "https://pypi.phylum.io/simple/"
+priority = "primary"
+
 [tool.black]
 line-length = 120
 
