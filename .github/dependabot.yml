@@ -18,6 +18,10 @@ updates:
   - package-ecosystem: "pip"
     registries:
       - phylum
+    # Allowing external code execution is required for Dependabot to update the
+    # "pip" ecosystem when a custom external registry is specified. Reference:
+    # https://docs.github.com/code-security/dependabot/working-with-dependabot/configuring-access-to-private-registries-for-dependabot#allowing-external-code-execution
+    insecure-external-code-execution: allow
     directory: "/"
     schedule:
       interval: weekly
