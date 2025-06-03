@@ -16,7 +16,8 @@ registries:
 updates:
   # "pip" also covers Poetry
   - package-ecosystem: "pip"
-    registries: phylum
+    registries:
+      - phylum
     directory: "/"
     schedule:
       interval: weekly
