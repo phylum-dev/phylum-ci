@@ -115,10 +115,7 @@ Here's how to set up `phylum-ci` for local development.
     ```sh
     # Take advantage of the `pyenv` feature that automatically resolves
     # specified minor versions to the latest patch version
-    pyenv install 3.10
-    pyenv install 3.11
-    pyenv install 3.12
-    pyenv install 3.13
+    pyenv install 3.10 3.11 3.12 3.13
 
     # Rebuild the shim files
     pyenv rehash
@@ -130,15 +127,13 @@ Here's how to set up `phylum-ci` for local development.
 4. Ensure [poetry v2.1+](https://python-poetry.org/docs/) is installed
    1. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
    2. Support for alternate build backends was added in Poetry v2.1.0
-5. Configure `poetry` to make use of the [PyPI Package Firewall](https://docs.phylum.io/package_firewall/pypi)
+5. Configure credentials to make use of the [PyPI Package Firewall](https://docs.phylum.io/package_firewall/pypi), which
+   has been enabled for `poetry` on this repo
 
     ```sh
     cd phylum-ci
 
-    # Add the Poetry package firewall as the primary source
-    poetry source add --priority primary phylum https://pypi.phylum.io/simple/
-
-    # Configure credentials to make use of the source
+    # Configure credentials to make use of the `phylum` package firewall source
     poetry config http-basic.phylum "<PHYLUM_ORG>%2F<PHYLUM_GROUP>" "<PHYLUM_API_KEY>"
 
     # NOTE: Internal developers (employees of Veracode) should use the `Phylum/Phylum` org/group
