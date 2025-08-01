@@ -73,16 +73,16 @@ packages = [
 optional = true
 
 [tool.poetry.group.test.dependencies]
+dulwich = "*"
 pytest = "*"
+pytest-cov = "*"
 tomli = "*"
 tox = "*"
-dulwich = "*"
 
 [tool.poetry.group.ci]
 optional = true
 
 [tool.poetry.group.ci.dependencies]
-tox-gh-actions = "*"
 pytest-github-actions-annotate-failures = "*"
 # PSR has a history of releasing breaking changes in minor and bugfix releases.
 # The irony is not lost, but it has become too much. This dependency has a hard
@@ -99,14 +99,15 @@ python-semantic-release = "==9.12.0"
 # A regression was added in v1.2.9 where config validation fails. It was fixed
 # in https://github.com/ewels/rich-codex/pull/54 and included in release v1.2.11
 rich-codex = ">=1.2.11"
+tox-gh-actions = "*"
 
 [tool.poetry.group.qa]
 optional = true
 
 [tool.poetry.group.qa.dependencies]
-types-requests = "*"
 pre-commit = "*"
 tox = "*"
+types-requests = "*"
 
 [tool.poetry.group.compile]
 optional = true
