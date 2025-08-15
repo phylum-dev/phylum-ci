@@ -101,6 +101,11 @@ def ensure_git_repo_access(git_c_path: Path | None = None) -> None:
                 Config updated. Undo for non-ephemeral environments with command:
                     [code]{shlex.join(conf_cmd).replace("--add", "--unset", 1)}[/]"""
             LOG.warning(cleandoc(msg), extra=MARKUP)
+            return
+
+        # Account for any other reason by bailing
+        msg = "Must be operating within git repository, with proper access"
+        raise PhylumCalledProcessError(outer_err, msg) from outer_err
 
 
 def git_remote(git_c_path: Path | None = None) -> str:
@@ -374,6 +379,8 @@ def git_worktree(
         # The worktree will be removed at the end of the block.
     ```
 
+    The optional `env` parameter can be used to pass environment variables to the subprocess.
+
     The optional `git_c_path` is used to tell `git` to run as if it were started in that
     path instead of the current working directory, which is the default when not provided.
     """
@@ -391,7 +398,7 @@ def git_worktree(
         try:
             yield temp_dir_path
         finally:
-            remove_git_worktree(temp_dir_path)
+            remove_git_worktree(temp_dir_path, git_c_path=git_c_path)
 
 
 def remove_git_worktree(worktree: Path, git_c_path: Path | None = None) -> None:
