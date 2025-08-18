@@ -12,7 +12,6 @@
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)][poetry]
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
 [![Downloads](https://static.pepy.tech/badge/phylum/month)][downloads]
-[![Discord](https://img.shields.io/discord/1070071012353376387?logo=discord)][discord_invite]
 
 Utilities for integrating Phylum into CI pipelines
 
@@ -25,7 +24,6 @@ Utilities for integrating Phylum into CI pipelines
 [poetry]: https://python-poetry.org/
 [black]: https://github.com/psf/black
 [downloads]: https://pepy.tech/project/phylum
-[discord_invite]: https://discord.gg/Fe6pr5eW6p
 
 ## Installation and usage
 
