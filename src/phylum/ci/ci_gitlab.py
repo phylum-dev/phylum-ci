@@ -32,9 +32,9 @@ def is_in_mr_pipeline() -> bool:
     """Indicate if the integration is operating in the context of a merge request pipeline.
 
     GitLab CI allows for the possibility of running pipelines in different contexts:
-      * For the last commit in a push to a branch (e.g., branch pipelines)
-      * For merge requests (e.g., merge request pipelines)
-      * When a new Git tag is pushed (e.g., tag pipelines)
+      * For the last commit in a push to a branch (branch pipelines)
+      * For merge requests (merge request pipelines)
+      * When a new Git tag is pushed (tag pipelines)
 
     Knowing when the context is within a merge request helps to ensure the logic used
     to determine the dependency file changes is correct. It also helps to ensure output
@@ -52,9 +52,9 @@ def is_in_tag_pipeline() -> bool:
     """Indicate if the integration is operating in the context of a tag pipeline.
 
     GitLab CI allows for the possibility of running pipelines in different contexts:
-      * For the last commit in a push to a branch (e.g., branch pipelines)
-      * For merge requests (e.g., merge request pipelines)
-      * When a new Git tag is pushed (e.g., tag pipelines)
+      * For the last commit in a push to a branch (branch pipelines)
+      * For merge requests (merge request pipelines)
+      * When a new Git tag is pushed (tag pipelines)
 
     Knowing when the context is within a tag pipeline helps to ensure the logic used
     to determine the dependency file changes is correct. It also helps to ensure output
@@ -71,9 +71,9 @@ def is_in_branch_pipeline() -> bool:
     """Indicate if the integration is operating in the context of a branch pipeline.
 
     GitLab CI allows for the possibility of running pipelines in different contexts:
-      * For the last commit in a push to a branch (e.g., branch pipelines)
-      * For merge requests (e.g., merge request pipelines)
-      * When a new Git tag is pushed (e.g., tag pipelines)
+      * For the last commit in a push to a branch (branch pipelines)
+      * For merge requests (merge request pipelines)
+      * When a new Git tag is pushed (tag pipelines)
 
     Knowing when the context is within a branch pipeline helps to ensure the logic used
     to determine the dependency file changes is correct. It also helps to ensure output
