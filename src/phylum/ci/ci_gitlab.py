@@ -1,11 +1,11 @@
 """Define an implementation for the GitLab CI platform.
 
 GitLab References:
-  * https://docs.gitlab.com/ee/ci/
-  * https://docs.gitlab.com/ee/ci/docker/using_docker_images.html
-  * https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-  * https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html
-  * https://docs.gitlab.com/ee/api/notes.html#merge-requests
+  * https://docs.gitlab.com/ci/
+  * https://docs.gitlab.com/ci/docker/using_docker_images
+  * https://docs.gitlab.com/ci/variables/predefined_variables
+  * https://docs.gitlab.com/ci/jobs/ci_job_token
+  * https://docs.gitlab.com/api/notes/#merge-requests
 """
 
 from argparse import Namespace
@@ -28,12 +28,13 @@ from phylum.logger import LOG
 
 
 @lru_cache(maxsize=1)
-def is_in_mr() -> bool:
+def is_in_mr_pipeline() -> bool:
     """Indicate if the integration is operating in the context of a merge request pipeline.
 
     GitLab CI allows for the possibility of running pipelines in different contexts:
-      * On every push, for the last commit in the push (e.g., branch pipelines)
+      * For the last commit in a push to a branch (e.g., branch pipelines)
       * For merge requests (e.g., merge request pipelines)
+      * When a new Git tag is pushed (e.g., tag pipelines)
 
     Knowing when the context is within a merge request helps to ensure the logic used
     to determine the dependency file changes is correct. It also helps to ensure output
@@ -41,9 +42,47 @@ def is_in_mr() -> bool:
     """
     # References:
     # https://github.com/watson/ci-info/blob/master/vendors.json
-    # https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html
-    # docs.gitlab.com/ee/ci/variables/predefined_variables.html#predefined-variables-for-merge-request-pipelines
+    # https://docs.gitlab.com/ci/pipelines/merge_request_pipelines
+    # https://docs.gitlab.com/ci/variables/predefined_variables/#predefined-variables-for-merge-request-pipelines
     return bool(os.getenv("CI_MERGE_REQUEST_ID"))
+
+
+@lru_cache(maxsize=1)
+def is_in_tag_pipeline() -> bool:
+    """Indicate if the integration is operating in the context of a tag pipeline.
+
+    GitLab CI allows for the possibility of running pipelines in different contexts:
+      * For the last commit in a push to a branch (e.g., branch pipelines)
+      * For merge requests (e.g., merge request pipelines)
+      * When a new Git tag is pushed (e.g., tag pipelines)
+
+    Knowing when the context is within a tag pipeline helps to ensure the logic used
+    to determine the dependency file changes is correct. It also helps to ensure output
+    is not attempted to be posted when NOT in the context of a review.
+    """
+    # References:
+    # https://docs.gitlab.com/ci/pipelines/pipeline_types/#tag-pipeline
+    # https://docs.gitlab.com/ci/variables/predefined_variables/#predefined-variables
+    return bool(os.getenv("CI_COMMIT_TAG"))
+
+
+@lru_cache(maxsize=1)
+def is_in_branch_pipeline() -> bool:
+    """Indicate if the integration is operating in the context of a branch pipeline.
+
+    GitLab CI allows for the possibility of running pipelines in different contexts:
+      * For the last commit in a push to a branch (e.g., branch pipelines)
+      * For merge requests (e.g., merge request pipelines)
+      * When a new Git tag is pushed (e.g., tag pipelines)
+
+    Knowing when the context is within a branch pipeline helps to ensure the logic used
+    to determine the dependency file changes is correct. It also helps to ensure output
+    is not attempted to be posted when NOT in the context of a review.
+    """
+    # References:
+    # https://docs.gitlab.com/ci/pipelines/pipeline_types/#branch-pipeline
+    # https://docs.gitlab.com/ci/variables/predefined_variables/#predefined-variables
+    return bool(os.getenv("CI_COMMIT_BRANCH"))
 
 
 class CIGitLab(CIBase):
@@ -52,9 +91,11 @@ class CIGitLab(CIBase):
     def __init__(self, args: Namespace) -> None:  # noqa: D107 ; the base __init__ docstring is better here
         super().__init__(args)
         self.ci_platform_name = "GitLab CI"
-        if is_in_mr():
+        if is_in_mr_pipeline():
             LOG.debug("Pipeline context: merge request pipeline")
-        else:
+        elif is_in_tag_pipeline():
+            LOG.debug("Pipeline context: tag pipeline")
+        elif is_in_branch_pipeline():
             LOG.debug("Pipeline context: branch pipeline")
 
     def _check_prerequisites(self) -> None:
@@ -62,6 +103,7 @@ class CIGitLab(CIBase):
 
         These are the current prerequisites for operating within a GitLab CI Environment:
           * The environment must actually be within GitLab CI
+          * Must be operating within the context of a tag, branch, or merge request pipeline
           * A GitLab token providing API access is available when operating in an MR pipeline
             * Unless comment generation is skipped
         """
@@ -69,16 +111,22 @@ class CIGitLab(CIBase):
 
         # References:
         # https://github.com/watson/ci-info/blob/master/vendors.json
-        # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        # https://docs.gitlab.com/ci/variables/predefined_variables
         if os.getenv("GITLAB_CI") != "true":
             msg = "Must be working within the GitLab CI environment"
             raise SystemExit(msg)
 
+        # While other pipeline types *may* work, they aren't explicitly supported.
+        # This check will prevent undocumented pipeline types from being used.
+        if not (is_in_mr_pipeline() or is_in_tag_pipeline() or is_in_branch_pipeline()):
+            msg = "Must use a supported pipeline type: branch, tag, or merge request"
+            raise SystemExit(msg)
+
         # A GitLab token with API access is required to use the API (e.g., to post notes/comments).
         # This can be a personal, project, or group access token...and possibly some other types as well.
-        # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/ee/security/token_overview.html
+        # See the GitLab Token Overview Documentation for info: https://docs.gitlab.com/security/tokens
         gitlab_token = os.getenv("GITLAB_TOKEN", "")
-        if not gitlab_token and is_in_mr() and not self.skip_comments:
+        if not gitlab_token and is_in_mr_pipeline() and not self.skip_comments:
             msg = "A GitLab token with API access must be set at `GITLAB_TOKEN`"
             raise SystemExit(msg)
         self._gitlab_token = gitlab_token
@@ -91,11 +139,14 @@ class CIGitLab(CIBase):
     @cached_property
     def phylum_label(self) -> str:
         """Get a custom label for use when submitting jobs for analysis."""
-        if is_in_mr():
+        if is_in_mr_pipeline():
             mr_iid = os.getenv("CI_MERGE_REQUEST_IID", "unknown-IID")
             mr_src_branch = os.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME", "unknown-branch")
             label = f"{self.ci_platform_name}_MR#{mr_iid}_{mr_src_branch}"
-        else:
+        elif is_in_tag_pipeline():
+            tag_name = os.getenv("CI_COMMIT_TAG", "unknown-tag")
+            label = f"{self.ci_platform_name}_tag_{tag_name}"
+        elif is_in_branch_pipeline():
             current_branch = os.getenv("CI_COMMIT_BRANCH", "unknown-branch")
             label = f"{self.ci_platform_name}_{current_branch}_{self.depfile_hash_object}"
 
@@ -106,19 +157,13 @@ class CIGitLab(CIBase):
     def common_ancestor_commit(self) -> str | None:
         """Find the common ancestor commit.
 
-        Some pre-defined variables are used: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        Some pre-defined variables are used: https://docs.gitlab.com/ci/variables/predefined_variables
         """
         remote = git_remote()
 
-        if is_in_mr():
+        if is_in_mr_pipeline():
             common_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
             return common_commit
-
-        src_branch_name = os.getenv("CI_COMMIT_BRANCH")
-        if not src_branch_name:
-            msg = "The CI_COMMIT_BRANCH environment variable must exist and be set"
-            raise SystemExit(msg)
-        src_branch = f"refs/remotes/{remote}/{src_branch_name}"
 
         # The default branch name is used instead of `HEAD` because of a GitLab runner bug where HEAD is not available:
         # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4078
@@ -132,32 +177,31 @@ class CIGitLab(CIBase):
             LOG.warning("The default remote branch is not available. Attempting to fetch it...")
             git_fetch(repo=remote, ref=default_branch_name, git_c_path=project_dir)
 
-        if src_branch == default_branch:
-            LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+        if is_in_tag_pipeline():
+            tag_name = os.getenv("CI_COMMIT_TAG")
+            if not tag_name:
+                msg = "The CI_COMMIT_TAG environment variable must exist and be set"
+                raise SystemExit(msg)
+            pipeline_trigger_commit_ref = f"refs/tags/{tag_name}"
+            LOG.warning("In tag pipeline. Proceeding with analysis of all dependencies ...")
             self._force_analysis = True
             self._all_deps = True
+        else:
+            # Must be in a branch pipeline.
+            # This is a best effort attempt since it will find the merge base between the current commit
+            # and the default branch instead of finding the exact commit from which the branch was created.
+            src_branch_name = os.getenv("CI_COMMIT_BRANCH")
+            if not src_branch_name:
+                msg = "The CI_COMMIT_BRANCH environment variable must exist and be set"
+                raise SystemExit(msg)
+            pipeline_trigger_commit_ref = f"refs/remotes/{remote}/{src_branch_name}"
 
-        # This is a best effort attempt since it is finding the merge base between the current commit
-        # and the default branch instead of finding the exact commit from which the branch was created.
-        cmd = ["git", "merge-base", src_branch, default_branch]
-        LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
-        try:
-            common_commit = subprocess.run(  # noqa: S603
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            ).stdout.strip()
-        except subprocess.CalledProcessError as err:
-            msg = """
-                The common ancestor commit could not be found.
-                Ensure the git strategy is set to `clone` for repo checkouts:
-                https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy"""
-            pprint_subprocess_error(err)
-            LOG.warning(cleandoc(msg))
-            common_commit = None
+            if pipeline_trigger_commit_ref == default_branch:
+                LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
+                self._force_analysis = True
+                self._all_deps = True
 
+        common_commit = git_merge_base(pipeline_trigger_commit_ref, default_branch)
         return common_commit
 
     @property
@@ -173,7 +217,7 @@ class CIGitLab(CIBase):
         err_msg = """
             Consider changing the `GIT_DEPTH` variable in CI settings to
             clone/fetch more branch history. For more info, reference:
-            https://docs.gitlab.com/ee/ci/large_repositories/index.html#shallow-cloning"""
+            docs.gitlab.com/ci/pipelines/settings/#limit-the-number-of-changes-fetched-during-clone"""
         self._update_depfiles_change_status(diff_base_sha, err_msg)
 
         return any(depfile.is_depfile_changed for depfile in self.depfiles)
@@ -186,7 +230,7 @@ class CIGitLab(CIBase):
     @property
     def repo_url(self) -> str | None:
         """Get the repository URL for reference in Phylum project metadata."""
-        # Ref: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+        # Ref: https://docs.gitlab.com/ci/variables/predefined_variables
         return os.getenv("CI_PROJECT_URL")
 
     def post_output(self) -> None:
@@ -198,7 +242,7 @@ class CIGitLab(CIBase):
         """
         super().post_output()
 
-        if not is_in_mr():
+        if not is_in_mr_pipeline():
             # Can't post the output to the MR when there is no MR
             return
 
@@ -242,7 +286,7 @@ class CIGitLab(CIBase):
 
         Return `None` when one does not exist.
         """
-        if not is_in_mr():
+        if not is_in_mr_pipeline():
             # It only makes sense to reference this property in the context of an MR
             return None
 
@@ -279,10 +323,10 @@ class CIGitLab(CIBase):
 
 def get_notes_url() -> str:
     """Get the notes API URL and return it."""
-    if not is_in_mr():
+    if not is_in_mr_pipeline():
         msg = "Must be working in the context of a merge request pipeline"
         raise SystemExit(msg)
-    # API Reference: https://docs.gitlab.com/ee/api/notes.html#merge-requests
+    # API Reference: https://docs.gitlab.com/api/notes/#merge-requests
     gitlab_api_v4_root_url = os.getenv("CI_API_V4_URL")
     mr_project_id = os.getenv("CI_MERGE_REQUEST_PROJECT_ID")
     mr_iid = os.getenv("CI_MERGE_REQUEST_IID")
@@ -290,3 +334,31 @@ def get_notes_url() -> str:
     base_mr_notes_api_endpoint = f"/projects/{mr_project_id}/merge_requests/{mr_iid}/notes"
     url = f"{gitlab_api_v4_root_url}{base_mr_notes_api_endpoint}"
     return url
+
+
+def git_merge_base(commit_1: str, commit_2: str) -> str | None:
+    """Get the best common ancestor between two commits and return it.
+
+    When found, it should be returned as a string of the SHA1 sum representing the commit.
+    When it can't be found (or there is an error), `None` should be returned.
+    """
+    cmd = ["git", "merge-base", commit_1, commit_2]
+    LOG.debug("Finding common ancestor commit with command: %s", shlex.join(cmd))
+    try:
+        common_commit = subprocess.run(  # noqa: S603
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout.strip()
+    except subprocess.CalledProcessError as err:
+        msg = """
+            The common ancestor commit could not be found.
+            Ensure the git strategy is set to `clone` for repo checkouts:
+            https://docs.gitlab.com/ci/runners/configure_runners/#git-strategy"""
+        pprint_subprocess_error(err)
+        LOG.warning(cleandoc(msg))
+        common_commit = None
+
+    return common_commit

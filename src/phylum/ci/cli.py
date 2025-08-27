@@ -261,6 +261,10 @@ def main(args: Sequence[str] | None = None) -> int:
     LOG.debug("Dependency files in use: %s", ci_env.depfiles)
     if ci_env.force_analysis:
         LOG.info("Forced analysis specified or otherwise set. Proceeding with analysis.")
+        # Reference `common_ancestor_commit` property here to ensure `all_deps` property is correct before analysis.
+        # Example: An included manifest forces analysis before there is a chance to set `all_deps`, causing tag or
+        #          branch pipelines running on default branch to analyze only new deps instead of all of them.
+        LOG.debug("The common ancestor commit: %s", ci_env.common_ancestor_commit)
     elif ci_env.is_any_depfile_changed:
         # "lockfile" language is used from here forward because the existence
         # of even a single manifest means the forced analysis branch is taken
