@@ -165,6 +165,23 @@ class CIGitLab(CIBase):
             common_commit = os.getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
             return common_commit
 
+        if is_in_tag_pipeline():
+            LOG.warning("In tag pipeline. Proceeding with analysis of all dependencies ...")
+            self._force_analysis = True
+            self._all_deps = True
+            # The `CI_COMMIT_SHA` pre-defined variable is "the commit revision the project is built for."
+            # Since this is a tag pipeline, that means the SHA-1 hash of the commit the tag points to will be returned.
+            # This isn't exactly a "common ancestor commit" but it works anyway since all dependencies are analyzed.
+            tag_commit = os.getenv("CI_COMMIT_SHA")
+            return tag_commit
+
+        # If we got here, we must be in a branch pipeline.
+        src_branch_name = os.getenv("CI_COMMIT_BRANCH")
+        if not src_branch_name:
+            msg = "The CI_COMMIT_BRANCH environment variable must exist and be set"
+            raise SystemExit(msg)
+        src_branch = f"refs/remotes/{remote}/{src_branch_name}"
+
         # The default branch name is used instead of `HEAD` because of a GitLab runner bug where HEAD is not available:
         # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4078
         default_branch_name = os.getenv("CI_DEFAULT_BRANCH")
@@ -177,38 +194,24 @@ class CIGitLab(CIBase):
             LOG.warning("The default remote branch is not available. Attempting to fetch it...")
             git_fetch(repo=remote, ref=default_branch_name, git_c_path=project_dir)
 
-        if is_in_tag_pipeline():
-            tag_name = os.getenv("CI_COMMIT_TAG")
-            if not tag_name:
-                msg = "The CI_COMMIT_TAG environment variable must exist and be set"
-                raise SystemExit(msg)
-            pipeline_trigger_commit_ref = f"refs/tags/{tag_name}"
-            LOG.warning("In tag pipeline. Proceeding with analysis of all dependencies ...")
+        if src_branch == default_branch:
+            LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
             self._force_analysis = True
             self._all_deps = True
-        else:
-            # Must be in a branch pipeline.
-            # This is a best effort attempt since it will find the merge base between the current commit
-            # and the default branch instead of finding the exact commit from which the branch was created.
-            src_branch_name = os.getenv("CI_COMMIT_BRANCH")
-            if not src_branch_name:
-                msg = "The CI_COMMIT_BRANCH environment variable must exist and be set"
-                raise SystemExit(msg)
-            pipeline_trigger_commit_ref = f"refs/remotes/{remote}/{src_branch_name}"
 
-            if pipeline_trigger_commit_ref == default_branch:
-                LOG.warning("Source branch is same as default branch. Proceeding with analysis of all dependencies ...")
-                self._force_analysis = True
-                self._all_deps = True
-
-        common_commit = git_merge_base(pipeline_trigger_commit_ref, default_branch)
+        # This is a best effort attempt since it will find the merge base between the current commit
+        # and the default branch instead of finding the exact commit from which the branch was created.
+        common_commit = git_merge_base(src_branch, default_branch)
         return common_commit
 
     @property
     def is_any_depfile_changed(self) -> bool:
         """Predicate for detecting if any dependency file has changed."""
         diff_base_sha = self.common_ancestor_commit
-        LOG.debug("The common ancestor commit: %s", diff_base_sha)
+        if is_in_tag_pipeline():
+            LOG.debug("The commit tag points to: %s", diff_base_sha)
+        else:
+            LOG.debug("The common ancestor commit: %s", diff_base_sha)
 
         # Assume no change when there isn't enough information to tell
         if diff_base_sha is None:
