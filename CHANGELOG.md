@@ -15,16 +15,6 @@ and understanding.
 
 <!--next-version-placeholder-->
 
-## [v0.59.0](https://github.com/phylum-dev/phylum-ci/compare/v0.58.1...v0.59.0) (2025-08-28)
-
-### Features
-
-* Support tag pipelines in gitlab integration ([#588](https://github.com/phylum-dev/phylum-ci/pull/588)) ([`d9deb74`](https://github.com/phylum-dev/phylum-ci/commit/d9deb74c34f1f86baf135e8c9da9d25c4d27ee50))
-
-### Documentation
-
-* Remove discord link ([#586](https://github.com/phylum-dev/phylum-ci/pull/586)) ([`4082475`](https://github.com/phylum-dev/phylum-ci/commit/4082475f740f3b8b8d94a16847d83d08c1ae338b))
-
 ## [v0.58.1](https://github.com/phylum-dev/phylum-ci/compare/v0.58.0...v0.58.1) (2025-03-20)
 
 ### Documentation
