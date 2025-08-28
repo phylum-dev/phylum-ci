@@ -3,34 +3,37 @@
 ## Overview
 
 Once configured for a repository, the GitLab CI integration will provide analysis of project dependencies from
-manifests and lockfiles. This can happen in a branch pipeline as a result of a commit or in a Merge Request (MR)
-pipeline.
+manifests and lockfiles. This can happen in a branch or tag pipeline as a result of a push or in a Merge Request (MR)
+pipeline. Other [pipeline types][pipeline_types] are not currently supported.
 
 For MR pipelines, analyzed dependencies will include any that are added/modified in the MR.
 
-For branch pipelines, the analyzed dependencies will be determined by comparing dependency files in the branch to
-the default branch. **All** dependencies will be analyzed when the branch pipeline is run on the default branch.
+For branch pipelines, the analyzed dependencies will be determined by comparing dependency files in the branch to the
+default branch. **All** dependencies will be analyzed for tag pipelines or when a branch pipeline is run on the
+default branch.
 
-The results will be provided in the pipeline logs and provided as a note (comment) on the MR unless the option to skip
-comments is provided. The CI job will return an error (i.e., fail the build) if any of the analyzed dependencies fail
-to meet the established policy unless audit mode is specified.
+The results will be provided in the pipeline job logs and provided as a note (comment) on the MR unless the option to
+skip comments is provided. The CI job will return an error (i.e., fail the build) if any of the analyzed dependencies fail to meet the established policy unless audit mode is specified.
 
 There will be no note if no dependencies were added or modified for a given MR.
 There will be no note when the results of the analysis are successful.
-If one or more dependencies are still processing (no results available), then the note will make that clear and
-the CI job will only fail if dependencies that have _completed analysis results_ do not meet the active policy.
+If one or more dependencies are still processing (no results available), then the note will make that clear and the CI
+job will only fail if dependencies that have _completed analysis results_ do not meet the active policy.
+
+[pipeline_types]: https://docs.gitlab.com/ci/pipelines/pipeline_types
 
 ## Prerequisites
 
 The GitLab CI environment is primarily supported through the use of a Docker image. GitLab [SaaS subscriptions][gl_saas]
 hosted on [https://gitlab.com](https://gitlab.com) are supported. [Self-managed subscriptions][self_managed] are
-supported for "on-premises" installs which still have access to the internet. Self-hosted "offline" (e.g., air-gapped networks) installs of GitLab may work but have not been confirmed.
+supported for "on-premises" installs which still have access to the internet. Self-hosted "offline" (e.g., air-gapped
+networks) installs of GitLab may work but have not been confirmed.
 
 The prerequisites for using this image are:
 
 * Access to the [`phylumio/phylum-ci` Docker image][docker_image]
 * A [GitLab token][gitlab_tokens] with API access
-  * This is only required when:
+  * Only required when:
     * Using the integration in merge request pipelines
     * Comment generation has not been skipped
   * The token needs the `api` scope
@@ -42,10 +45,10 @@ The prerequisites for using this image are:
 * Access to the Phylum API endpoints
   * That usually means a connection to the internet, optionally via a proxy
 
-[gl_saas]: https://docs.gitlab.com/ee/subscriptions/gitlab_com/
-[self_managed]: https://docs.gitlab.com/ee/subscriptions/self_managed/
+[gl_saas]: https://docs.gitlab.com/subscriptions/manage_users_and_seats/#gitlabcom-billing-and-usage
+[self_managed]: https://docs.gitlab.com/subscriptions/manage_subscription/#for-gitlab-self-managed
 [docker_image]: https://hub.docker.com/r/phylumio/phylum-ci/tags
-[gitlab_tokens]: https://docs.gitlab.com/ee/security/token_overview.html
+[gitlab_tokens]: https://docs.gitlab.com/security/tokens
 [phylum_tokens]: ../knowledge_base/api-keys.md
 [phylum_contact]: https://phylum.io/contact-us/
 [app_register]: https://app.phylum.io/register
@@ -90,25 +93,25 @@ analyze_MR_with_Phylum:  # Name this what you like
 
 ### Job control
 
-Choose when to run the job. The Phylum integration can run in the context of branch pipelines or merge request
-pipelines but [merge request pipelines][mr_pipelines] are given preferential treatment so care should be taken to
+Choose when to run the job. The Phylum integration can run in the context of branch, tag, or merge request pipelines
+but [merge request pipelines][mr_pipelines] are given preferential treatment so care should be taken to
 [avoid duplicate pipelines][duplicate_pipelines].
 
 There are several ways to accomplish this goal. The first is to create a rule at the job level to specify that
-the job should only run for merge request pipelines. Branch pipelines are the default type and will run when new
-commits are pushed to a branch. If the desire is to only run the job for branch pipelines, then no rule limiting
-the pipeline source should be specified.
+the job should only run for merge request pipelines. Jobs with no rules default to `except: merge_requests`, so if the
+desire is to only run the job for push events (i.e., tag and branch pipelines), then no rule limiting the pipeline
+source should be specified.
 
 ```yaml
   # This optional rule specifies to run the job for merge request pipelines only.
-  # Remove these lines entirely to run the job for branch pipelines instead.
+  # Remove these lines entirely to run the job for tag and branch pipelines instead.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 ```
 
-It is also possible to allow for both pipeline types while ensuring only one runs at a time by using workflow
-rules to automatically [switch between branch pipelines and merge request pipelines][switch]. To do so, remove
-any _job_ level rules related to pipeline sources and add the following _workflow_ level rules to the configuration:
+It is also possible to allow for all supported pipeline types while ensuring only one runs at a time by using workflow
+rules to automatically [switch between branch pipelines and merge request pipelines][switch]. To do so, remove any
+_job_ level rules related to pipeline sources and add the following _workflow_ level rules to the configuration:
 
 ```yaml
 workflow:
@@ -118,6 +121,7 @@ workflow:
       when: never
       # This next rule will trigger for pushes to any branch
     - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
 ```
 
 It is recommended to allow branch pipelines for pushes to the default branch, to ensure the Phylum analysis results for
@@ -132,14 +136,18 @@ workflow:
       when: never
       # This next rule will trigger for pushes only to the default branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
 ```
 
-See the [GitLab CI/CD Job Control][job_control] documentation for more detail.
+View GitLab CI/CD documentation for more detail on [job control][job_control], [job rules][job_rules], and
+[workflow rules][workflow_rules].
 
-[mr_pipelines]: https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html
-[duplicate_pipelines]: https://docs.gitlab.com/ee/ci/jobs/job_control.html#avoid-duplicate-pipelines
-[switch]: https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
-[job_control]: https://docs.gitlab.com/ee/ci/jobs/job_control.html
+[mr_pipelines]: https://docs.gitlab.com/ci/pipelines/merge_request_pipelines
+[duplicate_pipelines]: https://docs.gitlab.com/ci/jobs/job_rules/#avoid-duplicate-pipelines
+[switch]: https://docs.gitlab.com/ci/yaml/workflow/#switch-between-branch-pipelines-and-merge-request-pipelines
+[job_control]: https://docs.gitlab.com/ci/jobs/job_control
+[job_rules]: https://docs.gitlab.com/ci/jobs/job_rules
+[workflow_rules]: https://docs.gitlab.com/ci/yaml/workflow
 
 ### Docker image selection
 
@@ -220,7 +228,7 @@ project and group access tokens. See the [GitLab Token Overview][gitlab_tokens] 
 The token needs the `api` scope. Project or Group access tokens should specify a role _other than_ `Guest`.
 
 Note, the GitLab token is only required when this Phylum integration is used in [merge request pipelines][mr_pipelines]
-where comment generation is not skipped. It is not required when used in branch pipelines.
+where comment generation is not skipped. It is not required when used in branch or tag pipelines.
 
 Note, using `$CI_JOB_TOKEN` as the value will work in some situations because "API authentication uses the job token,
 by using the authorization of the user triggering the job." This is not recommended for anything other than temporary
@@ -235,22 +243,22 @@ for this token.
 Values for the `GITLAB_TOKEN` and `PHYLUM_API_KEY` variables can come from a [CI/CD Variable][ci_cd_variable] or an
 [External Secret][external_secret]. Since they are sensitive, **care should be taken to protect them appropriately**.
 
-[ci_cd_variable]: https://docs.gitlab.com/ee/ci/variables/index.html
-[external_secret]: https://docs.gitlab.com/ee/ci/secrets/index.html
+[ci_cd_variable]: https://docs.gitlab.com/ci/variables
+[external_secret]: https://docs.gitlab.com/ci/secrets
 
 ```yaml
   variables:
     # References:
-    # GIT_STRATEGY - https://docs.gitlab.com/ee/ci/runners/configure_runners.html#git-strategy
-    # GIT_DEPTH - https://docs.gitlab.com/ee/ci/runners/configure_runners.html#shallow-cloning
+    # GIT_STRATEGY - https://docs.gitlab.com/ci/runners/configure_runners/#git-strategy
+    # GIT_DEPTH - https://docs.gitlab.com/ci/runners/configure_runners/#shallow-cloning
     GIT_STRATEGY: clone
     # GIT_DEPTH: "50"
 
     # References for GitLab tokens:
-    # All tokens - https://docs.gitlab.com/ee/security/token_overview.html
-    # Personal - https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
-    # Project - https://docs.gitlab.com/ee/user/project/settings/project_access_tokens.html
-    # Group - https://docs.gitlab.com/ee/user/group/settings/group_access_tokens.html
+    # All tokens - https://docs.gitlab.com/security/tokens
+    # Personal - https://docs.gitlab.com/user/profile/personal_access_tokens
+    # Project - https://docs.gitlab.com/user/project/settings/project_access_tokens
+    # Group - https://docs.gitlab.com/user/group/settings/group_access_tokens
     GITLAB_TOKEN: $GITLAB_TOKEN_VARIABLE_OR_SECRET_HERE
 
     # Contact Phylum (phylum.io/contact-us) or register (app.phylum.io/register)
@@ -326,7 +334,7 @@ view the [script options output][script_options] for the latest release.
     - phylum-ci --phylum-release 4.8.0 --force-install
 
     # Mix and match for your specific use case.
-    # Long commands: https://docs.gitlab.com/ee/ci/yaml/script.html#split-long-commands
+    # Long commands: https://docs.gitlab.com/ci/yaml/script/#split-long-commands
     - |
       phylum-ci \
         -vv \

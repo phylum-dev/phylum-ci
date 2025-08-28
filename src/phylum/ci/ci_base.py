@@ -925,7 +925,10 @@ class CIBase(ABC):
             new_packages = sorted(set(current_packages).difference(set(base_packages)))
             num_new_packages = len(new_packages)
             dep_txt = "dependency" if num_new_packages == 1 else "dependencies"
-            LOG.debug("%s new %s: %s", num_new_packages, dep_txt, new_packages)
+            if new_packages:
+                LOG.debug("%s new %s: %s", num_new_packages, dep_txt, new_packages)
+            else:
+                LOG.info("No new dependencies found.")
 
         with (
             tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", prefix="base_", suffix=".json") as base_fd,
