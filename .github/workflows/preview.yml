@@ -97,7 +97,7 @@ jobs:
 
       - name: Publish to TestPyPI
         if: inputs.TestPyPI
-        run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
+        run: poetry publish -vvv --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
 
   build_windows:
     name: Build Windows ${{ matrix.name }} binary
