@@ -192,7 +192,7 @@ convention = "pep257"
 
 [tool.semantic_release]
 # Reference: https://python-semantic-release.readthedocs.io/en/latest/configuration.html
-version_toml = ["pyproject.toml:tool.poetry.version"]
+version_toml = ["pyproject.toml:project.version"]
 # TODO: remove this setting or change it to `true` after the project is stable and no longer zeroVer
 major_on_zero = false
 # These files (may) get updated in the release workflow before Python Semantic Release runs

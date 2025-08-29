@@ -97,7 +97,10 @@ jobs:
 
       - name: Publish to TestPyPI
         if: inputs.TestPyPI
-        run: poetry publish --repository testpypi --username __token__ --password ${{ secrets.TESTPYPI_API_TOKEN }}
+        env:
+          # Ref: https://python-poetry.org/docs/repositories/#configuring-credentials
+          POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TESTPYPI_API_TOKEN }}
+        run: poetry publish -vvv --repository testpypi
 
   build_windows:
     name: Build Windows ${{ matrix.name }} binary
