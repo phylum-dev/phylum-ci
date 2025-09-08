@@ -95,7 +95,7 @@ jobs:
         # The PR may already exist (e.g., created in previous week and not merged yet) so we
         # allow it here and check in the next step so workflow failures will be extraordinary
         continue-on-error: true
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           # This PAT is for the `phylum-bot` account and only has the `public_repo` scope to limit privileges.
           github-token: ${{ secrets.GH_RELEASE_PAT }}
