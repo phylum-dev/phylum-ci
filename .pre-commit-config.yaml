@@ -28,9 +28,9 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 13a6bda8ea7612b3aec844ded16569d424b9a1ab  # frozen: v0.13.0
+    rev: 13a6bda8ea7612b3aec844ded16569d424b9a1ab # frozen: v0.13.0
     hooks:
-      - id: ruff
+      - id: ruff-check
 
   - repo: https://github.com/dosisod/refurb
     rev: 6310068b3faa547fb36240fd52e5bd282c29289f # frozen: v2.1.0
@@ -52,7 +52,7 @@ repos:
     # https://python-poetry.org/docs/pre-commit-hooks/#why-does-pre-commit-autoupdate-not-update-to-the-latest-version
     # NOTE: This `rev` should be manually updated whenever `poetry` is updated. The `rev` can be found by checking out
     #       the `poetry` repository and running the command: `git show-ref --tags <tag_name>`
-    rev: a8f0889a54a545ec4f7ceed7bf41f8c2a7677bbb # frozen: 2.1.4
+    rev: 4dba0e1b041366b3f05bec89dca82e902e6386e8 # frozen: 2.2.0
     hooks:
       - id: poetry-check
         args: [--lock, --strict]

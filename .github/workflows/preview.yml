@@ -26,7 +26,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.13"
-  POETRY_VERSION: "2.1.4"
+  POETRY_VERSION: "2.2.0"
 
 jobs:
   publish_preview:
@@ -67,7 +67,7 @@ jobs:
           poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock --strict
           poetry lock --no-cache
-          poetry sync --verbose --no-root --with test,ci
+          poetry sync --verbose --no-root --only main,test,ci
 
       - name: Make developmental release version
         id: dev_ver
@@ -151,7 +151,7 @@ jobs:
         run: |
           poetry check --lock --strict
           poetry lock --no-cache
-          poetry sync --verbose --no-root --with compile
+          poetry sync --verbose --no-root --only main,compile
           poetry run python -m pip install --find-links dist --no-index phylum
 
       - name: Compile binary with Nuitka

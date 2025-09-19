@@ -16,7 +16,7 @@ defaults:
 
 env:
   PYTHON_VERSION: "3.13"
-  POETRY_VERSION: "2.1.4"
+  POETRY_VERSION: "2.2.0"
 
 jobs:
   QA:
@@ -48,7 +48,7 @@ jobs:
           poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock --strict
           poetry lock --no-cache
-          poetry sync --verbose --no-root --with qa
+          poetry sync --verbose --no-root --only main,qa
 
       - name: Run tox via poetry
         env:
@@ -96,7 +96,7 @@ jobs:
           poetry env use python${{ matrix.python-version }}
           poetry check --lock --strict
           poetry lock --no-cache
-          poetry sync --verbose --no-root --with test,ci
+          poetry sync --verbose --no-root --only main,test,ci
 
       - name: Run tox via poetry
         run: poetry run tox
@@ -145,7 +145,7 @@ jobs:
           poetry env use python${{ env.PYTHON_VERSION }}
           poetry check --lock --strict
           poetry lock --no-cache
-          poetry sync --verbose --no-root
+          poetry sync --verbose --no-root --only main
 
       - name: Build wheel and source distribution
         if: ${{ matrix.build == 'wheel' }}
