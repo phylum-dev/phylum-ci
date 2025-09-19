@@ -6,6 +6,7 @@ name = "phylum"
 version = "0.59.0"
 description = "Utilities for integrating Phylum into CI pipelines"
 license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 authors = [
@@ -31,7 +32,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 # Required dependencies for creating distributions are defined in this `project`
-# table while optional dev dependencies are defined in `tool.poetry.group.*` tables.
+# table while optional dev dependencies are defined in the `dependency-groups` table.
 dependencies = [
     "cryptography",
     "packaging",
@@ -58,62 +59,41 @@ phylum-ci = "phylum.ci.cli:script_main"
 [build-system]
 # NOTE: Changes to the build system values should be inspected closely!
 # `poetry-core` and `poetry` should have matching version constraints.
-requires = ["poetry-core>=2.1,<3.0"]
+requires = ["poetry-core>=2.2,<3.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 # `poetry-core` and `poetry` should have matching version constraints.
-requires-poetry = ">=2.1,<3.0"
+requires-poetry = ">=2.2,<3.0"
 packages = [
     { include = "phylum", from = "src" },
     { include = "tests", format = "sdist" },
 ]
 
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-dulwich = "*"
-pytest = "*"
-pytest-cov = "*"
-tomli = "*"
-tox = "*"
-
-[tool.poetry.group.ci]
-optional = true
-
-[tool.poetry.group.ci.dependencies]
-pytest-github-actions-annotate-failures = "*"
-# PSR has a history of releasing breaking changes in minor and bugfix releases.
-# The irony is not lost, but it has become too much. This dependency has a hard
-# pin now so that every new release can be examined before it is used. Some notes:
-#
-# PSR re-defined the `context` variable in release notes templates in v9.8.7, but
-# expects to remove it again in the next major version.
-# https://github.com/python-semantic-release/python-semantic-release/pull/1005
-# https://github.com/python-semantic-release/python-semantic-release/issues/984
-#
-# TODO: Remove this pin
-#       https://github.com/phylum-dev/phylum-ci/issues/565
-python-semantic-release = "==9.12.0"
-# A regression was added in v1.2.9 where config validation fails. It was fixed
-# in https://github.com/ewels/rich-codex/pull/54 and included in release v1.2.11
-rich-codex = ">=1.2.11"
-tox-gh-actions = "*"
-
-[tool.poetry.group.qa]
-optional = true
-
-[tool.poetry.group.qa.dependencies]
-pre-commit = "*"
-tox = "*"
-types-requests = "*"
-
-[tool.poetry.group.compile]
-optional = true
-
-[tool.poetry.group.compile.dependencies]
-nuitka = "*"
+[dependency-groups]
+ci = [
+    "pytest-github-actions-annotate-failures",
+    # PSR has a history of releasing breaking changes in minor and bugfix releases.
+    # The irony is not lost, but it has become too much. This dependency has a hard
+    # pin now so that every new release can be examined before it is used. Some notes:
+    #
+    # PSR re-defined the `context` variable in release notes templates in v9.8.7, but
+    # expects to remove it again in the next major version.
+    # https://github.com/python-semantic-release/python-semantic-release/pull/1005
+    # https://github.com/python-semantic-release/python-semantic-release/issues/984
+    #
+    # TODO: Remove this pin
+    #       https://github.com/phylum-dev/phylum-ci/issues/565
+    "python-semantic-release==9.12.0",
+    # A regression was added in v1.2.9 where config validation fails. It was fixed
+    # in https://github.com/ewels/rich-codex/pull/54 and included in release v1.2.11
+    "rich-codex>=1.2.11",
+    "tox-gh-actions",
+]
+compile = ["nuitka"]
+dev = [{ include-group = "test" }, { include-group = "qa" }]
+qa = ["pre-commit", "tox", "types-requests"]
+test = ["dulwich", "pytest", "pytest-cov", "tomli", "tox"]
 
 [[tool.poetry.source]]
 name = "phylum"
