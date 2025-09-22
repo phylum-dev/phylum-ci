@@ -23,17 +23,17 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: 8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # frozen: 25.1.0
+    rev: af0ba72a73598c76189d6dd1b21d8532255d5942  # frozen: 25.9.0
     hooks:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 13a6bda8ea7612b3aec844ded16569d424b9a1ab  # frozen: v0.13.0
+    rev: a113f03edeabb71305f025e6e14bd2cd68660e29  # frozen: v0.13.1
     hooks:
       - id: ruff
 
   - repo: https://github.com/dosisod/refurb
-    rev: 6310068b3faa547fb36240fd52e5bd282c29289f # frozen: v2.1.0
+    rev: 854db6cdfab04b7f4911d9cba6bfc084f086ea92  # frozen: v2.2.0
     hooks:
       - id: refurb
 
