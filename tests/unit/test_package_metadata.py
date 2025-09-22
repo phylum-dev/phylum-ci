@@ -64,7 +64,7 @@ def test_build_system() -> None:
     """
     # NOTE: Changes to these values should be inspected closely!
     expected_build_req_name = "poetry-core"
-    expected_build_req_spec = SpecifierSet(">=2.1,<3.0")
+    expected_build_req_spec = SpecifierSet(">=2.2.1,<3.0")
     expected_build_backend = "poetry.core.masonry.api"
 
     build_system: dict[str, Any] = PYPROJECT.get("build-system", {})

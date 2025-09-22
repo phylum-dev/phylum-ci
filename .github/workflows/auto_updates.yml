@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: "3.13"
-      POETRY_VERSION: "2.1.4"
+      POETRY_VERSION: "2.2.1"
       UPDATE_BRANCH_NAME: workflow-auto-updates
     defaults:
       run:
