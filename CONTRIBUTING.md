@@ -124,10 +124,10 @@ Here's how to set up `phylum-ci` for local development.
     pyenv global 3.13 3.12 3.11 3.10
     ```
 
-4. Ensure [poetry v2.2+](https://python-poetry.org/docs/) is installed
+4. Ensure [poetry v2.2.1+](https://python-poetry.org/docs/) is installed
    1. PEP 621 support was added and the `pyproject.toml` file was updated to match in Poetry v2.0.0
    2. Support for alternate build backends was added in Poetry v2.1.0
-   3. PEP 735 support for dependency groups was added in Poetry v2.2.0
+   3. PEP 735 support for dependency groups was added in Poetry v2.2.0 and a fix for declaring them optional in v2.2.1
 5. Configure credentials to make use of the [PyPI Package Firewall](https://docs.phylum.io/package_firewall/pypi), which
    has been enabled for `poetry` on this repo
 
@@ -153,12 +153,12 @@ Here's how to set up `phylum-ci` for local development.
     poetry check --lock --strict
 
     # Install the main dependencies only:
-    poetry sync --only main
+    poetry sync
 
     # Alternatively, specific dependency groups can be installed at the same
-    # time. It makes sense to add the "dev" group now, which includes the "test"
-    # and "qa" groups now, if new code is going to be added and tested:
-    poetry sync --only main,dev
+    # time. It makes sense to add the "dev" group now, which includes the
+    # "test" and "qa" groups, if new code is going to be added and tested:
+    poetry sync --with dev
     ```
 
 7. Create a branch for local development:
@@ -208,7 +208,7 @@ Here's how to set up `phylum-ci` for local development.
     phylum analyze poetry.lock
 
     # If the dependencies pass the active Phylum policy, they can be installed locally:
-    poetry sync --only main,dev
+    poetry sync --with dev
     ```
 
     **NOTE:** The version of `poetry` used to make changes to the lockfile must match the one specified
@@ -220,7 +220,7 @@ Here's how to set up `phylum-ci` for local development.
     ```sh
     # Ensure the "test" and "qa" dependency groups are installed, if not done previously.
     # These groups are included in the "dev" dependency group for simplicity.
-    poetry sync --only main,dev
+    poetry sync --with dev
     poetry run tox run -e qa
     poetry run tox run-parallel
     ```

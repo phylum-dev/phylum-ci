@@ -59,12 +59,12 @@ phylum-ci = "phylum.ci.cli:script_main"
 [build-system]
 # NOTE: Changes to the build system values should be inspected closely!
 # `poetry-core` and `poetry` should have matching version constraints.
-requires = ["poetry-core>=2.2,<3.0"]
+requires = ["poetry-core>=2.2.1,<3.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 # `poetry-core` and `poetry` should have matching version constraints.
-requires-poetry = ">=2.2,<3.0"
+requires-poetry = ">=2.2.1,<3.0"
 packages = [
     { include = "phylum", from = "src" },
     { include = "tests", format = "sdist" },
@@ -94,6 +94,21 @@ compile = ["nuitka"]
 dev = [{ include-group = "test" }, { include-group = "qa" }]
 qa = ["pre-commit", "tox", "types-requests"]
 test = ["dulwich", "pytest", "pytest-cov", "tomli", "tox"]
+
+[tool.poetry.group.ci]
+optional = true
+
+[tool.poetry.group.compile]
+optional = true
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.qa]
+optional = true
+
+[tool.poetry.group.test]
+optional = true
 
 [[tool.poetry.source]]
 name = "phylum"
