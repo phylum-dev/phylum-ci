@@ -170,7 +170,7 @@ jobs:
       # Nuitka needs the packaged form and not the editable install Poetry provides
       # Ref: https://github.com/Nuitka/Nuitka/issues/2965
       - name: Download dist artifacts
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: dist
           path: ./dist
@@ -295,13 +295,13 @@ jobs:
           git_tag_gpgsign: true
 
       - name: Download dist artifacts
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: dist
           path: ./dist
 
       - name: Download build artifacts
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: ./build
           pattern: phylum-ci-*
