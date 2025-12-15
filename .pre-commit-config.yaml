@@ -28,7 +28,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 1a1f58ba4c35362efe8fed2279715a905baee93d  # frozen: v0.14.8
+    rev: d96cc7adddf7d15b77f99dbd5d20e037dfd1b29c  # frozen: v0.14.9
     hooks:
       - id: ruff-check
 
