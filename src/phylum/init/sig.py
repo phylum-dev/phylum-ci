@@ -36,8 +36,7 @@ from phylum.logger import LOG, progress_spinner
 
 # This is the RSA Public Key for Phylum, Inc. The matching private key was used to sign the software releases
 PHYLUM_RSA_PUBKEY = bytes(
-    cleandoc(
-        """
+    cleandoc("""
         -----BEGIN PUBLIC KEY-----
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyGgvuy6CWSgJuhKY8oVz
         42udH1F2yIlaBoxAdQFuY2zxPSSpK9zv34B7m0JekuC5WCYfW0gS2Z8Ryu2RVdQh
@@ -47,8 +46,7 @@ PHYLUM_RSA_PUBKEY = bytes(
         CPPnPlCwuCIyUPezCP5XYczuHfaWeuwArlwdJFSUpMTc+SqO6REKgL9yvpqsO5Ia
         sQIDAQAB
         -----END PUBLIC KEY-----
-        """  # noqa: COM812 ; FP due to multiline string in function call
-    ),
+        """),
     encoding="ASCII",
 )
 
