@@ -1,5 +1,6 @@
 """Test the git helper functions."""
 
+import contextlib
 from inspect import cleandoc
 import logging
 from pathlib import Path
@@ -668,9 +669,7 @@ def test_git_worktree_failure_to_create_worktree(tmp_path: Path) -> None:
         ...
 
 
-@patch("subprocess.run")
 def test_remove_git_worktree_failure_logs_warning(
-    mock_run: MagicMock,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -683,15 +682,15 @@ def test_remove_git_worktree_failure_logs_warning(
 
     assert created_worktree_path == str(desired_worktree_path), "Worktree should have been created"
 
-    mock_run.side_effect = subprocess.CalledProcessError(
-        1,
-        ["git", "-C", str(repo_path), "worktree", "remove", "--force", str(created_worktree_path)],
-        output=None,
-        stderr="Unable to remove worktree",
-    )
+    # Make the worktree directory read-only to cause removal to fail
+    desired_worktree_path.chmod(0o444)
 
     with caplog.at_level(logging.WARNING):
         git.remove_git_worktree(worktree=desired_worktree_path, git_c_path=repo_path)
 
     expected_err_msg = "Unable to remove the git worktree. Try running `git worktree prune` manually."
     assert expected_err_msg in caplog.text
+
+    # Best effort to restore permissions so `pytest` can clean up the temp directory
+    with contextlib.suppress(Exception):
+        desired_worktree_path.chmod(0o755)
