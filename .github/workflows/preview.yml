@@ -39,7 +39,7 @@ jobs:
       next_ver: ${{ steps.dev_ver.outputs.next_ver }}
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # `python-semantic-release` needs full history to properly determine the next release version
           fetch-depth: 0
@@ -121,7 +121,7 @@ jobs:
             artifact: ./build/phylum-ci.exe
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       # Nuitka needs the packaged form and not the editable install Poetry provides
       # Ref: https://github.com/Nuitka/Nuitka/issues/2965
