@@ -190,14 +190,14 @@ reference = "phylum"
 
 [[package]]
 name = "chardet"
-version = "6.0.0.post1"
+version = "5.2.0"
 description = "Universal encoding detector for Python 3"
 optional = false
-python-versions = ">=3.10"
-groups = ["ci", "dev", "qa", "test"]
+python-versions = ">=3.7"
+groups = ["main", "ci", "dev", "qa", "test"]
 files = [
-    {file = "chardet-6.0.0.post1-py3-none-any.whl", hash = "sha256:c894a36800549adf7bb5f2af47033281b75fdfcd2aa0f0243be0ad22a52e2dcb"},
-    {file = "chardet-6.0.0.post1.tar.gz", hash = "sha256:6b78048c3c97c7b2ed1fbad7a18f76f5a6547f7d34dbab536cc13887c9a92fa4"},
+    {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
+    {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
 ]
 
 [package.source]
@@ -2471,4 +2471,4 @@ reference = "phylum"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "e660b9276e61a29637fa2c04c4b65b6350be2348ba94767e3f01b2d2c9339f5c"
+content-hash = "6384aa2c482e5f84400bf0a3a131f733c239ff4368d5db15bf6ecbd711cfbb6f"
