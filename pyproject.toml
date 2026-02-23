@@ -34,6 +34,10 @@ classifiers = [
 # Required dependencies for creating distributions are defined in this `project`
 # table while optional dev dependencies are defined in the `dependency-groups` table.
 dependencies = [
+    # TODO: Remove `chardet` as a top-level dependency after a release of `requests`
+    #       comes out that includes this fix: https://github.com/psf/requests/pull/7220
+    #       This should be the release after v2.32.5 of `requests`.
+    "chardet<6",
     "cryptography",
     "packaging",
     "pathspec",
