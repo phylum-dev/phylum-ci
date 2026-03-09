@@ -23,12 +23,12 @@ repos:
       - id: no-commit-to-branch
 
   - repo: https://github.com/psf/black
-    rev: 6305bf1ae645ab7541be4f5028a86239316178eb  # frozen: 26.1.0
+    rev: 35ea67920b7f6ac8e09be1c47278752b1e827f76  # frozen: 26.3.0
     hooks:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: a27a2e47c7751b639d2b5badf0ef6ff11fee893f  # frozen: v0.15.4
+    rev: b969e2851312ca2b24bbec879ba4954341d1bd12  # frozen: v0.15.5
     hooks:
       - id: ruff-check
 
@@ -38,7 +38,7 @@ repos:
       - id: refurb
 
   - repo: https://github.com/jendrikseipp/vulture
-    rev: dada4a02e862cfe72d6c8eac2e9b7aae080b1df2 # frozen: v2.14
+    rev: 1f3056ae35fb864322764d765ea0f855a7ef888b  # frozen: v2.15
     hooks:
       - id: vulture
 
