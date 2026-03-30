@@ -28,7 +28,7 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: e05c5c0818279e5ac248ac9e954431ba58865e61  # frozen: v0.15.7
+    rev: aca6d4c8045a504e2812ea4bedff1d0a09e437bc  # frozen: v0.15.8
     hooks:
       - id: ruff-check
 
@@ -38,7 +38,7 @@ repos:
       - id: refurb
 
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 1f3056ae35fb864322764d765ea0f855a7ef888b  # frozen: v2.15
+    rev: 258fe6a1974e89a2add9a45519a9e9dd9f46154e  # frozen: v2.16
     hooks:
       - id: vulture
 
