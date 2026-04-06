@@ -28,12 +28,12 @@ repos:
       - id: black
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: aca6d4c8045a504e2812ea4bedff1d0a09e437bc  # frozen: v0.15.8
+    rev: c60c980e561ed3e73101667fe8365c609d19a438  # frozen: v0.15.9
     hooks:
       - id: ruff-check
 
   - repo: https://github.com/dosisod/refurb
-    rev: 2fd5fe077fd4f5261a417da21e120e148259e303  # frozen: v2.3.0
+    rev: 0dbb127465ca9398b6c89c32a7fd86d78ca755c4  # frozen: v2.3.1
     hooks:
       - id: refurb
 
