@@ -102,7 +102,7 @@ jobs:
         run: poetry build -vvv
 
       - name: Upload dist artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist
           path: ./dist/
@@ -238,7 +238,7 @@ jobs:
 
       - name: Upload ${{ matrix.name }} artifact
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: phylum-ci-${{ matrix.name }}
           path: ${{ matrix.artifact }}
@@ -246,7 +246,7 @@ jobs:
 
       - name: Upload compilation report
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nuitka-compilation-report-${{ matrix.name }}
           path: ./nuitka-compilation-report.xml
@@ -255,7 +255,7 @@ jobs:
       # Nuitka will create a crash report with a static name when there are failures
       - name: Upload crash report
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nuitka-crash-report-${{ matrix.name }}
           path: ./nuitka-crash-report.xml
