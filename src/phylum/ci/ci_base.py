@@ -235,7 +235,7 @@ class CIBase(ABC):
 
         try:
             spec = pathspec.GitIgnoreSpec.from_lines(provided_arg_exclusions)
-        except pathspec.patterns.gitwildmatch.GitWildMatchPatternError as err:
+        except pathspec.patterns.gitignore.GitIgnorePatternError as err:
             msg = f"""
                 Could not parse provided gitignore-style exclusion pattern!
                 {err}
