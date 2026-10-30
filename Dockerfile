@@ -252,6 +252,7 @@ RUN \
         git \
         git-lfs \
         bundler \
+        libatomic1 \
         maven \
         default-jdk-headless \
         procps \
